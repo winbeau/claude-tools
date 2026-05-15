@@ -1,0 +1,138 @@
+# 7 所学校 × CS/AI 相关学院的入口配置
+# 每个 department 都有 list_url（师资列表起点），有些有多个 list_url（按职称分页）
+
+schools:
+  - code: tsinghua
+    name_cn: 清华大学
+    name_en: Tsinghua University
+    departments:
+      - code: cs
+        name_cn: 计算机系
+        list_urls:
+          - https://www.cs.tsinghua.edu.cn/szzk/jzgml.htm
+      - code: iiis
+        name_cn: 交叉信息研究院
+        list_urls:
+          - https://iiis.tsinghua.edu.cn/zh/faculty/
+      - code: air
+        name_cn: 智能产业研究院 AIR
+        list_urls:
+          - https://air.tsinghua.edu.cn/info/1046/1180.htm
+      - code: au-ai
+        name_cn: 自动化系（AI 方向）
+        list_urls:
+          - https://www.au.tsinghua.edu.cn/info/1108/3231.htm
+      - code: ee-ai
+        name_cn: 电子工程系（AI 方向）
+        list_urls:
+          - https://www.ee.tsinghua.edu.cn/szdw/jsml.htm
+
+  - code: pku
+    name_cn: 北京大学
+    name_en: Peking University
+    departments:
+      - code: eecs
+        name_cn: 信息科学技术学院
+        list_urls:
+          - https://eecs.pku.edu.cn/info/1342/8930.htm
+      - code: ai
+        name_cn: 智能学院
+        list_urls:
+          - https://ai.pku.edu.cn/rydw/index.htm
+      - code: wangxuan
+        name_cn: 王选计算机研究所
+        list_urls:
+          - https://www.icst.pku.edu.cn/szdw/
+      - code: cfcs
+        name_cn: 前沿计算研究中心
+        list_urls:
+          - https://cfcs.pku.edu.cn/people/
+
+  - code: nju
+    name_cn: 南京大学
+    name_en: Nanjing University
+    departments:
+      - code: cs
+        name_cn: 计算机科学与技术系
+        list_urls:
+          - https://cs.nju.edu.cn/szdw/
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://ai.nju.edu.cn/people/list.htm
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://software.nju.edu.cn/szll/index.htm
+
+  - code: ustc
+    name_cn: 中国科学技术大学
+    name_en: USTC
+    departments:
+      - code: cs
+        name_cn: 计算机科学与技术学院
+        list_urls:
+          - https://cs.ustc.edu.cn/2013/1224/c2496a30007/page.htm
+      - code: ai-info
+        name_cn: 信息学院（AI 方向）
+        list_urls:
+          - https://eeis.ustc.edu.cn/main.htm
+
+  - code: zju
+    name_cn: 浙江大学
+    name_en: Zhejiang University
+    departments:
+      - code: cs
+        name_cn: 计算机科学与技术学院
+        list_urls:
+          - https://person.zju.edu.cn/cs
+      - code: cadcg
+        name_cn: CAD&CG 国家重点实验室
+        list_urls:
+          - http://www.cad.zju.edu.cn/
+      - code: ai-inst
+        name_cn: 人工智能研究所
+        list_urls:
+          - https://person.zju.edu.cn/ai
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - http://www.cst.zju.edu.cn/
+
+  - code: fudan
+    name_cn: 复旦大学
+    name_en: Fudan University
+    departments:
+      - code: cs
+        name_cn: 计算机科学技术学院
+        list_urls:
+          - https://cs.fudan.edu.cn/szdw/szdwjs.htm
+      - code: bd
+        name_cn: 大数据学院
+        list_urls:
+          - https://sds.fudan.edu.cn/szdw/qzjs.htm
+      - code: ai
+        name_cn: 人工智能创新与产业研究院
+        list_urls:
+          - https://aiii.fudan.edu.cn/
+
+  - code: sjtu
+    name_cn: 上海交通大学
+    name_en: SJTU
+    departments:
+      - code: cs
+        name_cn: 计算机科学与工程系
+        list_urls:
+          - https://www.cs.sjtu.edu.cn/PeopleList.aspx
+      - code: see-ai
+        name_cn: 电院（AI 方向）
+        list_urls:
+          - https://english.seiee.sjtu.edu.cn/
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://soai.sjtu.edu.cn/szdw
+      - code: qingyuan
+        name_cn: 清源研究院
+        list_urls:
+          - https://qingyuan.sjtu.edu.cn/

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data — NEVER commit
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node / web-ui
+node_modules/
+web-ui/dist/
+web-ui/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Playwright
+playwright-report/
+test-results/
