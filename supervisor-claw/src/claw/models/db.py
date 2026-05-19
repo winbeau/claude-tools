@@ -7,7 +7,7 @@ from functools import cache
 
 from sqlalchemy import Column, DateTime, UniqueConstraint, event
 from sqlalchemy.engine import Engine
-from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
+from sqlmodel import Field, Session, SQLModel, create_engine
 
 from ..config import get_settings
 
@@ -30,8 +30,6 @@ class School(SQLModel, table=True):
     name_cn: str
     name_en: str | None = None
 
-    departments: list["Department"] = Relationship(back_populates="school")
-
 
 class Department(SQLModel, table=True):
     __tablename__ = "department"
@@ -43,8 +41,6 @@ class Department(SQLModel, table=True):
     name_cn: str
     name_en: str | None = None
     faculty_list_url: str | None = None
-
-    school: School | None = Relationship(back_populates="departments")
 
 
 class Advisor(SQLModel, table=True):
