@@ -158,18 +158,34 @@ schools:
     name_cn: 复旦大学
     name_en: Fudan University
     departments:
+      # 计算机科学技术学院 was merged into the broader "计算与智能创新学院"
+      # in 2024 — the public site is cs.fudan.edu.cn. The 师资 page
+      # /53161/list.htm (by 职称) is a sudy-CMS SPA whose teacher cards are
+      # populated client-side from /_wp3services/generalQuery?queryObj=teacherHome.
+      # That endpoint accepts GET with the same querystring as the in-page POST
+      # and returns a single JSON payload covering all 288 entries — far
+      # cleaner than scraping the SPA-rendered DOM (would need Playwright).
+      # Adapter sniffs the JSON content-type and parses ``data[]`` directly.
       - code: cs
-        name_cn: 计算机科学技术学院
+        name_cn: 计算与智能创新学院（含 CS + AI 双聘）
         list_urls:
-          - https://cs.fudan.edu.cn/szdw/szdwjs.htm
+          - https://cs.fudan.edu.cn/_wp3services/generalQuery?queryObj=teacherHome&siteId=577&pageIndex=1&rows=999&conditions=%5B%5D&orders=%5B%7B%22field%22%3A%22letter%22%2C%22type%22%3A%22asc%22%7D%5D&returnInfos=%5B%7B%22field%22%3A%22title%22%2C%22name%22%3A%22title%22%7D%2C%7B%22field%22%3A%22cnUrl%22%2C%22name%22%3A%22cnUrl%22%7D%2C%7B%22field%22%3A%22headerPic%22%2C%22name%22%3A%22headerPic%22%7D%2C%7B%22field%22%3A%22exField1%22%2C%22name%22%3A%22exField1%22%7D%2C%7B%22field%22%3A%22exField9%22%2C%22name%22%3A%22exField9%22%7D%2C%7B%22field%22%3A%22exField7%22%2C%22name%22%3A%22exField7%22%7D%2C%7B%22field%22%3A%22firstLetter%22%2C%22name%22%3A%22firstLetter%22%7D%2C%7B%22field%22%3A%22letter%22%2C%22name%22%3A%22letter%22%7D%2C%7B%22field%22%3A%22email%22%2C%22name%22%3A%22email%22%7D%2C%7B%22field%22%3A%22career%22%2C%22name%22%3A%22career%22%7D%5D&articleType=1&level=1
+      # 大数据学院 (sds.fudan.edu.cn) is *not* a SPA. Each "rank" page is a
+      # single inline <table> where every <tr> is one teacher (h4 + photo + bio).
+      # 17428 = 教授/研究员；17429 = 副教授/副研究员. 17431 (博士后) shares the
+      # template but rows are alumni with no profile_url — pipeline would
+      # upsert them as no-link advisors, so we leave it out.
       - code: bd
         name_cn: 大数据学院
         list_urls:
-          - https://sds.fudan.edu.cn/szdw/qzjs.htm
+          - https://sds.fudan.edu.cn/17428/list.htm
+          - https://sds.fudan.edu.cn/17429/list.htm
+      # 人工智能创新与产业研究院 (AI³) — note the correct host is ai3.fudan.edu.cn
+      # (the v0.1 ``aiii.fudan.edu.cn`` doesn't resolve).
       - code: ai
         name_cn: 人工智能创新与产业研究院
         list_urls:
-          - https://aiii.fudan.edu.cn/
+          - https://ai3.fudan.edu.cn/yjspy/dsdw.htm
 
   - code: sjtu
     name_cn: 上海交通大学

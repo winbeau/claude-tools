@@ -1,0 +1,466 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1,initial-scale=1,user-scalable=no" />
+    <title>陈曦-复旦大学人工智能创新与产业研究院</title><meta name="pageType" content="3">
+<meta name="pageTitle" content="陈曦">
+<META Name="keywords" Content="复旦大学人工智能创新与产业研究院，AI³，ai3，AI3，复旦大学人工智能创新与产业(AI³)研究院,导师队伍,陈曦" />
+<META Name="description" Content="教授、博士生导师&lt;br&gt;邮箱：x_chen@fudan.edu.cn" />
+
+    <!-- Bootstrap -->
+    <link href="../../css/animate.min.css" rel="stylesheet">
+    <link href="../../css/bootstrap.css" rel="stylesheet">
+    <link href="../../css/slick.css" rel="stylesheet">
+    <link href="../../css/style.css" rel="stylesheet">
+
+<!--Announced by Visual SiteBuilder 9-->
+<script language="javascript" src="../../_sitegray/_sitegray.js"></script>
+<!-- CustomerNO:776562626572323074684757505a5742000400014451 -->
+<link rel="stylesheet" type="text/css" href="../../ldnr.vsb.css" />
+<script type="text/javascript" src="/system/resource/js/vsbscreen.min.js" id="_vsbscreen" devices="pc|mobile|pad"></script>
+<script type="text/javascript" src="/system/resource/js/counter.js"></script>
+<script type="text/javascript">_jsq_(1088,'/ldnr.jsp',1664,1972308329)</script>
+</head>
+<body>
+  <div class="header clearfix">
+    <div class="pull-left logo">
+<!-- 网站logo图片地址请在本组件"内容配置-网站logo"处填写 -->
+<a href="../../index.htm" title="人工智能创新与产业研究院"><img src="../../images/fudanLogo15.png" style="max-width:95%"></a></div>
+    <div class="pull-right header-right">
+      <div class="clearfix header-top">
+        <div class="pull-right">
+          <div class="pull-left header-a"><script language="javascript" src="/system/resource/js/dynclicks.js"></script><script language="javascript" src="/system/resource/js/openlink.js"></script>    <a href="#" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 93818)">中文</a><span>|</span>
+    <a href="#" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 93819)">EN</a>
+</div>
+          <div class="modal-box pull-left">
+
+
+<script language="javascript" src="/system/resource/js/base64.js"></script><script language="javascript" src="/system/resource/js/jquery/jquery-latest.min.js"></script><script language="javascript" src="/system/resource/vue/vue.js"></script><script language="javascript" src="/system/resource/vue/bluebird.min.js"></script><script language="javascript" src="/system/resource/vue/axios.js"></script><script language="javascript" src="/system/resource/vue/polyfill.js"></script><script language="javascript" src="/system/resource/vue/token.js"></script><LINK href="/system/resource/vue/static/element/index.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/vue/static/element/index.js"></script><script language="javascript" src="/system/resource/vue/static/public.js"></script><style>
+    #appu2 .qwss{}
+    #appu2 .tj{}
+</style>
+<div id="divu2"></div>
+<div class="modal-back"></div>
+<script type="text/html" id="htmlu2">
+
+    <div id="appu2"  class="search-box-c pull-right search-c search-box">
+    
+        <div v-if="!isError">
+            <input type="text" class="qwss form-control" placeholder="" autocomplete=off v-model=query.keyWord @keyup.enter="onSubmit">
+            <button class="btn btn-search-c" type="button"><img src="../../images/search.png"></button>
+        </div>
+        <div v-if="isError" style="color: #b30216; font-size:18px;text-align: center;padding:20px;">
+            应用维护中！
+        </div>
+    </div>
+</script>
+<script>
+    $("#divu2").html($("#htmlu2").text());
+</script>
+<script>
+    var appOwner = "1972308329";
+    var token = gettoken(10);
+    var urlPrefix = "/aop_component/";
+
+    jQuery.support.cors = true;
+    $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+    });
+
+    new Vue({
+        el: "#appu2",
+        data: function () {
+            return {
+                query: {
+                    keyWord: "",//搜索关键词
+                    owner: appOwner,
+                    token: token,
+                    urlPrefix: urlPrefix,
+                    lang:"i18n_zh_CN"
+                },
+                isError: false
+            }
+        },
+        mounted: function () {
+            var _this = this;
+            // _this.init();
+        },
+        methods: {
+            init: function(){
+                $.ajax({
+                    url: "/aop_component//webber/search/test",
+                    type: "get",
+                    success: function (response) {
+                        if (response.code == "0000") {
+                        } else if (response.code == "220") {
+                            _this.isError = true;
+                            console.log(response);
+                        } else if (!response.code) {
+                            _this.isError = true;
+                            console.log(response);
+                        }
+                    },
+                    error: function (response) {
+                        _this.isError = true;
+                    }
+                });
+            },
+            onSubmit: function (e) {
+                var url = "/aop_views/search/modules/resultpc/soso.html";
+                if ("10" == "1" || "10" == "2") {
+                    url = "" + url;
+                }
+                var _this = this;
+                var query = _this.query;
+                if (url.indexOf("?") > -1) {
+                    url = url.split("?")[0];
+                }
+                if (query.keyWord) {
+                    var query = new Base64().encode(JSON.stringify(query));
+                    window.open(url + "?query=" + query);
+                } else {
+                    alert("请填写搜索内容")
+                }
+            },
+        }
+    })
+</script></div> 
+        </div>
+      </div>
+      <ul class="nav-list clearfix">
+    <li><a href="../../index.htm" title="首页">首页</a>
+    
+    
+    
+    </li>
+
+    <li><a href="../../yjygk1/yjyjs.htm" title="研究院概况">研究院概况</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../../yjygk1/yjyjs.htm" title="研究院介绍">研究院介绍</a> </li>
+                    <li><a href="../../yjygk1/xrld.htm" title="现任领导">现任领导</a> </li>
+                    <li><a href="../../yjygk1/kxzdwyh1.htm" title="科学指导委员会">科学指导委员会</a> </li>
+                    <li><a href="../../yjygk1/cyzdwyh1.htm" title="产业指导委员会">产业指导委员会</a> </li>
+                    <li><a href="../../yjygk1/znbm.htm" title="职能部门">职能部门</a> </li>
+                    <li><a href="../../yjygk1/lxfs.htm" title="联系方式">联系方式</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../../yjygk1/kxzdwyh1.htm" title="人才队伍">人才队伍</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../../rcdw/qzkyry.htm" title="全职科研人员">全职科研人员</a> </li>
+                    <li><a href="../../rcdw/gcjsry.htm" title="工程技术人员">工程技术人员</a> </li>
+                    <li><a href="../../rcdw/jzzj.htm" title="兼职专家">兼职专家</a> </li>
+                    <li><a href="../../rcdw/bsh.htm" title="博士后">博士后</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../../kyyhz/yjly.htm" title="科研与合作">科研与合作</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../../kyyhz/yjly.htm" title="研究领域">研究领域</a> </li>
+                    <li><a href="../../kyyhz/cyhz.htm" title="产业合作">产业合作</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="http://cfff.fudan.edu.cn/" title="CFFF平台">CFFF平台</a>
+    
+    
+    
+    </li>
+
+    <li><a href="../../yjspy/dsdw.htm" title="研究生培养">研究生培养</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../../yjspy/dsdw.htm" title="导师队伍">导师队伍</a> </li>
+                    <li><a href="../../yjspy/zsxx.htm" title="招生信息">招生信息</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../../rczp.htm" title="人才招聘">人才招聘</a>
+    
+    
+    
+    </li>
+
+    <li><a href="../../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1078" title="内网服务">内网服务</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1078" title="规章制度">规章制度</a> </li>
+                    <li><a href="../../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1080" title="公示公告">公示公告</a> </li>
+                    <li><a href="../../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1081" title="办事指南">办事指南</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+</ul>
+    </div>
+    <a class="search-a" role="button"><img src="../../images/search.png"></a>
+    <div class="menu-button">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+  </div>
+  <div><div class="banner-list" style="background: url() repeat-x top center;    width: 100%;    top: 0;"></div></div>
+  <div class="container">
+    <div class="nav-b wow fadeInUp"><span>
+    当前位置: </span>
+                        <a href="../../index.htm">首页</a>
+                >
+                <a href="../../yjspy/dsdw.htm">研究生培养</a>
+                >
+                <a href="../../yjspy/dsdw.htm">导师队伍</a>
+                >
+                正文
+</div>
+    <div class="clearfix">
+      <div class="pull-left list-left wow fadeInUp">
+        <div class="list-left-top text-center">
+研究生培养</div>
+        <ul class="list-nav text-center">     <li class="active"><a href="../../yjspy/dsdw.htm" title="导师队伍">导师队伍
+     
+     
+     </a>
+     
+     </li>
+     <li><a href="../../yjspy/zsxx.htm" title="招生信息">招生信息
+     
+     
+     </a>
+     
+     </li>
+</ul>
+      </div>
+      <div class="pull-right list-right">
+<script language="javascript" src="../../_dwr/interface/NewsvoteDWR.js"></script><script language="javascript" src="../../_dwr/engine.js"></script><script language="javascript" src="/system/resource/js/news/newscontent.js"></script><LINK href="/system/resource/js/photoswipe/3.0.5.1/photoswipe.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/js/photoswipe/3.0.5.1/klass.min.js"></script><script language="javascript" src="/system/resource/js/ajax.js"></script><form name="_newscontent_fromname">
+  <div class="person clearfix">
+  
+
+                         <div class="imgs"><img src="/__local/7/66/08/FC5CE0F9DA5F5ED51BE9543E342_57DF17D6_FC7B.jpg"></div>
+                         <div class="wz">
+                            <div class="title"><em>陈曦</em><span class="kz kz1"><span></span></div>
+                            <div class="zdbox clearfix">
+                              
+                               
+                               <div class="zd">教授、博士生导师<br>邮箱：x_chen@fudan.edu.cn</div>
+                               
+                              
+
+                            </div>
+                         </div>    
+
+        
+        </div>
+
+    
+   
+    <div id="vsb_content" class="fac_art"><div class="v_news_content">
+<p class="vsbcontent_start" style="text-wrap: wrap;"><img src="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" width="37" height="33" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/9C893FE627E3E56703F461FEC5B8A66B/71B1E634/3452" vheight=" 33px" vwidth=" 37px" orisrc="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" class="img_vsb_content" style="width: 37px; height: 33px; float: left;"><strong style="font-size: 21px;"><span style="color: rgb(0, 112, 192); font-family: 宋体, SimSun;">&nbsp;教育经历</span></strong></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-size: 16px; font-family: 宋体, SimSun;">2011年-2015年，英国剑桥大学, 信息工程，获博士学位</span></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-size: 16px; font-family: 宋体, SimSun;">2009年-2011年，加拿大麦吉尔大学，电气与计算机工程，获硕士学位</span></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-size: 16px; font-family: 宋体, SimSun;">2005年-2009年，北京邮电大学，通信工程，获学士学位</span></p><p style="text-wrap: wrap; line-height: 2em;"><span style="font-size: 21px;"><strong><span style="color: rgb(0, 112, 192);"></span></strong></span></p><p style="text-wrap: wrap;"><img src="/__local/7/82/82/1A120F9F4232BE4BDDB986FE523_66AA051F_2F4A.bmp" width="37" height="29" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/782821A120F9F4232BE4BDDB986FE523/66AA051F/2F4A" vheight=" 29px" vwidth=" 37px" orisrc="/__local/7/82/82/1A120F9F4232BE4BDDB986FE523_66AA051F_2F4A.bmp" class="img_vsb_content" style="width: 37px; height: 29px; float: left;"></p><p style="text-wrap: wrap; line-height: 2em;"><span style="font-size: 21px;"><strong><span style="color: rgb(0, 112, 192); font-family: 宋体, SimSun;"> &nbsp;工作经历</span></strong></span></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px;">2024年至今，复旦大学，人工智能创新与产业研究院，教授</span></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px;">2019年-2024年，英国巴斯大学，计算机系，历任助理教授、副教授</span></p><p style="text-indent: 0em; line-height: 1.5em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px;">2016年-2019年，英国剑桥大学，卡文迪许实验室，博士后</span></p><p><img src="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" width="37" height="33" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/9C893FE627E3E56703F461FEC5B8A66B/71B1E634/3452" vheight=" 33px" vwidth=" 37px" orisrc="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" class="img_vsb_content" style="width: 37px; height: 33px; float: left;"></p><p style="text-wrap: wrap; line-height: 2em;"><span style="font-size: 21px; font-family: 宋体, SimSun;"><strong><span style="color: rgb(0, 112, 192);"> &nbsp;研究方向</span></strong></span></p><p style="text-wrap: wrap; line-height: 2em; margin-bottom: 20px; text-align: justify; text-indent: 0em; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px; text-indent: 0em;">研究方向为科学智能 AI for Science 与大模型多智能体。致力于研究交叉学科中由领域知识驱动的概率建模和AI技术，以提高算法模型在交叉学科应用的泛化能力和可靠性。研究涉及贝叶斯推断、统计机器学习、深度学习、多模态大模型、多智能体等研究领域，并应用于生命科学、地球科学、工程科学等交叉学科场景。</span></p><p style="text-wrap: wrap; line-height: 2em;"><img src="/__local/6/84/A8/97C7F6BF0127F39E8CD750E5A84_4334D4BC_3616.bmp" width="39" height="26" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/684A897C7F6BF0127F39E8CD750E5A84/4334D4BC/3616" vheight=" 26px" vwidth=" 39px" orisrc="/__local/6/84/A8/97C7F6BF0127F39E8CD750E5A84_4334D4BC_3616.bmp" class="img_vsb_content" style="text-wrap: wrap; width: 39px; height: 26px; float: left;"><strong style="text-wrap: wrap;"><span style="color: rgb(0, 112, 192);"><span style="font-family: 宋体, SimSun; font-size: 16px;"> &nbsp;</span><span style="font-family: 宋体, SimSun; font-size: 21px;">主要成果</span></span></strong></p><p><span style="font-family: 宋体, SimSun;"></span></p><p style="text-align: justify; line-height: 2em; text-indent: 0em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px; text-indent: 0em;">已发表论文40余篇，出版专著（章节）1 部，Nature子刊《Nature Reviews Methods Primers》(IF 50.1) 领域特邀综述 1 篇。在生命科学领域的交叉研究工作入选2023年英国工程与自然科学研究理事会 EPSRC NIA 科研奖（全英共9位科学家入选）。在地球科学领域的交叉研究成果被集成入欧洲某五百强头部企业的大型智算平台实现规模化应用，处理其全球多个业务区域的多参数反演，决策及不确定性估计等统计计算任务。曾独立主持英国 EPSRC 面向人工智能与生命科学交叉领域约300万元的研究基金，共同主持英国 EPSRC、NIHR 等研究基金总额超700万元。</span></p><p style="text-align: justify; line-height: 2em; text-indent: 0em; margin-bottom: 20px; margin-top: 15px;"><img src="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" width="37" height="33" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/9C893FE627E3E56703F461FEC5B8A66B/71B1E634/3452" vheight=" 33px" vwidth=" 37px" orisrc="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" class="img_vsb_content" style="text-wrap: wrap; width: 37px; height: 33px; float: left;"></p><p><strong style="text-wrap: wrap; font-size: 21px;"><span style="color: rgb(0, 112, 192); font-family: 宋体, SimSun;">&nbsp;招生专业</span></strong></p><p><strong style="text-wrap: wrap; font-size: 21px;"><span style="color: rgb(0, 112, 192); font-family: 宋体, SimSun;"></span></strong></p><p style="text-indent: 0em; line-height: 1.75em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; font-size: 16px;">依托计算与智能创新学院招生，学术学位招生专业为计算机应用技术；专业学位招生专业为人工智能。同时长期招收博士后与对研究感兴趣的本科生，有意请发邮件联系。</span></p><p><img src="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" width="37" height="33" border="0" vspace="0" hspace="0" title="" alt="" vsbhref="vurl" vurl="/_vsl/9C893FE627E3E56703F461FEC5B8A66B/71B1E634/3452" vheight=" 33px" vwidth=" 37px" orisrc="/__local/9/C8/93/FE627E3E56703F461FEC5B8A66B_71B1E634_3452.bmp" class="img_vsb_content" style="text-wrap: wrap; width: 37px; height: 33px; float: left;"><strong style="text-indent: 2em; font-size: 21px;"><span style="color: rgb(0, 112, 192); font-family: 宋体, SimSun;">&nbsp;发表论文</span></strong></p><p style="text-wrap: wrap; text-indent: 0em; margin-bottom: 20px; margin-top: 15px;"><span style="font-family: 宋体, SimSun; text-indent: 0em; font-size: 16px;">近5年发表论文节选：</span><br></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">1. Zeng, Z., Zhang, J., Li, P., Qi, Y., Chen, X.* (2026). AI-for-Science Low-code Platform with Bayesian Adversarial Multi-Agent Framework. In Proceedings of the International Conference on Learning Representations (ICLR).</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">2. Li, P., Liu, J., Yu, J., Liu, L., Ding, M., Ouyang, W., ... &amp; Chen, X.* (2026). ARCHE: A Novel Task to Evaluate LLMs on Latent Reasoning Chain Extraction. In Proceedings of the 40th Annual AAAI Conference on Artificial Intelligence (AAAI).</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">3. Long, Y., Zhang, J., Chen, X.*, &amp; Brintrup, A. (2026). Topological Federated Clustering via Gravitational Potential Fields under Local Differential Privacy. In Proceedings of the 40th Annual AAAI Conference on Artificial Intelligence (AAAI).</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">4. Jagpal, D., Chen, X.*, &amp; Namboodiri, V. P. (2025). Eidt-v: Exploiting intersections in diffusion trajectories for model-agnostic, zero-shot, training-free text-to-video generation. In Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR).</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">5. Li, Y., Li, C., Wei, Y., Price, S., Schönlieb, C. B., &amp; Chen, X.* (2024). Multi-objective Bayesian optimization with enhanced features for adaptively improved glioblastoma partitioning and survival prediction. Computerized Medical Imaging and Graphics.</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">6. Jiang, L., Mao, Y., Chen, X., Wang, X., &amp; Li, C. (2023). CoLa-Diff: Conditional Latent Diffusion Model for Multi-Modal MRI Synthesis. In International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI).</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">7. Wei, Y., Chen, X., Zhu, L., Zhang, L., Schönlieb, C. B., Price, S. J., &amp; Li, C. (2023). Multi-modal learning for predicting the genotype of glioma. IEEE Transactions on Medical Imaging.</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">8. Lu, Y., Jin, Y., &amp; Chen, X.* (2023) Recombination-based two-stage out-of-distribution detection method for traffic flow pattern analysis. In Handbook on Artificial Intelligence and Transport. Edward Elgar.</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">9. Chen, X., Feroz, F., &amp; Hobson, M. (2022). Bayesian posterior repartitioning for nested sampling. Bayesian Analysis.</span></p><p style="margin-bottom: 20px; margin-top: 15px; line-height: 1.75em; text-indent: 0em;"><span style="font-family: &quot;times new roman&quot;; font-size: 16px;">10. Ashton, G., Barbary, K., Bernstein N., Buchner J., Chen X., Csányi G., Fowlie A., et. al. (2022). Nested Sampling for physical scientists. Nature Reviews: Methods Primers.</span></p>
+</div></div><div id="div_vote_id"></div>
+       
+
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="container clearfix">
+      <div class="footer-left pull-left">
+        <div class="logo-b">        
+   
+              
+                   
+                        <a href="" title="" onclick="_addDynClicks(&#34;wbimage&#34;, 1972308329, 79465)" target="_blank">
+                            <img src="../../images/fudanLogo15.png" border="0">
+                        </a>  
+                   
+               
+      
+</div>
+        <div class="footer-p"><script language="javascript" src="/system/resource/js/news/mp4video.js"></script>
+<p>地址：上海市浦东新区张衡路&nbsp;825&nbsp;号<br></p> 
+<p>邮编：201203<span style="color: rgb(219, 219, 219); font-family: PingFangSC-Regular, "></span></p> 
+<p>邮箱：ai3@fudan.edu.cn<span style="color: rgb(219, 219, 219); font-family: PingFangSC-Regular, "></span></p></div>
+      </div>
+      <div class="pull-left footer-center">
+        <div class="footer-tt">友情链接</div>
+        <div class="dropdown"><a id="dLabel" class="down-a" role="button" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <span>校内常用站点</span>
+          </a>
+<UL class="dropdown-menu" aria-labelledby="dLabel">
+    <LI><a href="https://www.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94620)">复旦大学</a></li>
+    <LI><a href="https://ecampus.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94619)">复旦大学信息化办公室</a></li>
+    <LI><a href="http://ehall.fudan.edu.cn/ywtb-portal/fudan/index.html#/hall" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94621)">复旦大学网上办事大厅</a></li>
+    <LI><a href="https://mail.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94622)">复旦大学电子邮件</a></li>
+    <LI><a href="https://baoweichu.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94701)">复旦大学保卫处</a></li>
+    <LI><a href="https://cwc.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94702)">财务与国有资产管理处</a></li>
+</UL></div>
+        <div class="dropdown"><a id="dLabel" class="down-a" role="button" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <span>校外常用站点</span>
+          </a>
+<UL class="dropdown-menu" aria-labelledby="dLabel">
+    <LI><a href="https://www.most.gov.cn/index.html" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94685)">科技部</a></li>
+    <LI><a href="https://stcsm.sh.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94686)">上海市科学技术委员会</a></li>
+    <LI><a href="https://www.nsfc.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94715)">国家自然科学基金委员会</a></li>
+    <LI><a href="https://www.baai.ac.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94688)">北京智源人工智能研究院</a></li>
+    <LI><a href="https://sairi.com.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94689)">上海人工智能研究院</a></li>
+    <LI><a href="https://www.sais.com.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 102800)">上海科学智能研究院</a></li>
+</UL></div>
+      </div>
+      <div class="pull-right footer-right text-center">        
+       
+         
+                    
+                       
+                            <img src="../../images/1c38edd6-5362-4338-ade5-003b91877f51.jpg">
+                        
+                   
+                
+            
+ <br>关注我们</div>
+
+    </div>
+    <div class="footer-bottom">
+      <div class="container clearfix">
+        <div class="pull-left"><!-- 版权内容请在本组件"内容配置-版权"处填写 -->
+<p>© 复旦大学人工智能创新与产业研究院 All Rights Reserved</p></div>
+        <div class="pull-right">
+<p> <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_self" style="color:#fff">沪ICP备10016111号1沪公网安备31019002000000号</a> </p></div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="../../js/jquery.min.js"></script>
+<script src="../../js/bootstrap.min.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/slick.js"></script>
+<script src="../../js/wow.min.js"></script>
+<script type="text/javascript">
+if (!(/msie [6|7|8|9]/i.test(navigator.userAgent))){
+  new WOW().init();
+};
+    $('.banner').slick({
+        infinite: true,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:true,
+    });
+    $('.news-slick').slick({
+        infinite: true,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:true,
+    });
+
+$('.pt-slick').slick({
+        infinite: true,
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:false,
+  responsive: [
+    {
+      breakpoint: 1630,
+      settings: {
+
+          slidesToShow: 4,
+          slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 1279,
+      settings: {
+  speed: 300,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 991,
+      settings: {
+  speed: 300,
+  slidesToShow: 2,
+  slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 768,
+      settings: {
+  speed: 300,
+  slidesToShow: 2,
+  slidesToScroll: 1,
+      }
+    }
+  ]
+});
+
+
+
+
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
