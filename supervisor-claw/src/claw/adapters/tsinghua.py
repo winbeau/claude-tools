@@ -144,16 +144,16 @@ def _split_h4_sections(content_node) -> dict[str, str]:
     """Walk h4/p in document order under content_node, grouping bodies under headers.
 
     Tsinghua profiles wrap section titles in <h4><p>研究领域</p></h4> and section
-    bodies in subsequent <p>...</p> until the next <h4>. We grab both tags in
-    order, then walk the flat list.
+    bodies in subsequent <p>...</p> until the next <h4>. selectolax's css('h4, p')
+    does NOT preserve document order — it groups by selector — so we walk via
+    traverse() and filter by tag.
     """
-    nodes = content_node.css("h4, p")
     sections: dict[str, list[str]] = {}
     current: str | None = None
-    # an h4 contains a <p> with the section name, so when we hit that inner <p>
-    # immediately after its <h4>, we skip it.
+    # The <h4> wraps a <p> with the same label text, which traverse yields right
+    # after the h4. Skip that duplicate.
     skip_next_p = False
-    for n in nodes:
+    for n in content_node.traverse(include_text=False):
         if n.tag == "h4":
             label = (n.text(strip=True) or "").strip()
             current = label or None
@@ -161,10 +161,10 @@ def _split_h4_sections(content_node) -> dict[str, str]:
                 sections[current] = []
             skip_next_p = True
             continue
-        # n.tag == "p"
+        if n.tag != "p":
+            continue
         if skip_next_p:
             skip_next_p = False
-            # if this <p> is the title text inside <h4>, label matches it; skip
             if current and (n.text(strip=True) or "").strip() == current:
                 continue
         if current is None:
