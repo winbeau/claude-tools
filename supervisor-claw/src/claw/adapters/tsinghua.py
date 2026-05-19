@@ -205,22 +205,25 @@ def _is_tag(p: str) -> bool:
 
 def _split_interests(text: str) -> list[str]:
     """Each paragraph in the section is either a standalone tag (李国良 style)
-    or a comma/、-separated list of tags (冯建华 style). Walk paragraphs and
-    accept either form."""
+    or a separator-joined list (冯建华 style). Always try to split; if a
+    paragraph has no separators, it falls through to a single-element split
+    and is kept verbatim when tag-like."""
     out: list[str] = []
     for line in text.split("\n"):
         line = line.strip(" 。.；;:：")
         if not line:
             continue
-        # short, clean phrase → standalone tag
-        if _is_tag(line):
-            out.append(line)
-        else:
-            # try splitting by tag separator
-            for p in _SPLIT_RE.split(line):
-                p = p.strip(" 。.；;:：")
-                if _is_tag(p):
-                    out.append(p)
+        for p in _SPLIT_RE.split(line):
+            p = p.strip(" 。.；;:：")
+            if _is_tag(p):
+                out.append(p)
         if len(out) >= 10:
             break
-    return out[:10]
+    # dedupe while preserving order
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for t in out:
+        if t not in seen:
+            seen.add(t)
+            deduped.append(t)
+    return deduped[:10]
