@@ -140,18 +140,32 @@ class TsinghuaAdapter(SchoolAdapter):
         )
 
 
-def _split_h4_sections(content_node) -> dict[str, str]:
-    """Walk h4/p in document order under content_node, grouping bodies under headers.
+# Section labels we recognise as pseudo-headers when an advisor's page omits
+# <h4> tags and uses plain <p>研究领域</p> as a section separator (李涓子-style).
+_PSEUDO_HEADERS: set[str] = {
+    "研究方向", "研究兴趣", "研究领域",
+    "研究概况", "个人简介", "简介", "Bio", "Biography",
+    "教育背景", "工作经历", "学术兼职", "社会兼职", "任职",
+    "招生信息", "招生", "招生招聘",
+    "讲授课程", "教学概况", "本科课程", "研究生课程", "课程",
+    "代表性成果", "代表论著", "代表论文", "学术成果",
+    "奖励与荣誉", "荣誉", "获奖",
+    "研究课题", "科研项目", "项目",
+}
 
-    Tsinghua profiles wrap section titles in <h4><p>研究领域</p></h4> and section
-    bodies in subsequent <p>...</p> until the next <h4>. selectolax's css('h4, p')
-    does NOT preserve document order — it groups by selector — so we walk via
-    traverse() and filter by tag.
+
+def _split_h4_sections(content_node) -> dict[str, str]:
+    """Group section body text by their preceding section header.
+
+    Two header styles on tsinghua.cs:
+    1. ``<h4><p>研究领域</p></h4>`` with body in following <p>'s (李国良 etc.)
+    2. plain ``<p>研究领域</p>`` followed by body <p>'s (李涓子)
+
+    We walk via traverse() (document order) and treat short <p>'s whose text
+    matches a known section label as pseudo-headers.
     """
     sections: dict[str, list[str]] = {}
     current: str | None = None
-    # The <h4> wraps a <p> with the same label text, which traverse yields right
-    # after the h4. Skip that duplicate.
     skip_next_p = False
     for n in content_node.traverse(include_text=False):
         if n.tag == "h4":
@@ -163,13 +177,20 @@ def _split_h4_sections(content_node) -> dict[str, str]:
             continue
         if n.tag != "p":
             continue
+        txt = (n.text(strip=True) or "").strip()
         if skip_next_p:
             skip_next_p = False
-            if current and (n.text(strip=True) or "").strip() == current:
+            if current and txt == current:
+                # duplicate label from <h4><p>label</p></h4>
                 continue
+        # pseudo-header detection (李涓子 style)
+        if txt and len(txt) <= 10 and txt in _PSEUDO_HEADERS:
+            current = txt
+            if current not in sections:
+                sections[current] = []
+            continue
         if current is None:
             continue
-        txt = n.text(separator=" ", strip=True)
         if txt:
             sections[current].append(txt)
     return {k: "\n".join(v) for k, v in sections.items()}
@@ -178,20 +199,28 @@ def _split_h4_sections(content_node) -> dict[str, str]:
 _SPLIT_RE = re.compile(r"[、，,；;/]+")
 
 
+def _is_tag(p: str) -> bool:
+    return 2 <= len(p) <= 25 and not any(c in p for c in "。！？()（）")
+
+
 def _split_interests(text: str) -> list[str]:
-    # only the first paragraph is the actual interest list; later paragraphs in
-    # the same h4 section are usually 讲授课程 / 教学概况 / 详细介绍 etc.
-    first_para = text.split("\n", 1)[0]
-    parts = [p.strip(" 。.；;:：") for p in _SPLIT_RE.split(first_para)]
+    """Each paragraph in the section is either a standalone tag (李国良 style)
+    or a comma/、-separated list of tags (冯建华 style). Walk paragraphs and
+    accept either form."""
     out: list[str] = []
-    for p in parts:
-        # tag-like: short phrase, no period/sentence-ending punctuation,
-        # no parenthesised course codes
-        if (
-            2 <= len(p) <= 25
-            and not any(c in p for c in "。！？()（）")
-        ):
-            out.append(p)
+    for line in text.split("\n"):
+        line = line.strip(" 。.；;:：")
+        if not line:
+            continue
+        # short, clean phrase → standalone tag
+        if _is_tag(line):
+            out.append(line)
+        else:
+            # try splitting by tag separator
+            for p in _SPLIT_RE.split(line):
+                p = p.strip(" 。.；;:：")
+                if _is_tag(p):
+                    out.append(p)
         if len(out) >= 10:
             break
-    return out
+    return out[:10]
