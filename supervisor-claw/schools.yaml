@@ -74,16 +74,22 @@ schools:
     departments:
       - code: cs
         name_cn: 计算机科学与技术系
+        # /szdw/ landing page is broken (404) — use per-rank sub-pages instead.
         list_urls:
-          - https://cs.nju.edu.cn/szdw/
+          - https://cs.nju.edu.cn/2639/listm.htm    # 教授
+          - https://cs.nju.edu.cn/2640/listm.htm    # 副教授
+          - https://cs.nju.edu.cn/zzp/listm.htm     # 准长聘
+          - https://cs.nju.edu.cn/kxkbd/listm.htm   # 跨学科博导
+          - https://cs.nju.edu.cn/2641/listm.htm    # 讲师 / 专职科研 / 博士后
       - code: ai
         name_cn: 人工智能学院
         list_urls:
           - https://ai.nju.edu.cn/people/list.htm
       - code: sw
         name_cn: 软件学院
+        # /szll/index.htm is the school homepage; real faculty listing is one level deeper.
         list_urls:
-          - https://software.nju.edu.cn/szll/index.htm
+          - https://software.nju.edu.cn/szll/szdw/index.html
 
   - code: ustc
     name_cn: 中国科学技术大学
