@@ -187,10 +187,21 @@ blocked、submit_* 会被拒绝。请优先用**实验室主页 / 课题组招�
 - 真的空手而归就 finish('no info found')，这也是合法收尾"""
 
 
-LAST_TURN_NUDGE = """⚠️ 这是你的最后一轮。立刻执行：
-1) 把你前几轮看到的、所有疑似相关的信息全部 submit_evaluation / submit_quota（confidence 可以低，但不要不写）
-2) 然后必须调用 finish()
-不 finish 的话所有结果丢失。"""
+LAST_TURN_NUDGE = """⚠️ 这是你的最后一轮，工具被限定为 submit_evaluation / submit_quota / finish。
+
+在这一轮里：
+1) **批量 submit**：把前几轮看到的所有疑似相关信息**一次性提交多个 tool_calls**
+   （评价、招生分别一条 submit_*；confidence 可以低，但只要相关就写）。
+2) 然后**必须**调用 finish()。
+3) 如果某个 submit 返回 "duplicate (source_url already submitted)"，说明该来源已写过 ——
+   **换不同的 source_url 提交**别的发现，不要重试同一个 URL。
+4) 若真的一无所获，调 finish('no info found')，这也是合法收尾。
+
+不 finish 且不 submit → 所有结果丢失。"""
+
+
+# Tools available on the wrap-up turn.
+FINAL_TOOL_NAMES: set[str] = {"submit_evaluation", "submit_quota", "finish"}
 
 
 @dataclass
@@ -229,6 +240,9 @@ class ResearchAgent:
         self.client = get_client()
         self.result = AgentResult(advisor_id=advisor.id or -1)
         self.view = view  # research_display.AdvisorView, optional
+        # set in the loop; checked in _dispatch to hard-block search/read on
+        # the final iter even if DeepSeek calls them.
+        self._enforce_final: bool = False
 
     # ----- tool implementations -----
 
@@ -369,6 +383,18 @@ class ResearchAgent:
     # ----- dispatcher -----
 
     async def _dispatch(self, name: str, args: dict) -> Any:
+        # Hard-block search/read on the final iter — DeepSeek occasionally
+        # ignores the restricted `tools` list and emits a search_web call
+        # anyway. Reject before doing any network work.
+        if self._enforce_final and name not in FINAL_TOOL_NAMES:
+            return {
+                "ok": False,
+                "blocked": True,
+                "error": (
+                    f"final iter only allows submit_evaluation / submit_quota / finish — "
+                    f"your {name!r} call was discarded. submit findings or call finish() now."
+                ),
+            }
         if name == "search_web":
             return await self._tool_search_web(args.get("query", ""), args.get("k", 5))
         if name == "read_page":
@@ -409,15 +435,19 @@ class ResearchAgent:
         # tool sets: full set for exploration; wrap-up set for the last turn
         # (only submit_* + finish; no more search/read so the LLM is forced
         # to either commit findings or end cleanly).
-        FINAL_TOOL_NAMES = {"submit_evaluation", "submit_quota", "finish"}
         final_tools = [t for t in TOOLS if t["function"]["name"] in FINAL_TOOL_NAMES]
 
-        for i in range(self.max_iter):
+        i = 0
+        rescued = False
+        max_iter = self.max_iter
+        while i < max_iter:
             self.result.iterations = i + 1
-            is_last = i == self.max_iter - 1
+            is_last = i == max_iter - 1
+            self._enforce_final = is_last  # block search/read in dispatch
             tools_for_turn = final_tools if is_last else TOOLS
-            if is_last:
+            if is_last and not rescued:
                 messages.append({"role": "user", "content": LAST_TURN_NUDGE})
+            iter_submit_ok = False  # any submit_* returned ok=True this iter
             try:
                 resp = self.client.chat.completions.create(
                     model=self.model,
@@ -479,10 +509,15 @@ class ResearchAgent:
                 node = self.view.tool_started(name, args) if self.view is not None else None
                 result = await self._dispatch(name, args)
                 self.result.tool_calls.append({"iter": i + 1, "name": name, "args": args})
+                # track submission success for rescue-iter decision
+                if name in ("submit_evaluation", "submit_quota") and isinstance(result, dict) and result.get("ok"):
+                    iter_submit_ok = True
                 # ---- describe outcome for the view ----
                 if self.view is not None:
                     summary = _summarize_result(name, args, result)
-                    skipped = isinstance(result, dict) and result.get("skipped") is True
+                    skipped = isinstance(result, dict) and (
+                        result.get("skipped") is True or result.get("blocked") is True
+                    )
                     ok = (
                         not (isinstance(result, dict) and result.get("ok") is False)
                         and not skipped
@@ -499,9 +534,28 @@ class ResearchAgent:
                     done = True
             if done:
                 break
-        else:
-            self.result.finished_reason = "max_iter reached"
 
+            # ---- rescue iter: final iter ended with no successful submission
+            # and no finish(). Grant exactly ONE more last-iter so the LLM can
+            # retry with a different source_url or finish empty. Triggered
+            # mostly by all submit_* being dup-skipped on the first final iter.
+            if is_last and not rescued and not iter_submit_ok and not done:
+                rescued = True
+                max_iter += 1
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "⚠️ 上一轮所有 submit 都失败或被去重跳过。再给你一次机会："
+                            "用**不同的 source_url** 提交剩下的发现；如确实没有更多内容，"
+                            "调 finish('no info found' 或简短说明) 收尾。"
+                        ),
+                    }
+                )
+            i += 1
+
+        if not done and not self.result.finished_reason:
+            self.result.finished_reason = "max_iter reached"
         return self.result
 
 
