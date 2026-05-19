@@ -183,9 +183,11 @@ def _split_h4_sections(content_node) -> dict[str, str]:
             if current and txt == current:
                 # duplicate label from <h4><p>label</p></h4>
                 continue
-        # pseudo-header detection (李涓子 style)
-        if txt and len(txt) <= 10 and txt in _PSEUDO_HEADERS:
-            current = txt
+        # pseudo-header detection (李涓子 / 鞠大鹏 style)
+        # — strip trailing colons since pages often write "研究领域：" not "研究领域"
+        norm = txt.rstrip("：:").strip()
+        if norm and len(norm) <= 10 and norm in _PSEUDO_HEADERS:
+            current = norm
             if current not in sections:
                 sections[current] = []
             continue
