@@ -82,22 +82,32 @@ schools:
     name_cn: 浙江大学
     name_en: Zhejiang University
     departments:
+      # person.zju.edu.cn/{cs,ai} 在 2026-05 都返回 404，旧入口已废。
+      # 浙大 CS/AI 师资统一挂在计算机学院 csen 站点下：
+      #  - 27003 = "教师名录"（全院 ~269 人，按所室分组：人工智能所/计算机软件所/...）
+      #  - 27051 = "研究生导师/计算机科学与技术专业"（~82 人，6 页分页）
+      # cs 段与 ai-inst 段会有大量重叠老师 —— pipeline 按 (school,name,email) 去重。
       - code: cs
         name_cn: 计算机科学与技术学院
         list_urls:
-          - https://person.zju.edu.cn/cs
+          - http://www.cs.zju.edu.cn/csen/27051/list.htm
+          - http://www.cs.zju.edu.cn/csen/27051/list2.htm
+          - http://www.cs.zju.edu.cn/csen/27051/list3.htm
+          - http://www.cs.zju.edu.cn/csen/27051/list4.htm
+          - http://www.cs.zju.edu.cn/csen/27051/list5.htm
+          - http://www.cs.zju.edu.cn/csen/27051/list6.htm
       - code: cadcg
         name_cn: CAD&CG 国家重点实验室
         list_urls:
-          - http://www.cad.zju.edu.cn/
+          - http://www.cad.zju.edu.cn/talent-team
       - code: ai-inst
         name_cn: 人工智能研究所
         list_urls:
-          - https://person.zju.edu.cn/ai
+          - http://www.cs.zju.edu.cn/csen/27003/list.htm
       - code: sw
         name_cn: 软件学院
         list_urls:
-          - http://www.cst.zju.edu.cn/
+          - http://www.cst.zju.edu.cn/szdw/list.htm
 
   - code: fudan
     name_cn: 复旦大学
