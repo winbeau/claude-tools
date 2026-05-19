@@ -67,6 +67,9 @@ def test_parse_profile_basic(adapter: TsinghuaAdapter) -> None:
     assert len(partial.research_interests) >= 2
     assert all(len(t) <= 25 for t in partial.research_interests)
     assert "数据库管理系统" in partial.research_interests
+    # noise from other sections (讲授课程 etc.) must not leak in
+    assert "讲授课程" not in partial.research_interests
+    assert all("(" not in t and "（" not in t for t in partial.research_interests)
 
 
 def test_parse_profile_no_nav_in_quota(adapter: TsinghuaAdapter) -> None:

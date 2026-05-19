@@ -175,15 +175,22 @@ def _split_h4_sections(content_node) -> dict[str, str]:
     return {k: "\n".join(v) for k, v in sections.items()}
 
 
-_SPLIT_RE = re.compile(r"[、，,；;/\n]+")
+_SPLIT_RE = re.compile(r"[、，,；;/]+")
 
 
 def _split_interests(text: str) -> list[str]:
-    parts = [p.strip(" 。.；;:：") for p in _SPLIT_RE.split(text)]
+    # only the first paragraph is the actual interest list; later paragraphs in
+    # the same h4 section are usually 讲授课程 / 教学概况 / 详细介绍 etc.
+    first_para = text.split("\n", 1)[0]
+    parts = [p.strip(" 。.；;:：") for p in _SPLIT_RE.split(first_para)]
     out: list[str] = []
     for p in parts:
-        # tag-like: short phrase, no period/sentence-ending punctuation
-        if 2 <= len(p) <= 25 and not any(c in p for c in "。！？"):
+        # tag-like: short phrase, no period/sentence-ending punctuation,
+        # no parenthesised course codes
+        if (
+            2 <= len(p) <= 25
+            and not any(c in p for c in "。！？()（）")
+        ):
             out.append(p)
         if len(out) >= 10:
             break
