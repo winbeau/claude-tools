@@ -71,12 +71,31 @@ schools:
     departments:
       - code: cs
         name_cn: 计算机科学与技术学院
+        # 教授 (js_23235, 32 人 / 2 页) + 副教授 (fjs_23239, 36 人 / 2 页)
         list_urls:
-          - https://cs.ustc.edu.cn/2013/1224/c2496a30007/page.htm
+          - https://cs.ustc.edu.cn/js_23235/list.htm
+          - https://cs.ustc.edu.cn/js_23235/list2.htm
+          - https://cs.ustc.edu.cn/fjs_23239/list.htm
+          - https://cs.ustc.edu.cn/fjs_23239/list2.htm
       - code: ai-info
-        name_cn: 信息学院（AI 方向）
+        name_cn: 信息学院（电子工程与信息科学系，含 AI 方向）
+        # 教授 (2648, 59 人 / 8 页) + 副教授 (2615, 49 人 / 7 页)
         list_urls:
-          - https://eeis.ustc.edu.cn/main.htm
+          - https://eeis.ustc.edu.cn/2648/list.htm
+          - https://eeis.ustc.edu.cn/2648/list2.htm
+          - https://eeis.ustc.edu.cn/2648/list3.htm
+          - https://eeis.ustc.edu.cn/2648/list4.htm
+          - https://eeis.ustc.edu.cn/2648/list5.htm
+          - https://eeis.ustc.edu.cn/2648/list6.htm
+          - https://eeis.ustc.edu.cn/2648/list7.htm
+          - https://eeis.ustc.edu.cn/2648/list8.htm
+          - https://eeis.ustc.edu.cn/2615/list.htm
+          - https://eeis.ustc.edu.cn/2615/list2.htm
+          - https://eeis.ustc.edu.cn/2615/list3.htm
+          - https://eeis.ustc.edu.cn/2615/list4.htm
+          - https://eeis.ustc.edu.cn/2615/list5.htm
+          - https://eeis.ustc.edu.cn/2615/list6.htm
+          - https://eeis.ustc.edu.cn/2615/list7.htm
 
   - code: zju
     name_cn: 浙江大学
