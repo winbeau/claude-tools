@@ -135,21 +135,30 @@ TOOLS: list[dict] = [
 ]
 
 
-SYSTEM_PROMPT = """你是一个学术导师调研助手。你被指派调研一位**特定**导师的：
-1) 公开评价（来自知乎、小木虫、一亩三分地、贴吧、博客等）
-2) 招生情况（当前/近年是否招博士/硕士，数量，方向）
+SYSTEM_PROMPT = """你是导师调研助手。被指派调研一位**特定**导师的：
+1) 评价（知乎/小木虫/一亩三分地/贴吧/博客/学生论坛/排名网站）
+2) 招生情况（近年是否招博/硕、数量、方向、加入方式）
 
-工作流程：
-- 用 search_web 找信息（可多次，换查询词）
-- 用 read_page 阅读最相关页面
-- 用 submit_evaluation / submit_quota 记录结构化结果（**只在确认是这个导师**时才写）
-- 当你认为信息已足够、或确实搜不到了，调用 finish
+策略（每轮选 1-2 个动作，不要并发太多）：
+1. search_web 用 1-2 个不同角度的查询（如 "X 导师 评价"、"X 招生 博士"）
+2. read_page 读最相关的 1-2 个页面
+3. **遇到任何相关描述就 submit**：评价提到本人 → submit_evaluation；
+   提到招生信号 → submit_quota。confidence 如实写（0.3 / 0.6 / 0.9）
+4. 调用 finish 结束
 
-注意：
-- 同名导师很多，必须**结合学校+学院+研究方向**确认是同一人
-- 评价类内容标注出处 URL，不要编造
-- 没有信息就直接 finish，不要硬塞
-- 4~6 个 tool call 内完成，简洁高效"""
+身份核对：用 school + dept + 研究方向匹配。同名风险大时降低 confidence
+但**仍然 submit**，把判断权交给用户。
+
+【重要规则】
+- **宁多勿少**：哪怕只是片段、传闻、间接信息，只要写明 source_url 和 confidence 就 submit
+- **必须 finish**：未 finish 时 max_iter 切断，所有未 submit 的内容会**永久丢失**
+- 真的空手而归就 finish('no info found')，这也是合法收尾"""
+
+
+LAST_TURN_NUDGE = """⚠️ 这是你的最后一轮。立刻执行：
+1) 把你前几轮看到的、所有疑似相关的信息全部 submit_evaluation / submit_quota（confidence 可以低，但不要不写）
+2) 然后必须调用 finish()
+不 finish 的话所有结果丢失。"""
 
 
 @dataclass
@@ -327,6 +336,9 @@ class ResearchAgent:
 
         for i in range(self.max_iter):
             self.result.iterations = i + 1
+            # final-turn nudge: append a user message coercing finish
+            if i == self.max_iter - 1:
+                messages.append({"role": "user", "content": LAST_TURN_NUDGE})
             try:
                 resp = self.client.chat.completions.create(
                     model=self.model,
@@ -343,6 +355,13 @@ class ResearchAgent:
 
             msg = resp.choices[0].message
             assistant_dict: dict[str, Any] = {"role": "assistant", "content": msg.content or ""}
+            # surface the LLM's text reasoning when present
+            if msg.content:
+                log.info(
+                    "[%s] iter=%d llm_text=%s",
+                    self.advisor.name_cn, i + 1,
+                    msg.content[:200].replace("\n", " "),
+                )
             tool_calls_raw = getattr(msg, "tool_calls", None) or []
             if tool_calls_raw:
                 assistant_dict["tool_calls"] = [

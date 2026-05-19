@@ -178,6 +178,7 @@ def stats() -> None:
 @app.command()
 def research(
     school_code: str = typer.Option(..., "--school", help="school code, required"),
+    name: list[str] = typer.Option(None, "--name", help="target specific advisor(s) by name (repeatable)"),
     limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all matched)"),
     max_iter: int = typer.Option(6, "--max-iter", help="max LLM turns per advisor"),
     headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
@@ -206,10 +207,13 @@ def research(
         if school is None:
             console.print(f"[red]school '{school_code}' not in DB — run `claw crawl` first[/red]")
             raise typer.Exit(2)
-        adv_rows = s.exec(select(Advisor).where(Advisor.school_id == school.id)).all()
+        q = select(Advisor).where(Advisor.school_id == school.id)
+        if name:
+            q = q.where(Advisor.name_cn.in_(name))  # type: ignore[attr-defined]
+        adv_rows = s.exec(q).all()
         # also need dept name (pick first appointment) for the prompt
         for a in adv_rows:
-            if only_missing:
+            if only_missing and not name:
                 has_eval = s.exec(
                     select(Evaluation).where(Evaluation.advisor_id == a.id).limit(1)
                 ).first()
