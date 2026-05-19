@@ -74,39 +74,55 @@ class TsinghuaAdapter(SchoolAdapter):
         return items
 
     # --- profile page ---
-    # Extract bio, research interests (heuristic), email confirmation,
-    # recruit signal.
+    # Tsinghua CS profile structure:
+    #   <div class="v_news_content"> contains body
+    #     <h4><p>研究领域</p></h4>   -> <p>tag, tag, tag</p>
+    #     <h4><p>研究概况</p></h4>   -> <p>long bio...</p>
+    #     <h4><p>招生信息</p></h4>   -> <p>...</p>  (if present)
+    #     ...
     def parse_profile(
         self, html: str, profile_url: str, list_item: ListItem
     ) -> AdvisorPartial:
         tree = parse(html)
-        full_text = tree.body.text(separator=" ", strip=True) if tree.body is not None else ""
+        # main content area; falls back to body
+        content_node = tree.css_first("div.v_news_content")
+        if content_node is None:
+            content_node = tree.body
+        sections = _split_h4_sections(content_node) if content_node is not None else {}
 
-        # research interests: pull text after "研究方向" up to next chinese section header
-        ri = _extract_after_header(
-            full_text,
-            headers=("研究方向", "研究兴趣", "研究领域", "Research Interests"),
-            terminators=(
-                "教育背景", "工作经历", "学术兼职", "教育经历", "代表性成果",
-                "代表论著", "代表论文", "联系方式", "Bio", "Biography",
-            ),
-            max_len=800,
+        research_tags: list[str] = []
+        for key in ("研究方向", "研究兴趣", "研究领域", "Research Interests"):
+            if key in sections:
+                research_tags = _split_interests(sections[key])
+                if research_tags:
+                    break
+
+        bio = None
+        for key in ("研究概况", "个人简介", "简介", "Bio", "Biography"):
+            if key in sections and sections[key].strip():
+                bio = sections[key].strip()[:1000]
+                break
+
+        # recruit signal — scan only main content, not nav
+        scope_text = (
+            content_node.text(separator=" ", strip=True)
+            if content_node is not None
+            else ""
         )
-        research_tags = _split_interests(ri) if ri else []
+        recruit_chunks = find_recruit_paragraphs(scope_text)
+        # also check a dedicated "招生信息" section
+        for key in ("招生信息", "招生", "招生招聘"):
+            if key in sections:
+                recruit_chunks.insert(0, sections[key].strip())
+                break
+        raw_quota_text = "\n\n".join(recruit_chunks[:3]) if recruit_chunks else None
+        is_recruiting = True if recruit_chunks else None
 
-        # email — prefer list_item.email; fall back to scanning page
+        # email — prefer list_item.email; fall back to scope text
         email = list_item.email
         email_obf = False
         if not email:
-            email, email_obf = extract_email(full_text)
-
-        # bio (first ~600 chars after the title section, dedup whitespace)
-        bio = _first_bio_paragraph(full_text)
-
-        # recruit signal
-        recruit_chunks = find_recruit_paragraphs(full_text)
-        raw_quota_text = "\n\n".join(recruit_chunks[:3]) if recruit_chunks else None
-        is_recruiting = True if recruit_chunks else None
+            email, email_obf = extract_email(scope_text)
 
         return AdvisorPartial(
             name_cn=list_item.name_cn,
@@ -124,47 +140,51 @@ class TsinghuaAdapter(SchoolAdapter):
         )
 
 
-def _extract_after_header(
-    text: str,
-    headers: tuple[str, ...],
-    terminators: tuple[str, ...],
-    max_len: int,
-) -> str | None:
-    for h in headers:
-        idx = text.find(h)
-        if idx < 0:
+def _split_h4_sections(content_node) -> dict[str, str]:
+    """Walk h4/p in document order under content_node, grouping bodies under headers.
+
+    Tsinghua profiles wrap section titles in <h4><p>研究领域</p></h4> and section
+    bodies in subsequent <p>...</p> until the next <h4>. We grab both tags in
+    order, then walk the flat list.
+    """
+    nodes = content_node.css("h4, p")
+    sections: dict[str, list[str]] = {}
+    current: str | None = None
+    # an h4 contains a <p> with the section name, so when we hit that inner <p>
+    # immediately after its <h4>, we skip it.
+    skip_next_p = False
+    for n in nodes:
+        if n.tag == "h4":
+            label = (n.text(strip=True) or "").strip()
+            current = label or None
+            if current and current not in sections:
+                sections[current] = []
+            skip_next_p = True
             continue
-        start = idx + len(h)
-        # skip a trailing colon / whitespace
-        while start < len(text) and text[start] in "：: \t\n\r":
-            start += 1
-        end_candidates = [text.find(t, start) for t in terminators]
-        end_candidates = [e for e in end_candidates if e > 0]
-        end = min(end_candidates) if end_candidates else start + max_len
-        end = min(end, start + max_len, len(text))
-        chunk = text[start:end].strip()
-        if chunk:
-            return chunk
-    return None
+        # n.tag == "p"
+        if skip_next_p:
+            skip_next_p = False
+            # if this <p> is the title text inside <h4>, label matches it; skip
+            if current and (n.text(strip=True) or "").strip() == current:
+                continue
+        if current is None:
+            continue
+        txt = n.text(separator=" ", strip=True)
+        if txt:
+            sections[current].append(txt)
+    return {k: "\n".join(v) for k, v in sections.items()}
 
 
 _SPLIT_RE = re.compile(r"[、，,；;/\n]+")
 
 
 def _split_interests(text: str) -> list[str]:
-    parts = [p.strip(" 。.；;") for p in _SPLIT_RE.split(text)]
+    parts = [p.strip(" 。.；;:：") for p in _SPLIT_RE.split(text)]
     out: list[str] = []
     for p in parts:
-        if 2 <= len(p) <= 40:
+        # tag-like: short phrase, no period/sentence-ending punctuation
+        if 2 <= len(p) <= 25 and not any(c in p for c in "。！？"):
             out.append(p)
-        if len(out) >= 8:
+        if len(out) >= 10:
             break
     return out
-
-
-def _first_bio_paragraph(text: str, limit: int = 500) -> str | None:
-    # collapse whitespace
-    t = re.sub(r"\s+", " ", text).strip()
-    if not t:
-        return None
-    return t[:limit]

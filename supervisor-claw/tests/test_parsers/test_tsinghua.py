@@ -57,7 +57,29 @@ def test_parse_profile_basic(adapter: TsinghuaAdapter) -> None:
     assert partial.name_cn == "冯建华"
     assert partial.email == "fengjh@tsinghua.edu.cn"
     assert partial.homepage == PROFILE_URL
+
+    # bio should be 冯建华's actual 研究概况 paragraph, not JS code or nav
     assert partial.bio_text and len(partial.bio_text) > 50
+    assert "function" not in partial.bio_text  # no JS leaked in
+    assert "招生信息" not in partial.bio_text  # no nav leaked in
+
+    # research interests should be tag-like short phrases from 研究领域
+    assert len(partial.research_interests) >= 2
+    assert all(len(t) <= 25 for t in partial.research_interests)
+    assert "数据库管理系统" in partial.research_interests
+
+
+def test_parse_profile_no_nav_in_quota(adapter: TsinghuaAdapter) -> None:
+    """raw_quota_text must not include the site nav text like '招生招聘 招生信息'."""
+    from claw.adapters.base import ListItem
+
+    html = (FIX / "profile.html").read_text(encoding="utf-8")
+    item = ListItem(name_cn="冯建华", profile_url=PROFILE_URL, title="教授")
+    partial = adapter.parse_profile(html, PROFILE_URL, item)
+    if partial.raw_quota_text:
+        # nav anchor text 'International Student Program' must not appear
+        assert "International Student Program" not in partial.raw_quota_text
+        assert "团委" not in partial.raw_quota_text
 
 
 def test_email_deobfuscation() -> None:
