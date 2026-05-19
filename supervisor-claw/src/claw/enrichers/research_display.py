@@ -3,8 +3,9 @@
 Layout inspired by Claude Code / opencode / Gemini CLI:
 - One header panel per advisor (name · school · dept · title · email)
 - A live-updating Tree showing each iter and its tool calls
-- Tool calls show: emoji + name(args) + status icon + summary
-- Final summary panel (counts + elapsed)
+- Tool calls in progress: animated braille spinner + Nerd Font icon
+- Tool calls completed: static check/cross/skip glyph + name(args) + summary
+- Final summary panel per advisor (counts + elapsed)
 
 Public API:
     display = ResearchDisplay(console)
@@ -12,7 +13,6 @@ Public API:
         adv.iter_start(i, llm_text, is_final=False)
         node = adv.tool_started(name, args)
         adv.tool_completed(node, ok=True, summary="5 results")
-        # ... after the agent loop:
         adv.summary(result)
 """
 
@@ -22,33 +22,58 @@ import time
 from contextlib import contextmanager
 
 from rich import box
-from rich.console import Console
+from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
+from rich.spinner import Spinner
 from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
 
-# --- visual constants ---
-TOOL_EMOJI = {
-    "search_web": "🔍",
-    "read_page": "📄",
-    "submit_evaluation": "💬",
-    "submit_quota": "🎓",
-    "finish": "🏁",
+# --- visual constants (Nerd Font glyphs; requires a Nerd Font installed) ---
+# We use Font Awesome / MDI subsets that ship in every Nerd Font release.
+NF_SEARCH = ""       # nf-fa-search
+NF_FILE = ""          # nf-fa-file_text
+NF_COMMENT = ""       # nf-fa-comment
+NF_GRADCAP = ""       # nf-fa-graduation_cap
+NF_FLAG = ""          # nf-fa-flag
+NF_CHECK = ""         # nf-fa-check
+NF_TIMES = ""         # nf-fa-times
+NF_BAN = ""           # nf-fa-ban
+NF_DIAMOND = ""       # nf-fa-money (looks like a diamond shape — header mark)
+NF_PLAY = ""          # nf-fa-play (header alt)
+
+TOOL_ICON = {
+    "search_web": NF_SEARCH,
+    "read_page": NF_FILE,
+    "submit_evaluation": NF_COMMENT,
+    "submit_quota": NF_GRADCAP,
+    "finish": NF_FLAG,
 }
 TOOL_COLOR = {
     "search_web": "yellow",
-    "read_page": "blue",
+    "read_page": "cyan",
     "submit_evaluation": "green",
-    "submit_quota": "green",
-    "finish": "magenta",
+    "submit_quota": "magenta",
+    "finish": "bright_green",
 }
-STATUS_OK = "[green]✓[/]"
-STATUS_FAIL = "[red]✗[/]"
-STATUS_SKIP = "[yellow]⊘[/]"
-STATUS_RUNNING = "[cyan]…[/]"
+STATUS_OK = f"[green]{NF_CHECK}[/]"
+STATUS_FAIL = f"[red]{NF_TIMES}[/]"
+STATUS_SKIP = f"[yellow]{NF_BAN}[/]"
+HEADER_MARK = "❯"  # also a single powerline glyph, matches typical zsh prompts
+
+
+def silence_loggers() -> None:
+    """Mute external loggers that would scroll above the Live region and cause
+    visible re-paints. Call once before opening Live."""
+    import logging
+    for name in (
+        "httpx", "httpcore", "openai", "openai._base_client",
+        "playwright", "asyncio", "urllib3", "selenium",
+        "claw",
+    ):
+        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 def _fmt_args(name: str, args: dict) -> str:
@@ -95,12 +120,17 @@ class AdvisorView:
 
     def __enter__(self) -> "AdvisorView":
         self._print_header()
-        self.tree = Tree("[bold dim]agent loop[/]")
+        self.tree = Tree(Text.from_markup("[bold dim]agent loop[/]"))
+        # high refresh keeps the spinner smooth; redirect captures stray prints
+        # (e.g. asyncio warnings) into the Live region so they don't push the
+        # tree down and cause ghosting.
         self._live = Live(
             self.tree,
             console=self.console,
-            refresh_per_second=8,
+            refresh_per_second=15,
             transient=False,
+            redirect_stdout=True,
+            redirect_stderr=True,
         )
         self._live.start()
         return self
@@ -115,20 +145,29 @@ class AdvisorView:
     def iter_start(self, i: int, llm_text: str | None, *, is_final: bool = False) -> None:
         text = (llm_text or "").strip().replace("\n", " ")
         if not text:
-            text = "[dim](no text)[/]"
+            text = "[dim italic](no reasoning)[/]"
         if len(text) > 120:
             text = text[:117] + "…"
-        tag = "[bold magenta]final iter[/]" if is_final else f"[bold]iter {i}[/]"
-        self.current_iter = self.tree.add(f"{tag} [dim]·[/] {text}")
+        tag = (
+            "[bold bright_magenta]final[/]"
+            if is_final
+            else f"[bold bright_cyan]iter {i}[/]"
+        )
+        self.current_iter = self.tree.add(Text.from_markup(f"{tag} [dim]·[/] {text}"))
         self._refresh()
 
     def tool_started(self, name: str, args: dict) -> Tree:
+        """Add a tree node with an animated spinner for the in-flight tool.
+        The Spinner advances under Live's refresh tick (no manual updates)."""
         if self.current_iter is None:
-            self.current_iter = self.tree.add("[bold]?[/]")
-        emoji = TOOL_EMOJI.get(name, "•")
+            self.current_iter = self.tree.add(Text.from_markup("[bold]?[/]"))
+        icon = TOOL_ICON.get(name, "•")
         color = TOOL_COLOR.get(name, "white")
-        label = f"{STATUS_RUNNING} {emoji} [{color}]{name}[/][dim]({_fmt_args(name, args)})[/]"
-        node = self.current_iter.add(label)
+        label_text = Text.from_markup(
+            f"[{color}]{icon}[/]  [bold]{name}[/][dim]({_fmt_args(name, args)})[/]"
+        )
+        spinner = Spinner("dots", text=label_text, style=color, speed=1.2)
+        node = self.current_iter.add(spinner)
         node._cw_name = name  # type: ignore[attr-defined]
         node._cw_args = args  # type: ignore[attr-defined]
         self._refresh()
@@ -139,22 +178,24 @@ class AdvisorView:
     ) -> None:
         name = getattr(node, "_cw_name", "?")
         args = getattr(node, "_cw_args", {})
-        emoji = TOOL_EMOJI.get(name, "•")
+        icon = TOOL_ICON.get(name, "•")
         color = TOOL_COLOR.get(name, "white")
         status = STATUS_SKIP if skipped else (STATUS_OK if ok else STATUS_FAIL)
         suffix = f"  [dim]{summary}[/]" if summary else ""
-        node.label = f"{status} {emoji} [{color}]{name}[/][dim]({_fmt_args(name, args)})[/]{suffix}"
+        node.label = Text.from_markup(
+            f"{status}  [{color}]{icon}[/]  [bold]{name}[/][dim]({_fmt_args(name, args)})[/]{suffix}"
+        )
         self._refresh()
 
     def summary(self, result) -> None:
         elapsed = time.time() - self.start_t
-        table = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
+        table = Table(box=None, show_header=False, padding=(0, 1), expand=False)
         table.add_column(style="dim", justify="right")
         table.add_column()
         table.add_row("iters", str(result.iterations))
         table.add_row("evaluations", f"[green]+{result.evaluations_written}[/]")
         table.add_row("quotas", f"[green]+{result.quotas_written}[/]")
-        table.add_row("end", result.finished_reason or "[yellow]—[/]")
+        table.add_row("end", result.finished_reason or "[dim]—[/]")
         table.add_row("elapsed", f"{elapsed:.1f}s")
         if result.error:
             table.add_row("error", f"[red]{result.error}[/]")
@@ -162,12 +203,17 @@ class AdvisorView:
         if self._live is not None:
             self._live.stop()
             self._live = None
+        # blank line so the panel doesn't collide with the last tree row
+        self.console.print()
         self.console.print(
             Panel(
                 table,
                 border_style="green" if not result.error else "red",
-                title=f"[bold]{self.advisor.name_cn}[/] summary",
+                title=Text.from_markup(f"[bold]{self.advisor.name_cn}[/] · summary"),
                 title_align="left",
+                box=box.ROUNDED,
+                padding=(0, 1),
+                expand=False,
             )
         )
 
@@ -215,23 +261,34 @@ class ResearchDisplay:
             yield v
 
     def run_header(self, n: int, school_code: str) -> None:
+        body = Text.from_markup(
+            f"[bold bright_cyan]{HEADER_MARK} supervisor-claw[/] "
+            f"[dim]·[/] [bold]research[/]\n"
+            f"[dim]targets[/]  [white]{n}[/] [dim]advisor(s) from[/] "
+            f"[bold cyan]{school_code}[/]"
+        )
         self.console.print(
             Panel(
-                Text.from_markup(
-                    f"[bold]🦞 supervisor-claw research[/]\n"
-                    f"[dim]targets:[/] [cyan]{n}[/] advisor(s) from [cyan]{school_code}[/]"
-                ),
-                border_style="cyan",
-                box=box.ROUNDED,
-                padding=(0, 1),
+                body,
+                border_style="bright_cyan",
+                box=box.HEAVY,
+                padding=(0, 2),
+                expand=False,
             )
         )
 
     def run_footer(self, ok: int, failed: int, total_elapsed: float) -> None:
-        msg = (
-            f"[bold]done[/] · "
-            f"[green]ok={ok}[/] · "
-            f"[red]failed={failed}[/] · "
-            f"[dim]elapsed={total_elapsed:.1f}s[/]"
+        parts = [f"[bold]done[/]", f"[green]{NF_CHECK} ok={ok}[/]"]
+        if failed:
+            parts.append(f"[red]{NF_TIMES} failed={failed}[/]")
+        parts.append(f"[dim]{total_elapsed:.1f}s[/]")
+        self.console.print()
+        self.console.print(
+            Panel(
+                Text.from_markup("  ·  ".join(parts)),
+                border_style="bright_green" if not failed else "yellow",
+                box=box.HEAVY,
+                padding=(0, 2),
+                expand=False,
+            )
         )
-        self.console.print(Panel(Text.from_markup(msg), border_style="green", box=box.ROUNDED))

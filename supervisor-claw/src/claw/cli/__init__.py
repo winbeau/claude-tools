@@ -235,8 +235,13 @@ def research(
         console.print("[yellow]nothing to research (all advisors already have evaluations?)[/yellow]")
         return
 
-    from ..enrichers.research_display import ResearchDisplay
+    from ..enrichers.research_display import ResearchDisplay, silence_loggers
     import time as _time
+
+    # External loggers (httpx INFO, openai INFO, playwright DEBUG) print above
+    # the Live region and cause visible ghosting as the tree re-paints. Mute
+    # them for the duration of research.
+    silence_loggers()
 
     display = ResearchDisplay(console)
     display.run_header(len(targets), school_code)
