@@ -1,0 +1,632 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1,initial-scale=1,user-scalable=no" />
+    <title>导师队伍-复旦大学人工智能创新与产业研究院</title><meta name="pageType" content="2">
+<meta name="pageTitle" content="导师队伍">
+<META Name="keywords" Content="复旦大学人工智能创新与产业研究院，AI³，ai3，AI3，复旦大学人工智能创新与产业(AI³)研究院,导师队伍" />
+
+    <!-- Bootstrap -->
+    <link href="../css/animate.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.css" rel="stylesheet">
+    <link href="../css/slick.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+
+<!--Announced by Visual SiteBuilder 9-->
+<script language="javascript" src="../_sitegray/_sitegray.js"></script>
+<!-- CustomerNO:776562626572323074684757505a5742000400014451 -->
+<link rel="stylesheet" type="text/css" href="../szlistqz.vsb.css" />
+<script type="text/javascript" src="/system/resource/js/vsbscreen.min.js" id="_vsbscreen" devices="pc|mobile|pad"></script>
+<script type="text/javascript" src="/system/resource/js/counter.js"></script>
+<script type="text/javascript">_jsq_(1088,'/szlistqz.jsp',-1,1972308329)</script>
+</head>
+<body>
+  <div class="header clearfix">
+    <div class="pull-left logo">
+<!-- 网站logo图片地址请在本组件"内容配置-网站logo"处填写 -->
+<a href="../index.htm" title="人工智能创新与产业研究院"><img src="../images/fudanLogo15.png" style="max-width:95%"></a></div>
+    <div class="pull-right header-right">
+      <div class="clearfix header-top">
+        <div class="pull-right">
+          <div class="pull-left header-a"><script language="javascript" src="/system/resource/js/dynclicks.js"></script><script language="javascript" src="/system/resource/js/openlink.js"></script>    <a href="#" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 93818)">中文</a><span>|</span>
+    <a href="#" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 93819)">EN</a>
+</div>
+          <div class="modal-box pull-left">
+
+
+<script language="javascript" src="/system/resource/js/base64.js"></script><script language="javascript" src="/system/resource/js/jquery/jquery-latest.min.js"></script><script language="javascript" src="/system/resource/vue/vue.js"></script><script language="javascript" src="/system/resource/vue/bluebird.min.js"></script><script language="javascript" src="/system/resource/vue/axios.js"></script><script language="javascript" src="/system/resource/vue/polyfill.js"></script><script language="javascript" src="/system/resource/vue/token.js"></script><LINK href="/system/resource/vue/static/element/index.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/vue/static/element/index.js"></script><script language="javascript" src="/system/resource/vue/static/public.js"></script><style>
+    #appu2 .qwss{}
+    #appu2 .tj{}
+</style>
+<div id="divu2"></div>
+<div class="modal-back"></div>
+<script type="text/html" id="htmlu2">
+
+    <div id="appu2"  class="search-box-c pull-right search-c search-box">
+    
+        <div v-if="!isError">
+            <input type="text" class="qwss form-control" placeholder="" autocomplete=off v-model=query.keyWord @keyup.enter="onSubmit">
+            <button class="btn btn-search-c" type="button"><img src="../images/search.png"></button>
+        </div>
+        <div v-if="isError" style="color: #b30216; font-size:18px;text-align: center;padding:20px;">
+            应用维护中！
+        </div>
+    </div>
+</script>
+<script>
+    $("#divu2").html($("#htmlu2").text());
+</script>
+<script>
+    var appOwner = "1972308329";
+    var token = gettoken(10);
+    var urlPrefix = "/aop_component/";
+
+    jQuery.support.cors = true;
+    $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+    });
+
+    new Vue({
+        el: "#appu2",
+        data: function () {
+            return {
+                query: {
+                    keyWord: "",//搜索关键词
+                    owner: appOwner,
+                    token: token,
+                    urlPrefix: urlPrefix,
+                    lang:"i18n_zh_CN"
+                },
+                isError: false
+            }
+        },
+        mounted: function () {
+            var _this = this;
+            // _this.init();
+        },
+        methods: {
+            init: function(){
+                $.ajax({
+                    url: "/aop_component//webber/search/test",
+                    type: "get",
+                    success: function (response) {
+                        if (response.code == "0000") {
+                        } else if (response.code == "220") {
+                            _this.isError = true;
+                            console.log(response);
+                        } else if (!response.code) {
+                            _this.isError = true;
+                            console.log(response);
+                        }
+                    },
+                    error: function (response) {
+                        _this.isError = true;
+                    }
+                });
+            },
+            onSubmit: function (e) {
+                var url = "/aop_views/search/modules/resultpc/soso.html";
+                if ("10" == "1" || "10" == "2") {
+                    url = "" + url;
+                }
+                var _this = this;
+                var query = _this.query;
+                if (url.indexOf("?") > -1) {
+                    url = url.split("?")[0];
+                }
+                if (query.keyWord) {
+                    var query = new Base64().encode(JSON.stringify(query));
+                    window.open(url + "?query=" + query);
+                } else {
+                    alert("请填写搜索内容")
+                }
+            },
+        }
+    })
+</script></div> 
+        </div>
+      </div>
+      <ul class="nav-list clearfix">
+    <li><a href="../index.htm" title="首页">首页</a>
+    
+    
+    
+    </li>
+
+    <li><a href="../yjygk1/yjyjs.htm" title="研究院概况">研究院概况</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../yjygk1/yjyjs.htm" title="研究院介绍">研究院介绍</a> </li>
+                    <li><a href="../yjygk1/xrld.htm" title="现任领导">现任领导</a> </li>
+                    <li><a href="../yjygk1/kxzdwyh1.htm" title="科学指导委员会">科学指导委员会</a> </li>
+                    <li><a href="../yjygk1/cyzdwyh1.htm" title="产业指导委员会">产业指导委员会</a> </li>
+                    <li><a href="../yjygk1/znbm.htm" title="职能部门">职能部门</a> </li>
+                    <li><a href="../yjygk1/lxfs.htm" title="联系方式">联系方式</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../yjygk1/kxzdwyh1.htm" title="人才队伍">人才队伍</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../rcdw/qzkyry.htm" title="全职科研人员">全职科研人员</a> </li>
+                    <li><a href="../rcdw/gcjsry.htm" title="工程技术人员">工程技术人员</a> </li>
+                    <li><a href="../rcdw/jzzj.htm" title="兼职专家">兼职专家</a> </li>
+                    <li><a href="../rcdw/bsh.htm" title="博士后">博士后</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../kyyhz/yjly.htm" title="科研与合作">科研与合作</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../kyyhz/yjly.htm" title="研究领域">研究领域</a> </li>
+                    <li><a href="../kyyhz/cyhz.htm" title="产业合作">产业合作</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="http://cfff.fudan.edu.cn/" title="CFFF平台">CFFF平台</a>
+    
+    
+    
+    </li>
+
+    <li><a href="dsdw.htm" title="研究生培养">研究生培养</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="dsdw.htm" title="导师队伍">导师队伍</a> </li>
+                    <li><a href="zsxx.htm" title="招生信息">招生信息</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+
+    <li><a href="../rczp.htm" title="人才招聘">人才招聘</a>
+    
+    
+    
+    </li>
+
+    <li><a href="../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1078" title="内网服务">内网服务</a>
+        <span class="nav-click"><span class="caret"></span></span>
+            <ul class="nav-down">
+                    <li><a href="../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1078" title="规章制度">规章制度</a> </li>
+                    <li><a href="../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1080" title="公示公告">公示公告</a> </li>
+                    <li><a href="../list2.jsp?urltype=tree.TreeTempUrl&wbtreeid=1081" title="办事指南">办事指南</a> </li>
+            </ul>
+    
+    
+    
+    </li>
+</ul>
+    </div>
+    <a class="search-a" role="button"><img src="../images/search.png"></a>
+    <div class="menu-button">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+  </div>
+  <div><div class="banner-list" style="background: url() repeat-x top center;    width: 100%;    top: 0;"></div></div>
+  <div class="container">
+    <div class="nav-b wow fadeInUp"><span>
+    当前位置: </span>
+                        <a href="../index.htm">首页</a>
+                >
+                <a href="dsdw.htm">研究生培养</a>
+                >
+                <a href="dsdw.htm">导师队伍</a>
+</div>
+    <div class="clearfix">
+      <div class="pull-left list-left wow fadeInUp">
+        <div class="list-left-top text-center">
+研究生培养</div>
+        <ul class="list-nav text-center">     <li class="active"><a href="dsdw.htm" title="导师队伍">导师队伍
+     
+     
+     </a>
+     
+     </li>
+     <li><a href="zsxx.htm" title="招生信息">招生信息
+     
+     
+     </a>
+     
+     </li>
+</ul>
+      </div>
+      <div class="pull-right list-right">
+        <div class="teacher-title wow fadeInUp"><span>
+导师队伍（按姓氏拼音排序）</span></div>
+        <ul class="teacher-list clearfix">
+
+
+<script language="javascript" src="/system/resource/js/centerCutImg.js"></script><script language="javascript" src="/system/resource/js/ajax.js"></script>    
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1684.htm" target="_blank" title="陈曦" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/7/66/08/FC5CE0F9DA5F5ED51BE9543E342_57DF17D6_FC7B.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">陈曦</div>
+                <div class="teacher-p">
+                  <p><span></span>教授、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2244.htm" target="_blank" title="程远" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/7/B1/5B/7B858DD58C9A238E100FA4CBD0F_EBBB171A_F772.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">程远</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2224.htm" target="_blank" title="姜若曦" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/3/17/59/E0F70D4E2FFD54A6256B2D6321C_DC4A46CE_3AD7.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">姜若曦</div>
+                <div class="teacher-p">
+                  <p><span></span>助理教授、硕士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1694.htm" target="_blank" title="李昊" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/C/C4/4B/7672F2AD8291B084A60B21F77C5_AC9B4CC1_8D26.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">李昊</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1434.htm" target="_blank" title="胡子欣" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/7/42/90/81DC4DBC4E3FA4A66A2008DEB2D_B28AAF30_53EAC.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">胡子欣</div>
+                <div class="teacher-p">
+                  <p><span></span>青年副研究员、硕士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2064.htm" target="_blank" title="林晨森" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/9/36/7F/D53429B7E0FD62286690E90C2B5_727FCA56_10CB7.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">林晨森</div>
+                <div class="teacher-p">
+                  <p><span></span>青年副研究员、硕士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1984.htm" target="_blank" title="李维" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/1/43/E9/2B7DEF5BDD4B8CE028E309A1CC4_64F90C03_7810.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">李维</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2354.htm" target="_blank" title="屈超" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/E/F9/7E/C512082449EFC53F6D9793D2111_30FF8FAE_3DBF.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">屈超</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1494.htm" target="_blank" title="漆远" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/7/17/54/D4C8913689DB0AB47F0EC9730D8_C9EF4BF3_33A99.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">漆远</div>
+                <div class="teacher-p">
+                  <p><span></span>浩清特聘教授、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2304.htm" target="_blank" title="魏龙" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/4/19/9A/E80F26193F587F20F071739227A_8D14B0F1_608CE.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">魏龙</div>
+                <div class="teacher-p">
+                  <p><span></span>助理教授、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2214.htm" target="_blank" title="熊昊" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/F/85/33/76D18660CB5FC3791CD5C1DA6B5_169727B7_36C7.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">熊昊</div>
+                <div class="teacher-p">
+                  <p><span></span>助理教授、硕士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1484.htm" target="_blank" title="徐盈辉" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/3/A1/7A/0AA7065037958CDA9DA00ACEBE6_C43FC862_33FD6.png"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">徐盈辉</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2024.htm" target="_blank" title="徐跃东" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/A/E1/7E/3DE3EC6B29A0ABB47884F02E223_BBB7BD29_A213.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">徐跃东</div>
+                <div class="teacher-p">
+                  <p><span></span>教授、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/2234.htm" target="_blank" title="仲晓辉" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/4/55/D3/3A05DC5E09956F3AECB17765B41_432FD02D_3064.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">仲晓辉</div>
+                <div class="teacher-p">
+                  <p><span></span>助理教授、硕士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1754.htm" target="_blank" title="徐增林" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/8/59/37/F7331B4B13CA2757127F448A749_FE176C7C_84BD.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">徐增林</div>
+                <div class="teacher-p">
+                  <p><span></span>教授、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+
+        <li class=" wow fadeInUp">
+            <a href="../info/1088/1514.htm" target="_blank" title="朱思语" class="clearfix img-hide" style="font-weight:bold;">
+              <div class="pull-left teacher-img img-hide"><img src="/__local/C/FE/EC/66A1A7FCD24A5C67CA6DB1543A5_80C5C931_11F59.jpg"></div>
+              <div class="teacher-right">
+                <div class="teacher-name txt-elise">朱思语</div>
+                <div class="teacher-p">
+                  <p><span></span>研究员、博士生导师</p>
+                  
+                </div>
+              </div>
+            </a>
+          </li>      
+  
+    
+<script>_showDynClickBatch(['dynclicks_u9_1684','dynclicks_u9_2244','dynclicks_u9_2224','dynclicks_u9_1694','dynclicks_u9_1434','dynclicks_u9_2064','dynclicks_u9_1984','dynclicks_u9_2354','dynclicks_u9_1494','dynclicks_u9_2304','dynclicks_u9_2214','dynclicks_u9_1484','dynclicks_u9_2024','dynclicks_u9_2234','dynclicks_u9_1754','dynclicks_u9_1514'],[1684,2244,2224,1694,1434,2064,1984,2354,1494,2304,2214,1484,2024,2234,1754,1514],"wbnews", 1972308329)</script></ul>
+       </div> 
+    </div>
+  </div>
+    <div class="footer">
+    <div class="container clearfix">
+      <div class="footer-left pull-left">
+        <div class="logo-b">        
+   
+              
+                   
+                        <a href="" title="" onclick="_addDynClicks(&#34;wbimage&#34;, 1972308329, 79465)" target="_blank">
+                            <img src="../images/fudanLogo15.png" border="0">
+                        </a>  
+                   
+               
+      
+</div>
+        <div class="footer-p"><script language="javascript" src="/system/resource/js/news/mp4video.js"></script>
+<p>地址：上海市浦东新区张衡路&nbsp;825&nbsp;号<br></p> 
+<p>邮编：201203<span style="color: rgb(219, 219, 219); font-family: PingFangSC-Regular, "></span></p> 
+<p>邮箱：ai3@fudan.edu.cn<span style="color: rgb(219, 219, 219); font-family: PingFangSC-Regular, "></span></p></div>
+      </div>
+      <div class="pull-left footer-center">
+        <div class="footer-tt">友情链接</div>
+        <div class="dropdown"><a id="dLabel" class="down-a" role="button" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <span>校内常用站点</span>
+          </a>
+<UL class="dropdown-menu" aria-labelledby="dLabel">
+    <LI><a href="https://www.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94620)">复旦大学</a></li>
+    <LI><a href="https://ecampus.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94619)">复旦大学信息化办公室</a></li>
+    <LI><a href="http://ehall.fudan.edu.cn/ywtb-portal/fudan/index.html#/hall" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94621)">复旦大学网上办事大厅</a></li>
+    <LI><a href="https://mail.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94622)">复旦大学电子邮件</a></li>
+    <LI><a href="https://baoweichu.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94701)">复旦大学保卫处</a></li>
+    <LI><a href="https://cwc.fudan.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94702)">财务与国有资产管理处</a></li>
+</UL></div>
+        <div class="dropdown"><a id="dLabel" class="down-a" role="button" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <span>校外常用站点</span>
+          </a>
+<UL class="dropdown-menu" aria-labelledby="dLabel">
+    <LI><a href="https://www.most.gov.cn/index.html" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94685)">科技部</a></li>
+    <LI><a href="https://stcsm.sh.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94686)">上海市科学技术委员会</a></li>
+    <LI><a href="https://www.nsfc.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94715)">国家自然科学基金委员会</a></li>
+    <LI><a href="https://www.baai.ac.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94688)">北京智源人工智能研究院</a></li>
+    <LI><a href="https://sairi.com.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 94689)">上海人工智能研究院</a></li>
+    <LI><a href="https://www.sais.com.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1972308329, 102800)">上海科学智能研究院</a></li>
+</UL></div>
+      </div>
+      <div class="pull-right footer-right text-center">        
+       
+         
+                    
+                       
+                            <img src="../images/1c38edd6-5362-4338-ade5-003b91877f51.jpg">
+                        
+                   
+                
+            
+ <br>关注我们</div>
+
+    </div>
+    <div class="footer-bottom">
+      <div class="container clearfix">
+        <div class="pull-left"><!-- 版权内容请在本组件"内容配置-版权"处填写 -->
+<p>© 复旦大学人工智能创新与产业研究院 All Rights Reserved</p></div>
+        <div class="pull-right">
+<p> <a href="https://beian.miit.gov.cn/#/Integrated/index" target="_self" style="color:#fff">沪ICP备10016111号1沪公网安备31019002000000号</a> </p></div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="../js/jquery.min.js"></script>
+<script src="../js/bootstrap.min.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/slick.js"></script>
+<script src="../js/wow.min.js"></script>
+<script type="text/javascript">
+if (!(/msie [6|7|8|9]/i.test(navigator.userAgent))){
+  new WOW().init();
+};
+    $('.banner').slick({
+        infinite: true,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:true,
+    });
+    $('.news-slick').slick({
+        infinite: true,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:true,
+    });
+
+$('.pt-slick').slick({
+        infinite: true,
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        autoplay: true,
+        centerMode: false,
+        arrows:true,
+        dots:false,
+  responsive: [
+    {
+      breakpoint: 1630,
+      settings: {
+
+          slidesToShow: 4,
+          slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 1279,
+      settings: {
+  speed: 300,
+  slidesToShow: 3,
+  slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 991,
+      settings: {
+  speed: 300,
+  slidesToShow: 2,
+  slidesToScroll: 1,
+      }
+    },
+    {
+      breakpoint: 768,
+      settings: {
+  speed: 300,
+  slidesToShow: 2,
+  slidesToScroll: 1,
+      }
+    }
+  ]
+});
+
+
+
+
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
