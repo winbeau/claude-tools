@@ -334,16 +334,23 @@ class ResearchAgent:
             {"role": "user", "content": user_intro},
         ]
 
+        # tool sets: full set for exploration; wrap-up set for the last turn
+        # (only submit_* + finish; no more search/read so the LLM is forced
+        # to either commit findings or end cleanly).
+        FINAL_TOOL_NAMES = {"submit_evaluation", "submit_quota", "finish"}
+        final_tools = [t for t in TOOLS if t["function"]["name"] in FINAL_TOOL_NAMES]
+
         for i in range(self.max_iter):
             self.result.iterations = i + 1
-            # final-turn nudge: append a user message coercing finish
-            if i == self.max_iter - 1:
+            is_last = i == self.max_iter - 1
+            tools_for_turn = final_tools if is_last else TOOLS
+            if is_last:
                 messages.append({"role": "user", "content": LAST_TURN_NUDGE})
             try:
                 resp = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    tools=TOOLS,
+                    tools=tools_for_turn,
                     tool_choice="auto",
                     temperature=0.2,
                     max_tokens=800,
