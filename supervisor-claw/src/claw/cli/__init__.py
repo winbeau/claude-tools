@@ -235,31 +235,37 @@ def research(
         console.print("[yellow]nothing to research (all advisors already have evaluations?)[/yellow]")
         return
 
-    console.print(f"[bold]researching {len(targets)} advisor(s) from {school_code}[/bold]")
+    from ..enrichers.research_display import ResearchDisplay
+    import time as _time
 
-    async def _run() -> None:
+    display = ResearchDisplay(console)
+    display.run_header(len(targets), school_code)
+
+    async def _run() -> tuple[int, int]:
+        ok_n = 0
+        failed_n = 0
         async with browser_pool(headless=not headed) as pool:
             with session_scope() as s:
                 for advisor, school_name, dept_name in targets:
-                    # re-attach to current session
                     a = s.get(Advisor, advisor.id)
                     if a is None:
                         continue
-                    console.rule(f"[bold blue]{a.name_cn} ({dept_name})")
-                    try:
-                        res = await research_advisor(
-                            a, school_name, dept_name, pool, s, max_iter=max_iter
-                        )
-                    except Exception as e:  # noqa: BLE001
-                        console.print(f"[red]agent crashed for {a.name_cn}: {e}[/red]")
-                        continue
-                    console.print(
-                        f"  iters={res.iterations} eval+={res.evaluations_written} "
-                        f"quota+={res.quotas_written} end={res.finished_reason}"
-                    )
+                    with display.advisor(a, school_name, dept_name) as view:
+                        try:
+                            res = await research_advisor(
+                                a, school_name, dept_name, pool, s,
+                                max_iter=max_iter, view=view,
+                            )
+                            view.summary(res)
+                            ok_n += 1
+                        except Exception as e:  # noqa: BLE001
+                            console.print(f"[red]agent crashed for {a.name_cn}: {e}[/red]")
+                            failed_n += 1
+        return ok_n, failed_n
 
-    asyncio.run(_run())
-    console.print("[green]done[/green]")
+    t0 = _time.time()
+    ok, failed = asyncio.run(_run())
+    display.run_footer(ok, failed, _time.time() - t0)
 
 
 if __name__ == "__main__":

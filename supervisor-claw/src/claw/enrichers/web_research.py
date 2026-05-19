@@ -23,19 +23,45 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from typing import Any
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 from playwright.async_api import BrowserContext, TimeoutError as PWTimeoutError
 from selectolax.parser import HTMLParser
+from sqlmodel import select
 
 from ..config import get_settings
 from ..core.browser import BrowserPool
 from ..core.llm import get_client
 from ..core.logging import get_logger
-from ..models.db import Advisor
+from ..models.db import Advisor, Evaluation, QuotaInfo
 from ..storage.repo import append_evaluation, append_quota
 
 log = get_logger(__name__)
+
+
+# Sources we refuse to cite — low information density / aggregator pages.
+# Search results from these domains are stripped; read_page returns blocked;
+# submit_* rejects them so the LLM is forced to find real primary sources.
+BLOCKED_DOMAINS: set[str] = {
+    "baike.baidu.com",
+    "baike.so.com",
+    "baike.sogou.com",
+    "wiki.mbalib.com",
+    "wiki.eol.cn",
+    "zh.wikipedia.org",  # arguably useful but often biographical-only
+}
+
+
+def _domain(url: str) -> str:
+    try:
+        return (urlparse(url).netloc or "").lower()
+    except Exception:
+        return ""
+
+
+def _is_blocked(url: str) -> bool:
+    d = _domain(url)
+    return any(d == b or d.endswith("." + b) for b in BLOCKED_DOMAINS)
 
 
 # ---- Tool schemas (OpenAI function-calling format, supported by DeepSeek) ----
@@ -136,7 +162,7 @@ TOOLS: list[dict] = [
 
 
 SYSTEM_PROMPT = """你是导师调研助手。被指派调研一位**特定**导师的：
-1) 评价（知乎/小木虫/一亩三分地/贴吧/博客/学生论坛/排名网站）
+1) 评价（知乎/小木虫/一亩三分地/贴吧/博客/学生论坛/导师评价网/排名网站）
 2) 招生情况（近年是否招博/硕、数量、方向、加入方式）
 
 策略（每轮选 1-2 个动作，不要并发太多）：
@@ -148,6 +174,12 @@ SYSTEM_PROMPT = """你是导师调研助手。被指派调研一位**特定**导
 
 身份核对：用 school + dept + 研究方向匹配。同名风险大时降低 confidence
 但**仍然 submit**，把判断权交给用户。
+
+【禁用源】百度百科 / 360 百科 / 搜狗百科 / 维基百科等聚合页 —— 信息密度
+低且容易混入同名误导。这些域名 search_web 已过滤、read_page 会返回
+blocked、submit_* 会被拒绝。请优先用**实验室主页 / 课题组招聘公告 /
+导师评价网 / 知乎专栏 / 小木虫帖子 / 高校招聘网 / 集智 / 学校研招目录**等
+原始或近原始来源。
 
 【重要规则】
 - **宁多勿少**：哪怕只是片段、传闻、间接信息，只要写明 source_url 和 confidence 就 submit
@@ -185,6 +217,7 @@ class ResearchAgent:
         *,
         max_iter: int = 8,
         model: str | None = None,
+        view=None,  # AdvisorView | None (rich TUI)
     ) -> None:
         self.advisor = advisor
         self.school_name = school_name
@@ -195,6 +228,7 @@ class ResearchAgent:
         self.model = model or get_settings().deepseek_model
         self.client = get_client()
         self.result = AgentResult(advisor_id=advisor.id or -1)
+        self.view = view  # research_display.AdvisorView, optional
 
     # ----- tool implementations -----
 
@@ -221,7 +255,9 @@ class ResearchAgent:
                 }
                 """
             )
-            return items[: max(1, min(int(k or 5), 8))]
+            # filter blocked domains
+            filtered = [r for r in items if not _is_blocked(r.get("url", ""))]
+            return filtered[: max(1, min(int(k or 5), 8))]
         except PWTimeoutError:
             log.warning("bing search timed out for %r", query)
             return []
@@ -232,6 +268,11 @@ class ResearchAgent:
             await page.close()
 
     async def _tool_read_page(self, url: str, max_chars: int = 4000) -> str:
+        if _is_blocked(url):
+            return (
+                f"[blocked source: {_domain(url)} — 百科/聚合类禁用，请改用"
+                f"实验室主页/招聘公告/导师评价网/知乎/小木虫等原始来源]"
+            )
         page = await self.ctx.new_page()
         try:
             await page.goto(url, timeout=15000, wait_until="domcontentloaded")
@@ -256,6 +297,21 @@ class ResearchAgent:
     ) -> dict:
         if not content.strip():
             return {"ok": False, "error": "empty content"}
+        if _is_blocked(source_url):
+            return {
+                "ok": False,
+                "skipped": True,
+                "error": f"blocked source {_domain(source_url)} — find a primary source",
+            }
+        # dedup: same advisor + same source_url already exists
+        existing = self.session.exec(
+            select(Evaluation).where(
+                (Evaluation.advisor_id == self.advisor.id)
+                & (Evaluation.source_url == source_url)
+            )
+        ).first()
+        if existing is not None:
+            return {"ok": False, "skipped": True, "error": "duplicate (source_url already submitted)"}
         ev = append_evaluation(
             self.session,
             self.advisor,
@@ -276,6 +332,22 @@ class ResearchAgent:
         count: int | None = None,
         confidence: float | None = None,
     ) -> dict:
+        if _is_blocked(source_url):
+            return {
+                "ok": False,
+                "skipped": True,
+                "error": f"blocked source {_domain(source_url)} — find a primary source",
+            }
+        existing = self.session.exec(
+            select(QuotaInfo).where(
+                (QuotaInfo.advisor_id == self.advisor.id)
+                & (QuotaInfo.source_url == source_url)
+                & (QuotaInfo.year == year)
+                & (QuotaInfo.degree == degree)
+            )
+        ).first()
+        if existing is not None:
+            return {"ok": False, "skipped": True, "error": "duplicate (source_url+year+degree)"}
         q = append_quota(
             self.session,
             self.advisor,
@@ -364,11 +436,13 @@ class ResearchAgent:
             assistant_dict: dict[str, Any] = {"role": "assistant", "content": msg.content or ""}
             # surface the LLM's text reasoning when present
             if msg.content:
-                log.info(
+                log.debug(
                     "[%s] iter=%d llm_text=%s",
                     self.advisor.name_cn, i + 1,
                     msg.content[:200].replace("\n", " "),
                 )
+            if self.view is not None:
+                self.view.iter_start(i + 1, msg.content, is_final=is_last)
             tool_calls_raw = getattr(msg, "tool_calls", None) or []
             if tool_calls_raw:
                 assistant_dict["tool_calls"] = [
@@ -396,14 +470,24 @@ class ResearchAgent:
                     args = json.loads(tc.function.arguments or "{}")
                 except json.JSONDecodeError:
                     args = {}
-                log.info(
+                log.debug(
                     "[%s] iter=%d tool=%s args=%s",
                     self.advisor.name_cn, i + 1, name,
                     {k: (str(v)[:60] + "…") if isinstance(v, str) and len(str(v)) > 60 else v
                      for k, v in args.items()},
                 )
+                node = self.view.tool_started(name, args) if self.view is not None else None
                 result = await self._dispatch(name, args)
                 self.result.tool_calls.append({"iter": i + 1, "name": name, "args": args})
+                # ---- describe outcome for the view ----
+                if self.view is not None:
+                    summary = _summarize_result(name, args, result)
+                    skipped = isinstance(result, dict) and result.get("skipped") is True
+                    ok = (
+                        not (isinstance(result, dict) and result.get("ok") is False)
+                        and not skipped
+                    )
+                    self.view.tool_completed(node, ok=ok, summary=summary, skipped=skipped)
                 messages.append(
                     {
                         "role": "tool",
@@ -421,6 +505,28 @@ class ResearchAgent:
         return self.result
 
 
+def _summarize_result(name: str, args: dict, result: Any) -> str:
+    """One-line summary of a tool result for the TUI."""
+    if name == "search_web":
+        return f"{len(result) if isinstance(result, list) else 0} results"
+    if name == "read_page":
+        if isinstance(result, str) and result.startswith("[blocked"):
+            return result[:80]
+        if isinstance(result, str) and result.startswith("[error"):
+            return result[:80]
+        return f"~{len(result) if isinstance(result, str) else 0} chars"
+    if name in ("submit_evaluation", "submit_quota"):
+        if isinstance(result, dict):
+            if result.get("ok"):
+                return "saved"
+            err = result.get("error", "")
+            return f"skip: {err}" if result.get("skipped") else f"fail: {err}"
+        return ""
+    if name == "finish":
+        return ""
+    return ""
+
+
 async def research_advisor(
     advisor: Advisor,
     school_name: str,
@@ -429,9 +535,10 @@ async def research_advisor(
     session,
     *,
     max_iter: int = 8,
+    view=None,
 ) -> AgentResult:
     ctx = await pool.context("bing")
     agent = ResearchAgent(
-        advisor, school_name, dept_name, ctx, session, max_iter=max_iter
+        advisor, school_name, dept_name, ctx, session, max_iter=max_iter, view=view
     )
     return await agent.run()
