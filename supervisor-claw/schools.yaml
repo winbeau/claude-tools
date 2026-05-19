@@ -175,19 +175,33 @@ schools:
     name_cn: 上海交通大学
     name_en: SJTU
     departments:
+      # cs.sjtu.edu.cn/PeopleList.aspx is gone — the new site renders 教师名录
+      # via a POST AJAX endpoint that returns JSON wrapping the per-institute
+      # HTML. The adapter accepts both the JSON envelope and the static shell.
+      # v0.2 GET on the shell returns 0 faculty (data is JS-loaded); a future
+      # fetcher upgrade should POST to /active/ajax_teacher_list.html with
+      # page=1&cat_id=20&cat_code=jiaoshiml&type=1&zm=All&zc=全部 to populate.
       - code: cs
         name_cn: 计算机科学与工程系
         list_urls:
-          - https://www.cs.sjtu.edu.cn/PeopleList.aspx
+          - https://www.cs.sjtu.edu.cn/jiaoshiml.html
+      # 电院 AI 方向 = sais.sjtu.edu.cn (自动化与感知学院, AI/robotics/control).
+      # english.seiee.sjtu.edu.cn was an English landing page with no faculty
+      # data. sais also uses the POST-AJAX JSON envelope (cat_id=18,
+      # cat_code=faculty). parse_profile applies a 研究方向 AI-keyword filter.
       - code: see-ai
-        name_cn: 电院（AI 方向）
+        name_cn: 自动化与感知学院（电院 AI 方向）
         list_urls:
-          - https://english.seiee.sjtu.edu.cn/
+          - https://sais.sjtu.edu.cn/faculty.html
+      # AI 学院 真正的入口是 soai.sjtu.edu.cn/cn/faculty/zzjs
+      # (sai.sjtu.edu.cn is an alias serving the same HTML).
       - code: ai
         name_cn: 人工智能学院
         list_urls:
-          - https://soai.sjtu.edu.cn/szdw
+          - https://soai.sjtu.edu.cn/cn/faculty/zzjs
+      # qingyuan.sjtu.edu.cn (no www) doesn't resolve; the canonical domain
+      # is www.qingyuan.sjtu.edu.cn. 全职教师 list ≈ 10 tenure-track members.
       - code: qingyuan
         name_cn: 清源研究院
         list_urls:
-          - https://qingyuan.sjtu.edu.cn/
+          - http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html
