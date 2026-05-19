@@ -31,22 +31,42 @@ schools:
     name_cn: 北京大学
     name_en: Peking University
     departments:
+      # eecs (信息科学技术学院) 改组后，本科系下的"计算机学院"承接 CS 师资。
+      # cs.pku.edu.cn/szdw/jyxl/amz/ALL.htm 是 "教研系列 - 按名字"，分 9 页。
       - code: eecs
-        name_cn: 信息科学技术学院
+        name_cn: 计算机学院 (原信息学院 CS 方向)
         list_urls:
-          - https://eecs.pku.edu.cn/info/1342/8930.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/1.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/2.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/3.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/4.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/5.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/6.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/7.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/8.htm
+          - https://cs.pku.edu.cn/szdw/jyxl/amz/ALL/9.htm
+      # 智能学院真正的入口是 cis.pku.edu.cn (ai.pku.edu.cn 是 AILab 旧站，已废)
       - code: ai
         name_cn: 智能学院
         list_urls:
-          - https://ai.pku.edu.cn/rydw/index.htm
+          - https://www.cis.pku.edu.cn/szdw/zzjs.htm
+          - https://www.cis.pku.edu.cn/szdw/zzjs/1.htm
+          - https://www.cis.pku.edu.cn/szdw/zzjs/2.htm
+          - https://www.cis.pku.edu.cn/szdw/zzjs/3.htm
+          - https://www.cis.pku.edu.cn/szdw/zzjs/4.htm
+      # 王选所站点是 www.icst.pku.edu.cn (www.wangxuan.pku.edu.cn 是纪念王选的 SPA)
+      # 学术团队在 xstd/xstd_01/index.htm，分 2 页
       - code: wangxuan
         name_cn: 王选计算机研究所
         list_urls:
-          - https://www.icst.pku.edu.cn/szdw/
+          - https://www.icst.pku.edu.cn/xstd/xstd_01/index.htm
+          - https://www.icst.pku.edu.cn/xstd/xstd_01/index1.htm
       - code: cfcs
         name_cn: 前沿计算研究中心
         list_urls:
-          - https://cfcs.pku.edu.cn/people/
+          - https://cfcs.pku.edu.cn/people/faculty/index.htm
+          - https://cfcs.pku.edu.cn/people/directors/index.htm
 
   - code: nju
     name_cn: 南京大学
