@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import json
 import sys
@@ -172,6 +173,89 @@ def stats() -> None:
             recruiting = sum(1 for a in advs if a.is_recruiting)
             table.add_row(school.code, str(len(advs)), str(with_email), str(recruiting))
         console.print(table)
+
+
+@app.command()
+def research(
+    school_code: str = typer.Option(..., "--school", help="school code, required"),
+    limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all matched)"),
+    max_iter: int = typer.Option(6, "--max-iter", help="max LLM turns per advisor"),
+    headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
+    only_missing: bool = typer.Option(
+        True,
+        "--only-missing/--all",
+        help="skip advisors that already have any evaluation row (default: skip)",
+    ),
+) -> None:
+    """Autonomous research via DeepSeek tool-calling + Playwright bing search.
+
+    For each advisor in --school, runs an agent loop that decides queries,
+    reads pages, and writes findings to evaluation / quota_info tables.
+    """
+    setup_logging()
+    init_db()
+
+    # imports kept local — playwright is optional at install time for v0.1 paths
+    from ..core.browser import browser_pool
+    from ..enrichers.web_research import research_advisor
+    from ..models.db import Evaluation  # noqa: F401 — used in the inner closure
+
+    targets: list[tuple[Advisor, str, str]] = []
+    with session_scope() as s:
+        school = s.exec(select(School).where(School.code == school_code)).first()
+        if school is None:
+            console.print(f"[red]school '{school_code}' not in DB — run `claw crawl` first[/red]")
+            raise typer.Exit(2)
+        adv_rows = s.exec(select(Advisor).where(Advisor.school_id == school.id)).all()
+        # also need dept name (pick first appointment) for the prompt
+        for a in adv_rows:
+            if only_missing:
+                has_eval = s.exec(
+                    select(Evaluation).where(Evaluation.advisor_id == a.id).limit(1)
+                ).first()
+                if has_eval:
+                    continue
+            appt = s.exec(
+                select(Appointment).where(Appointment.advisor_id == a.id).limit(1)
+            ).first()
+            dept_name = "(unknown dept)"
+            if appt:
+                d = s.exec(select(Department).where(Department.id == appt.department_id)).first()
+                if d:
+                    dept_name = d.name_cn
+            targets.append((a, school.name_cn, dept_name))
+            if limit and len(targets) >= limit:
+                break
+
+    if not targets:
+        console.print("[yellow]nothing to research (all advisors already have evaluations?)[/yellow]")
+        return
+
+    console.print(f"[bold]researching {len(targets)} advisor(s) from {school_code}[/bold]")
+
+    async def _run() -> None:
+        async with browser_pool(headless=not headed) as pool:
+            with session_scope() as s:
+                for advisor, school_name, dept_name in targets:
+                    # re-attach to current session
+                    a = s.get(Advisor, advisor.id)
+                    if a is None:
+                        continue
+                    console.rule(f"[bold blue]{a.name_cn} ({dept_name})")
+                    try:
+                        res = await research_advisor(
+                            a, school_name, dept_name, pool, s, max_iter=max_iter
+                        )
+                    except Exception as e:  # noqa: BLE001
+                        console.print(f"[red]agent crashed for {a.name_cn}: {e}[/red]")
+                        continue
+                    console.print(
+                        f"  iters={res.iterations} eval+={res.evaluations_written} "
+                        f"quota+={res.quotas_written} end={res.finished_reason}"
+                    )
+
+    asyncio.run(_run())
+    console.print("[green]done[/green]")
 
 
 if __name__ == "__main__":
