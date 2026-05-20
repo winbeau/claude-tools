@@ -424,3 +424,44 @@ schools:
         name_cn: 人工智能学院
         list_urls:
           - https://aiar.xjtu.edu.cn/szdw/js.htm
+
+  - code: nankai
+    name_cn: 南开大学
+    name_en: Nankai University
+    departments:
+      # 计算机学院 = cc.nankai.edu.cn (NOT cs.nankai.edu.cn —— 后者其实是软件学院)
+      # 师资按职称分 3 个单页 (single-page each, no pagination).
+      - code: cs
+        name_cn: 计算机学院
+        list_urls:
+          - https://cc.nankai.edu.cn/jswyjy/list.htm    # 教授 / 研究员
+          - https://cc.nankai.edu.cn/fjswfyjy/list.htm  # 副教授 / 副研究员
+          - https://cc.nankai.edu.cn/js/list.htm        # 讲师
+      # 密码与网络空间安全学院 = cyber.nankai.edu.cn.  Same Bootstrap "img-card"
+      # template as cc.nankai; many people overlap with cs (pipeline dedupes
+      # by (school, name, email)).
+      - code: cse
+        name_cn: 密码与网络空间安全学院
+        list_urls:
+          - https://cyber.nankai.edu.cn/jswyjy/list.htm    # 教授 / 研究员
+          - https://cyber.nankai.edu.cn/fjswfyjy/list.htm  # 副教授 / 副研究员
+          - https://cyber.nankai.edu.cn/js/list.htm        # 讲师
+      # 人工智能学院 = ai.nankai.edu.cn.  Old-school vsb-cms <table> rows with
+      # 4 columns (name / title / dept / research-direction). No email on
+      # the list page; profile page has labelled key/value pairs.
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://ai.nankai.edu.cn/szdw/js_yjy_.htm   # 教授 / 研究员
+          - https://ai.nankai.edu.cn/szdw/fjs_fyjy_.htm # 副教授 / 副研究员
+          - https://ai.nankai.edu.cn/szdw/j_s.htm       # 讲师
+      # 软件学院 = cs.nankai.edu.cn.  NOTE: the cs.* subdomain is the SOFTWARE
+      # college despite the misleading name. Lists are paginated (each rank
+      # has 1-2 pages); enumerate explicitly so the adapter stays simple.
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://cs.nankai.edu.cn/szdw/js.htm      # 教授 (p1)
+          - https://cs.nankai.edu.cn/szdw/js/1.htm    # 教授 (p2)
+          - https://cs.nankai.edu.cn/szdw/fjs.htm     # 副教授
+          - https://cs.nankai.edu.cn/szdw/js2.htm     # 讲师
