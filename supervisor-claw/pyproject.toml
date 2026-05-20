@@ -3,7 +3,7 @@ name = "supervisor-claw"
 version = "0.1.0"
 description = "Local crawler for CS/AI advisor info at top Chinese universities"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = { text = "MIT" }
 dependencies = [
     "httpx[http2]>=0.27",
