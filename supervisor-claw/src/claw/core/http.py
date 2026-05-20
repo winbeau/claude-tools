@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ssl
 from urllib.parse import urlparse
 
 import httpx
@@ -11,6 +12,20 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+
+def _make_legacy_friendly_ssl_context() -> ssl.SSLContext:
+    """Cert-verifying SSL context that also accepts legacy ciphers/hashes.
+
+    Several Chinese university web servers (e.g. cs.nju.edu.cn, software.nju)
+    still serve TLS 1.2 with cipher suites that OpenSSL 3.x rejects at the
+    default SECLEVEL=2 — Python 3.13+ then fails the handshake with
+    SSLV3_ALERT_HANDSHAKE_FAILURE while system curl still works. Dropping to
+    SECLEVEL=1 lets us shake hands while still verifying the certificate.
+    """
+    ctx = ssl.create_default_context()
+    ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+    return ctx
 
 from ..config import ListUrlSpec, get_settings
 from .logging import get_logger
@@ -39,6 +54,7 @@ class Fetcher:
             timeout=timeout,
             follow_redirects=True,
             http2=True,
+            verify=_make_legacy_friendly_ssl_context(),
         )
 
     async def aclose(self) -> None:
