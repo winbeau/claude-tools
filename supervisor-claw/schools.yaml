@@ -224,24 +224,9 @@ schools:
             headers:
               X-Requested-With: XMLHttpRequest
               Referer: https://www.cs.sjtu.edu.cn/jiaoshiml.html
-      # 电院 AI 方向 = sais.sjtu.edu.cn (自动化与感知学院, AI/robotics/control).
-      # Same POST-AJAX JSON envelope as cs.sjtu (cat_id=18, cat_code=faculty,
-      # no `zc` field — sais only filters by zm). parse_profile applies a
-      # 研究方向 AI-keyword filter to drop non-AI faculty.
-      - code: see-ai
-        name_cn: 自动化与感知学院（电院 AI 方向）
-        list_urls:
-          - url: https://sais.sjtu.edu.cn/active/ajax_teacher_list.html
-            method: POST
-            data:
-              cat_id: '18'
-              cat_code: faculty
-              type: 1
-              zm: All
-              search: ''
-            headers:
-              X-Requested-With: XMLHttpRequest
-              Referer: https://sais.sjtu.edu.cn/faculty.html
+      # (v0.4.x 删除) 电院 AI 方向 sais.sjtu.edu.cn —— 用户判断与计算机相关度低、对
+      # CS PhD 投递价值不大；cs.sjtu (~290) + ai (soai) + cse (网安) + qingyuan 合计已
+      # 充足，所以把 see-ai 整段去掉避免 noise。如果以后要恢复，参考 git history。
       # AI 学院 真正的入口是 soai.sjtu.edu.cn/cn/faculty/zzjs
       # (sai.sjtu.edu.cn is an alias serving the same HTML).
       - code: ai
