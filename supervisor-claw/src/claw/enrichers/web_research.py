@@ -2,13 +2,14 @@
 
 Pattern: DeepSeek (OpenAI-compatible tool calling) drives a loop:
     LLM picks a query → search_web → LLM reads chosen pages → LLM submits
-    evaluation / quota rows → finish().
+    evaluation / quota rows → submit_report (mandatory) → finish().
 
 Tools exposed to the LLM:
     - search_web(query, k=5)              -> list of {title, url, snippet}
     - read_page(url, max_chars=4000)      -> cleaned page text (no scripts)
     - submit_evaluation(...)              -> insert into evaluation table
     - submit_quota(...)                   -> insert into quota_info table
+    - submit_report(...)                  -> write 4 enrichment columns on advisor
     - finish(reason)                      -> end loop
 
 Search backend: cn.bing.com (no login, low captcha rate). If a Playwright
@@ -22,6 +23,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 from urllib.parse import quote_plus, urlparse
 
@@ -149,8 +151,49 @@ TOOLS: list[dict] = [
     {
         "type": "function",
         "function": {
+            "name": "submit_report",
+            "description": (
+                "**必须在 finish 之前调用一次**。综合本轮收集的全部证据，"
+                "给出对该导师的投递参考结构化判断。证据不足时也要提交（"
+                "is_recruiting=null / reputation_tag='unknown' / confidence 给低分）。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "is_recruiting": {
+                        "type": ["boolean", "null"],
+                        "description": "true=明确招生 / false=明确不招 / null=未知",
+                    },
+                    "recruiting_confidence": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "description": "对 is_recruiting 判断的置信度 0-1",
+                    },
+                    "reputation_tag": {
+                        "type": "string",
+                        "enum": ["positive", "neutral", "negative", "unknown"],
+                        "description": "综合学生评价的标签",
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "1-2 句话投递参考（≤200 字）",
+                    },
+                },
+                "required": [
+                    "is_recruiting",
+                    "recruiting_confidence",
+                    "reputation_tag",
+                    "summary",
+                ],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "finish",
-            "description": "End the research loop for this advisor.",
+            "description": "End the research loop for this advisor. Call submit_report first.",
             "parameters": {
                 "type": "object",
                 "properties": {"reason": {"type": "string"}},
@@ -161,47 +204,62 @@ TOOLS: list[dict] = [
 ]
 
 
-SYSTEM_PROMPT = """你是导师调研助手。被指派调研一位**特定**导师的：
+SYSTEM_PROMPT = """你是导师投递参考助手。被指派调研一位**特定**导师：
 1) 评价（知乎/小木虫/一亩三分地/贴吧/博客/学生论坛/导师评价网/排名网站）
 2) 招生情况（近年是否招博/硕、数量、方向、加入方式）
+3) **最终给出结构化投递参考**（招生信号、风评标签、综合判断）
 
-策略（每轮选 1-2 个动作，不要并发太多）：
-1. search_web 用 1-2 个不同角度的查询（如 "X 导师 评价"、"X 招生 博士"）
-2. read_page 读最相关的 1-2 个页面
-3. **遇到任何相关描述就 submit**：评价提到本人 → submit_evaluation；
-   提到招生信号 → submit_quota。confidence 如实写（0.3 / 0.6 / 0.9）
-4. 调用 finish 结束
+工作流（每轮选 1-2 个动作，不要并发太多）：
+1. search_web 用 1-2 个不同角度的查询（如 "X 导师 评价"、"X 招生 博士"、
+   "X 课题组 招生 2026"、"X group recruiting"）
+2. read_page 读最相关的 1-2 个页面（优先课题组官网 / 知乎答主 / 学生评价网）
+3. **遇到任何相关描述就 submit_evaluation / submit_quota**，confidence 如实写
+4. **结束前必须调用 submit_report 一次**，给出 is_recruiting / confidence /
+   reputation_tag / summary 四件套（证据不足也要提交，confidence 给低分）
+5. 最后调用 finish
 
 身份核对：用 school + dept + 研究方向匹配。同名风险大时降低 confidence
 但**仍然 submit**，把判断权交给用户。
 
+【优先来源】
+- 课题组独立官网（搜 "{name} {school} 课题组" / "{name} group"）
+- 知乎回答 / 专栏（zhihu.com/answer/* / zhihu.com/question/*）
+- 学校研究生招生目录、招生简章
+- 小木虫、一亩三分地、寄托天下、导师评价网
+
 【禁用源】百度百科 / 360 百科 / 搜狗百科 / 维基百科等聚合页 —— 信息密度
 低且容易混入同名误导。这些域名 search_web 已过滤、read_page 会返回
-blocked、submit_* 会被拒绝。请优先用**实验室主页 / 课题组招聘公告 /
-导师评价网 / 知乎专栏 / 小木虫帖子 / 高校招聘网 / 集智 / 学校研招目录**等
-原始或近原始来源。
+blocked、submit_* 会被拒绝。
 
 【重要规则】
 - **宁多勿少**：哪怕只是片段、传闻、间接信息，只要写明 source_url 和 confidence 就 submit
+- **必须 submit_report**：不调 submit_report 直接 finish 会被视为失败
 - **必须 finish**：未 finish 时 max_iter 切断，所有未 submit 的内容会**永久丢失**
-- 真的空手而归就 finish('no info found')，这也是合法收尾"""
+- 真的空手而归：submit_report(is_recruiting=null, recruiting_confidence=0.1,
+  reputation_tag='unknown', summary='无可用证据') → finish('no info found')"""
 
 
-LAST_TURN_NUDGE = """⚠️ 这是你的最后一轮，工具被限定为 submit_evaluation / submit_quota / finish。
+LAST_TURN_NUDGE = """⚠️ 这是你的最后一轮，工具被限定为 submit_evaluation / submit_quota / submit_report / finish。
 
 在这一轮里：
-1) **批量 submit**：把前几轮看到的所有疑似相关信息**一次性提交多个 tool_calls**
-   （评价、招生分别一条 submit_*；confidence 可以低，但只要相关就写）。
-2) 然后**必须**调用 finish()。
-3) 如果某个 submit 返回 "duplicate (source_url already submitted)"，说明该来源已写过 ——
-   **换不同的 source_url 提交**别的发现，不要重试同一个 URL。
-4) 若真的一无所获，调 finish('no info found')，这也是合法收尾。
+1) **批量 submit_evaluation / submit_quota**：把前几轮看到的所有疑似相关信息
+   **一次性提交多个 tool_calls**（评价、招生分别一条 submit_*；confidence 可以低）。
+2) **必须调用 submit_report 一次**给出综合判断（即使证据稀薄也要交，给低 confidence）。
+3) 然后**必须**调用 finish()。
+4) 某个 submit 返回 "duplicate (...)" → **换不同的 source_url** 提交别的发现。
+5) 若真的一无所获：submit_report(is_recruiting=null, recruiting_confidence=0.1,
+   reputation_tag='unknown', summary='无可用证据') → finish('no info found')。
 
-不 finish 且不 submit → 所有结果丢失。"""
+不 submit_report → 该导师下次会被重新调研（白跑）。"""
 
 
 # Tools available on the wrap-up turn.
-FINAL_TOOL_NAMES: set[str] = {"submit_evaluation", "submit_quota", "finish"}
+FINAL_TOOL_NAMES: set[str] = {
+    "submit_evaluation", "submit_quota", "submit_report", "finish"
+}
+
+
+_VALID_REPUTATION_TAGS = {"positive", "neutral", "negative", "unknown"}
 
 
 @dataclass
@@ -210,6 +268,11 @@ class AgentResult:
     iterations: int = 0
     evaluations_written: int = 0
     quotas_written: int = 0
+    report_submitted: bool = False
+    is_recruiting: bool | None = None
+    recruiting_confidence: float | None = None
+    reputation_tag: str | None = None
+    enriched_summary: str | None = None
     finished_reason: str | None = None
     error: str | None = None
     tool_calls: list[dict] = field(default_factory=list)
@@ -376,6 +439,56 @@ class ResearchAgent:
         self.result.quotas_written += 1
         return {"ok": True, "quota_id": q.id}
 
+    def _tool_submit_report(
+        self,
+        is_recruiting: bool | None,
+        recruiting_confidence: float,
+        reputation_tag: str,
+        summary: str,
+    ) -> dict:
+        # normalize / clamp
+        try:
+            conf = float(recruiting_confidence)
+        except (TypeError, ValueError):
+            conf = 0.0
+        conf = max(0.0, min(1.0, conf))
+        tag = (reputation_tag or "").strip().lower()
+        if tag not in _VALID_REPUTATION_TAGS:
+            tag = "unknown"
+        summary_clean = (summary or "").strip()[:400]
+        if isinstance(is_recruiting, str):
+            # tolerate string-encoded booleans/nulls from the LLM
+            low = is_recruiting.strip().lower()
+            if low in ("true", "yes", "1"):
+                is_recruiting = True
+            elif low in ("false", "no", "0"):
+                is_recruiting = False
+            else:
+                is_recruiting = None
+
+        # write back to advisor row
+        self.advisor.is_recruiting = is_recruiting
+        self.advisor.recruiting_confidence = conf
+        self.advisor.reputation_tag = tag
+        self.advisor.enriched_summary = summary_clean
+        self.advisor.last_enriched_at = datetime.utcnow()
+        self.session.add(self.advisor)
+        self.session.commit()
+
+        self.result.report_submitted = True
+        self.result.is_recruiting = is_recruiting
+        self.result.recruiting_confidence = conf
+        self.result.reputation_tag = tag
+        self.result.enriched_summary = summary_clean
+        return {
+            "ok": True,
+            "stored": {
+                "is_recruiting": is_recruiting,
+                "recruiting_confidence": conf,
+                "reputation_tag": tag,
+            },
+        }
+
     def _tool_finish(self, reason: str) -> dict:
         self.result.finished_reason = reason
         return {"ok": True}
@@ -411,6 +524,13 @@ class ResearchAgent:
                 args.get("degree"),
                 args.get("count"),
                 args.get("confidence"),
+            )
+        if name == "submit_report":
+            return self._tool_submit_report(
+                args.get("is_recruiting"),
+                args.get("recruiting_confidence", 0.0),
+                args.get("reputation_tag", "unknown"),
+                args.get("summary", ""),
             )
         if name == "finish":
             return self._tool_finish(args.get("reason", ""))
@@ -510,7 +630,7 @@ class ResearchAgent:
                 result = await self._dispatch(name, args)
                 self.result.tool_calls.append({"iter": i + 1, "name": name, "args": args})
                 # track submission success for rescue-iter decision
-                if name in ("submit_evaluation", "submit_quota") and isinstance(result, dict) and result.get("ok"):
+                if name in ("submit_evaluation", "submit_quota", "submit_report") and isinstance(result, dict) and result.get("ok"):
                     iter_submit_ok = True
                 # ---- describe outcome for the view ----
                 if self.view is not None:
@@ -535,23 +655,26 @@ class ResearchAgent:
             if done:
                 break
 
-            # ---- rescue iter: final iter ended with no successful submission
-            # and no finish(). Grant exactly ONE more last-iter so the LLM can
-            # retry with a different source_url or finish empty. Triggered
-            # mostly by all submit_* being dup-skipped on the first final iter.
-            if is_last and not rescued and not iter_submit_ok and not done:
+            # ---- rescue iter: final iter ended with no submit_report (or no
+            # successful submission of any kind), and no finish(). Grant ONE
+            # more last-iter so the LLM can ship the mandatory report.
+            need_rescue = (
+                is_last and not rescued and not done
+                and (not self.result.report_submitted or not iter_submit_ok)
+            )
+            if need_rescue:
                 rescued = True
                 max_iter += 1
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": (
-                            "⚠️ 上一轮所有 submit 都失败或被去重跳过。再给你一次机会："
-                            "用**不同的 source_url** 提交剩下的发现；如确实没有更多内容，"
-                            "调 finish('no info found' 或简短说明) 收尾。"
-                        ),
-                    }
+                missing_report = not self.result.report_submitted
+                rescue_msg = (
+                    "⚠️ 你还没调用 submit_report —— 这是必填项。立刻提交综合判断"
+                    "（即使证据稀薄也要交，confidence 给低分），然后 finish。"
+                    if missing_report
+                    else "⚠️ 上一轮所有 submit 都失败或被去重跳过。再给你一次机会："
+                    "用**不同的 source_url** 提交剩下的发现，并确保 submit_report，"
+                    "然后 finish。"
                 )
+                messages.append({"role": "user", "content": rescue_msg})
             i += 1
 
         if not done and not self.result.finished_reason:
@@ -576,6 +699,13 @@ def _summarize_result(name: str, args: dict, result: Any) -> str:
             err = result.get("error", "")
             return f"skip: {err}" if result.get("skipped") else f"fail: {err}"
         return ""
+    if name == "submit_report":
+        if isinstance(result, dict) and result.get("ok"):
+            stored = result.get("stored", {})
+            ir = stored.get("is_recruiting")
+            ir_s = "招生" if ir is True else ("不招" if ir is False else "未知")
+            return f"report saved · {ir_s} · {stored.get('reputation_tag','unknown')}"
+        return "report failed"
     if name == "finish":
         return ""
     return ""

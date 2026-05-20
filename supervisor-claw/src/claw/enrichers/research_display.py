@@ -49,6 +49,7 @@ TOOL_ICON = {
     "read_page": NF_FILE,
     "submit_evaluation": NF_COMMENT,
     "submit_quota": NF_GRADCAP,
+    "submit_report": NF_DIAMOND,
     "finish": NF_FLAG,
 }
 TOOL_COLOR = {
@@ -56,6 +57,7 @@ TOOL_COLOR = {
     "read_page": "cyan",
     "submit_evaluation": "green",
     "submit_quota": "magenta",
+    "submit_report": "bright_magenta",
     "finish": "bright_green",
 }
 STATUS_OK = f"[green]{NF_CHECK}[/]"
@@ -98,6 +100,13 @@ def _fmt_args(name: str, args: dict) -> str:
         cnt = args.get("count")
         conf = args.get("confidence")
         return f"{deg} {yr}" + (f" ×{cnt}" if cnt else "") + (f" conf={conf}" if conf else "")
+    if name == "submit_report":
+        ir = args.get("is_recruiting")
+        ir_s = "招生" if ir is True else ("不招" if ir is False else "未知")
+        tag = args.get("reputation_tag", "?")
+        conf = args.get("recruiting_confidence")
+        summ = (args.get("summary") or "")[:30]
+        return f"{ir_s} · {tag} · conf={conf} · {summ}…"
     if name == "finish":
         return repr(args.get("reason", ""))[:60]
     return ", ".join(f"{k}={v!r}" for k, v in args.items())[:80]
