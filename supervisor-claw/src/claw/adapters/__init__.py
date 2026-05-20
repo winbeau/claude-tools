@@ -1,4 +1,5 @@
 from . import (  # noqa: F401
+    bit,
     buaa,
     fudan,
     hust,
@@ -8,7 +9,9 @@ from . import (  # noqa: F401
     shtech,
     sjtu,
     sysu,
+    tju,
     tsinghua,
+    uestc,
     ustc,
     xjtu,
     zju,
