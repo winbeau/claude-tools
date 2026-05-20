@@ -531,3 +531,47 @@ schools:
         list_urls:
           - https://cic.tju.edu.cn/szdw/szmd/azcjs.htm
           - https://cic.tju.edu.cn/szdw/szmd/azmjs.htm
+
+  - code: bit
+    name_cn: 北京理工大学
+    name_en: Beijing Institute of Technology
+    departments:
+      # 计算机学院 = cs.bit.edu.cn. 北理工是 "国防七子" 之一, 部分二级页面
+      # 在 VPS 上偶尔 403, fixture 是在能拿到的窗口里抓的快照。
+      # 同站点还托管 "特色化示范性软件学院" 与 "信创学院" —— 共用一份导师
+      # 名录, 我们把 sw / cs 视为同一 PI 集合, pipeline 按 (school, name,
+      # email) 去重。
+      # /szdw/jsml/ 是 "导师名录" (按 博/硕 导分):
+      #   - bssds = 博士生导师 (~76 PI)
+      #   - sssds = 硕士生导师 (~72 PI, 与 bssds 不重叠)
+      # /szdw/jsml2/ 是 "教师名录" (按研究所分): 14 个所室, 每所 7~38 人.
+      # 同一老师会同时出现在 bssds 与某个所室列表 —— 必须按 profile_url
+      # 去重 (parse_list 内部已做).
+      - code: cs
+        name_cn: 计算机学院
+        list_urls:
+          - https://cs.bit.edu.cn/szdw/jsml/bssds/index.htm
+          - https://cs.bit.edu.cn/szdw/jsml/sssds/index.htm
+      # 软件学院 (特色化示范性软件学院): 北理工没有独立子域, 直接挂在
+      # cs.bit.edu.cn 下. 我们选 3 个软件方向所室作为 sw dept, 范围与 cs
+      # 高度重叠 —— 由 pipeline 在 (school, name, email) 层面去重。
+      - code: sw
+        name_cn: 特色化示范性软件学院
+        list_urls:
+          - https://cs.bit.edu.cn/szdw/jsml2/rjznyrjgcyjs2/index.htm   # 软件智能与软件工程研究所
+          - https://cs.bit.edu.cn/szdw/jsml2/jsjx2/index.htm           # 计算机系
+          - https://cs.bit.edu.cn/szdw/jsml2/pczx2/index.htm           # 评测中心
+      # 人工智能学院 = ai.bit.edu.cn (注意是 ai, 不是 sai/iai).
+      # 师资页一页 21 人, 第 2 页 8 人, 总计 ~29.
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://ai.bit.edu.cn/szdw/index.htm
+          - https://ai.bit.edu.cn/szdw/index1.htm
+      # 网络空间安全学院 = cst.bit.edu.cn (注意 host 是 cst, 不是 cse).
+      # /szdw/jsml/index.htm 把博/硕 导师同页平铺 (单页 ~46 + 13). 站内有
+      # JS 分页按钮 (href="#") —— 静态 HTML 已含足够 PI 不需要翻页.
+      - code: cse
+        name_cn: 网络空间安全学院
+        list_urls:
+          - https://cst.bit.edu.cn/szdw/jsml/index.htm
