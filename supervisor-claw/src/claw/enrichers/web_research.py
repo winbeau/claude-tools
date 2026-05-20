@@ -316,9 +316,15 @@ class AgentResult:
     recruiting_confidence: float | None = None
     reputation_tag: str | None = None
     enriched_summary: str | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
     finished_reason: str | None = None
     error: str | None = None
     tool_calls: list[dict] = field(default_factory=list)
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
 
 
 class ResearchAgent:
@@ -663,6 +669,12 @@ class ResearchAgent:
                 self.result.error = f"deepseek error: {e}"
                 log.error("[%s] LLM call failed: %s", self.advisor.name_cn, e)
                 break
+
+            # accumulate token usage (DeepSeek returns OpenAI-compatible usage)
+            usage = getattr(resp, "usage", None)
+            if usage is not None:
+                self.result.prompt_tokens += int(getattr(usage, "prompt_tokens", 0) or 0)
+                self.result.completion_tokens += int(getattr(usage, "completion_tokens", 0) or 0)
 
             msg = resp.choices[0].message
             assistant_dict: dict[str, Any] = {"role": "assistant", "content": msg.content or ""}

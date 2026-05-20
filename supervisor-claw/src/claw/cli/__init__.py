@@ -273,5 +273,66 @@ def research(
     display.run_footer(ok, failed, _time.time() - t0)
 
 
+@app.command()
+def enrich(
+    source: str = typer.Option(
+        "agent", "--source",
+        help="enrichment source: 'agent' = DeepSeek tool-calling + bing search",
+    ),
+    school_code: str = typer.Option(..., "--school", help="school code, required"),
+    dept: list[str] = typer.Option(None, "--dept", help="dept code(s) to limit to"),
+    limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all matched)"),
+    max_iter: int = typer.Option(8, "--max-iter", help="max LLM turns per advisor"),
+    concurrency: int = typer.Option(2, "--concurrency", help="parallel advisor agents (1-4)"),
+    only_missing: bool = typer.Option(
+        True,
+        "--only-missing/--all",
+        help="skip advisors with recent last_enriched_at (default); --all re-runs everyone",
+    ),
+    stale_days: int = typer.Option(30, "--stale-days", help="how old last_enriched_at must be to re-run"),
+    headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
+) -> None:
+    """Batch enrichment: run agent across all (or filtered) advisors of a school."""
+    setup_logging()
+    init_db()
+    if source != "agent":
+        console.print(f"[red]unsupported --source[/red] {source!r}; only 'agent' is implemented in v0.3")
+        raise typer.Exit(2)
+
+    from ..pipeline.enrich_runner import enrich_with_agent
+
+    def _progress(n: int, total: int, t, res, err) -> None:
+        from ..pipeline.enrich_runner import _short_summary
+        tag = "[red]✗[/red]" if err else (
+            "[green]✓[/green]" if (res and res.report_submitted) else "[yellow]·[/yellow]"
+        )
+        console.print(f"{tag} [{n:>3}/{total}] [bold]{t.name_cn}[/] · {t.dept_name} — {_short_summary(res, err)}")
+
+    console.rule(f"[bold blue]enrich {school_code} (source=agent)")
+    stats = asyncio.run(enrich_with_agent(
+        school_code=school_code,
+        dept_codes=dept or None,
+        only_missing=only_missing,
+        stale_days=stale_days,
+        limit=limit or None,
+        max_iter=max_iter,
+        concurrency=concurrency,
+        headed=headed,
+        on_advisor_done=_progress,
+    ))
+    console.rule(f"[bold green]done {school_code}")
+    console.print(
+        f"candidates={stats.candidates} processed={stats.processed} "
+        f"[green]report={stats.report_submitted}[/] [yellow]no_report={stats.no_report}[/] "
+        f"[red]errors={stats.errors}[/]"
+    )
+    console.print(
+        f"tokens in={stats.prompt_tokens} out={stats.completion_tokens} "
+        f"(≈¥{stats.prompt_tokens / 1e6 * 2 + stats.completion_tokens / 1e6 * 8:.3f}) "
+        f"wall={stats.wall_seconds:.1f}s"
+    )
+    console.print(f"log: {stats.log_path}")
+
+
 if __name__ == "__main__":
     app()
