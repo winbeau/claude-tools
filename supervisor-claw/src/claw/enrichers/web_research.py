@@ -700,6 +700,15 @@ class ResearchAgent:
                     tool_choice="auto",
                     temperature=0.2,
                     max_tokens=800,
+                    # DeepSeek v4-flash (and other reasoning-enabled models)
+                    # default to thinking=enabled, which requires every
+                    # follow-up turn to echo back the previous assistant's
+                    # `reasoning_content`. Our message accumulator doesn't
+                    # carry that field, so the second turn would 400. Disable
+                    # thinking for the agent loop — we don't need CoT here
+                    # because the tool-calling protocol already forces
+                    # search→read→submit reasoning into observable actions.
+                    extra_body={"thinking": {"type": "disabled"}},
                 )
             except Exception as e:
                 self.result.error = f"deepseek error: {e}"
