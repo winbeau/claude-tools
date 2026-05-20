@@ -1,4 +1,15 @@
-from . import fudan, nju, pku, sjtu, tsinghua, ustc, zju  # noqa: F401
+from . import (  # noqa: F401
+    buaa,
+    fudan,
+    nju,
+    pku,
+    shtech,
+    sjtu,
+    sysu,
+    tsinghua,
+    ustc,
+    zju,
+)
 from .base import REGISTRY, SchoolAdapter  # noqa: F401
 
 
