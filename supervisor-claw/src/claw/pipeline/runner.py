@@ -60,16 +60,16 @@ async def crawl_school(
                     )
                     continue
 
-                primary_list_url = dept.list_urls[0] if dept.list_urls else None
+                primary_list_url = dept.list_urls[0].url if dept.list_urls else None
                 dept_row = upsert_department(s, school_row, dept.code, dept.name_cn, primary_list_url)
 
-                for list_url in dept.list_urls:
+                for spec in dept.list_urls:
                     await _process_list(
                         fetcher=fetcher,
                         adapter=adapter,
                         school=school_row,
                         dept=dept_row,
-                        list_url=list_url,
+                        list_spec=spec,
                         session=s,
                         stats=stats,
                         limit=limit,
@@ -87,15 +87,17 @@ async def _process_list(
     adapter,
     school,
     dept,
-    list_url: str,
+    list_spec,
     session,
     stats: CrawlStats,
     limit: int | None,
     snapshot: bool,
 ) -> None:
-    log.info("[%s/%s] list: %s", school.code, dept.code, list_url)
+    list_url = list_spec.url
+    method_tag = f"[{list_spec.method}]" if list_spec.method != "GET" else ""
+    log.info("[%s/%s] list%s: %s", school.code, dept.code, method_tag, list_url)
     try:
-        r = await fetcher.get(list_url)
+        r = await fetcher.fetch(list_spec)
     except ForbiddenByRobots:
         stats.skipped_robots += 1
         return

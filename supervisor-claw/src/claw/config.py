@@ -2,17 +2,59 @@ from __future__ import annotations
 
 from functools import cache
 from pathlib import Path
+from typing import Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ListUrlSpec(BaseModel):
+    """A single faculty-listing endpoint.
+
+    YAML accepts either a bare string (GET) or an object form for POST /
+    custom headers:
+
+        list_urls:
+          - https://example.edu/faculty       # GET (string shorthand)
+          - url: https://example.edu/ajax     # POST with form data
+            method: POST
+            data:
+              page: 1
+              type: all
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://example.edu/faculty.html
+    """
+
+    url: str
+    method: Literal["GET", "POST"] = "GET"
+    data: dict[str, str | int] | None = None
+    headers: dict[str, str] | None = None
+
+
+def normalize_list_url(item: str | ListUrlSpec | dict) -> ListUrlSpec:
+    if isinstance(item, ListUrlSpec):
+        return item
+    if isinstance(item, str):
+        return ListUrlSpec(url=item)
+    if isinstance(item, dict):
+        return ListUrlSpec.model_validate(item)
+    raise TypeError(f"unsupported list_urls entry type: {type(item).__name__}")
 
 
 class DepartmentConfig(BaseModel):
     code: str
     name_cn: str
     name_en: str | None = None
-    list_urls: list[str] = Field(default_factory=list)
+    list_urls: list[ListUrlSpec] = Field(default_factory=list)
+
+    @field_validator("list_urls", mode="before")
+    @classmethod
+    def _coerce_list_urls(cls, v):  # noqa: ANN001
+        if v is None:
+            return []
+        return [normalize_list_url(item) for item in v]
 
 
 class SchoolConfig(BaseModel):

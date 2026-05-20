@@ -191,24 +191,45 @@ schools:
     name_cn: 上海交通大学
     name_en: SJTU
     departments:
-      # cs.sjtu.edu.cn/PeopleList.aspx is gone — the new site renders 教师名录
-      # via a POST AJAX endpoint that returns JSON wrapping the per-institute
-      # HTML. The adapter accepts both the JSON envelope and the static shell.
-      # v0.2 GET on the shell returns 0 faculty (data is JS-loaded); a future
-      # fetcher upgrade should POST to /active/ajax_teacher_list.html with
-      # page=1&cat_id=20&cat_code=jiaoshiml&type=1&zm=All&zc=全部 to populate.
+      # cs.sjtu.edu.cn/jiaoshiml.html is the SPA shell — empty under GET.
+      # Faculty data comes from a POST AJAX call returning JSON {tab_html,
+      # content}. The adapter unwraps the JSON envelope automatically.
+      # type=1 yields the rc-list (grouped by institute, all teachers in one
+      # response). zm=All / zc=全部 disable the alphabetical / rank filters.
       - code: cs
         name_cn: 计算机科学与工程系
         list_urls:
-          - https://www.cs.sjtu.edu.cn/jiaoshiml.html
+          - url: https://www.cs.sjtu.edu.cn/active/ajax_teacher_list.html
+            method: POST
+            data:
+              page: 1
+              cat_id: '20'
+              cat_code: jiaoshiml
+              type: 1
+              zm: All
+              zc: 全部
+              search: ''
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://www.cs.sjtu.edu.cn/jiaoshiml.html
       # 电院 AI 方向 = sais.sjtu.edu.cn (自动化与感知学院, AI/robotics/control).
-      # english.seiee.sjtu.edu.cn was an English landing page with no faculty
-      # data. sais also uses the POST-AJAX JSON envelope (cat_id=18,
-      # cat_code=faculty). parse_profile applies a 研究方向 AI-keyword filter.
+      # Same POST-AJAX JSON envelope as cs.sjtu (cat_id=18, cat_code=faculty,
+      # no `zc` field — sais only filters by zm). parse_profile applies a
+      # 研究方向 AI-keyword filter to drop non-AI faculty.
       - code: see-ai
         name_cn: 自动化与感知学院（电院 AI 方向）
         list_urls:
-          - https://sais.sjtu.edu.cn/faculty.html
+          - url: https://sais.sjtu.edu.cn/active/ajax_teacher_list.html
+            method: POST
+            data:
+              cat_id: '18'
+              cat_code: faculty
+              type: 1
+              zm: All
+              search: ''
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://sais.sjtu.edu.cn/faculty.html
       # AI 学院 真正的入口是 soai.sjtu.edu.cn/cn/faculty/zzjs
       # (sai.sjtu.edu.cn is an alias serving the same HTML).
       - code: ai
