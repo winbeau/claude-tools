@@ -395,3 +395,32 @@ schools:
         name_cn: 人工智能与自动化学院
         list_urls:
           - https://aia.hust.edu.cn/szdw/xysz/axlb.htm
+
+  - code: xjtu
+    name_cn: 西安交通大学
+    name_en: Xi'an Jiaotong University
+    departments:
+      # cs.xjtu.edu.cn 师资名录按职称分三页：教授 / 副教授 / 讲师及其他。
+      # 全部都是 VSB SiteBuilder 模板，与 buaa scse 同构 — adapter 走通用
+      # VSB list 解析。注：cs.xjtu / se.xjtu / aiar.xjtu 三个子站点都会
+      # 在 VPS 网络上触发 challenge JS 墙；pipeline / Playwright fetcher
+      # 通过后我们的解析器拿到的就是真实 HTML。
+      - code: cs
+        name_cn: 计算机科学与技术学院
+        list_urls:
+          - https://cs.xjtu.edu.cn/szdw/jsml/js.htm
+          - https://cs.xjtu.edu.cn/szdw/jsml/fjs1.htm
+          - https://cs.xjtu.edu.cn/szdw/jsml/jsjqt.htm
+      # 软件学院师资页是 se.xjtu.edu.cn/jsdw.htm（聚合页），部分高级 PI
+      # 直接外链到 faculty.xjtu.edu.cn —— adapter 会照单全收。
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://se.xjtu.edu.cn/jsdw.htm
+      # 人工智能学院（aiar.xjtu.edu.cn = 人工智能与机器人研究所）。
+      # /szdw/js.htm 聚合 PI 与副教授；许多 senior PI（郑南宁、龚怡宏、
+      # 辛景民等）外链到 faculty.xjtu.edu.cn 或 gr.xjtu.edu.cn 学者主页。
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://aiar.xjtu.edu.cn/szdw/js.htm
