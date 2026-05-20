@@ -66,6 +66,12 @@ class Advisor(SQLModel, table=True):
     raw_quota_text: str | None = None
     source_url: str | None = None
 
+    # v0.3 — agent enrichment fields
+    recruiting_confidence: float | None = None
+    reputation_tag: str | None = None  # positive | neutral | negative | unknown
+    enriched_summary: str | None = None
+    last_enriched_at: datetime | None = Field(default=None, sa_column=Column(DateTime, nullable=True))
+
     first_seen: datetime = Field(sa_column=_ts_column())
     last_updated: datetime = Field(sa_column=_ts_column(onupdate=True))
 
@@ -130,6 +136,28 @@ def _enable_sqlite_pragmas(dbapi_conn, _conn_record):  # noqa: ANN001
     cur.close()
 
 
+_ENRICHMENT_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("recruiting_confidence", "REAL"),
+    ("reputation_tag", "TEXT"),
+    ("enriched_summary", "TEXT"),
+    ("last_enriched_at", "DATETIME"),
+)
+
+
+def _ensure_enrichment_columns(engine: Engine) -> None:
+    """Idempotent: add v0.3 enrichment columns to advisor if missing.
+
+    Existing DBs created under v0.1/v0.2 only have the original advisor schema;
+    `SQLModel.metadata.create_all` does NOT add columns to existing tables.
+    """
+    with engine.connect() as conn:
+        existing = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(advisor)")}
+        for col, ddl in _ENRICHMENT_COLUMNS:
+            if col not in existing:
+                conn.exec_driver_sql(f"ALTER TABLE advisor ADD COLUMN {col} {ddl}")
+        conn.commit()
+
+
 def _ensure_fts(engine: Engine) -> None:
     """Create FTS5 virtual table mirroring evaluation.content."""
     with engine.connect() as conn:
@@ -166,6 +194,7 @@ def get_engine():
 def init_db() -> None:
     engine = get_engine()
     SQLModel.metadata.create_all(engine)
+    _ensure_enrichment_columns(engine)
     _ensure_fts(engine)
 
 

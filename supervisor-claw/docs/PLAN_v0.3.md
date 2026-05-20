@@ -1,207 +1,223 @@
-# v0.3 实施方案：招生信号抽取（quota enricher）
+# v0.3 实施方案（已修订）：agent 综合 enrichment
 
-> 范围：把 v0.2 落库的 ~3000 名导师的 `bio_text` / 主页文本里的"招生段"喂给 DeepSeek，结构化产出 `{degree, year, count, is_recruiting, confidence}`，写入 `quota_info` 表 + 回填 `advisor.is_recruiting`。
+> **关键转向**：放弃"bio 启发式定位招生段 → DeepSeek 抽取"。理由：pku 207 人样本里 bio_text 内含"招生/招收/欢迎报考"等关键词的只有 **3 人（1.4%）**，且 91/207 bio 完全为空。中国导师不在官网写招生计划——写在课题组站、知乎、公众号、师兄师姐口碑里。
 >
-> 不在范围：第三方评价（v0.4）、Web UI（v0.5）。
+> 改为：把 `enrichers/web_research.py` 升级成 production-grade **批量 agent enrichment**，DeepSeek tool calling 自主上网搜+综合，产出"可投递依靠"的结构化报告。
 
 ---
 
-## 1. 现状盘点
+## 1. 目标产出
 
-已有基础设施（不重复造）：
+每位 advisor 跑完 agent enrichment 后，DB 中固化：
 
-- `core/llm.py::chat_json(system, user)` — DeepSeek (openai SDK + base_url)，`response_format={"type": "json_object"}`，`temperature=0.0`。直接复用。
-- `models/db.py::QuotaInfo` — 表已建好，字段齐全：`advisor_id / year / degree / count / raw_text / source_url / confidence / extractor`。`extractor="regex"` 是默认值，本期写 `"deepseek"`。
-- `models/db.py::Advisor.raw_quota_text` / `is_recruiting` — 字段就位，目前大多为空。
-- `storage/repo.py::append_quota` — 已存在（research agent 在用）。
-- `enrichers/web_research.py` — 已有自主研究 agent，写过 `quota_info`；本期只做"基于本地 bio 文本的批量抽取"，路径上独立、互不依赖。
+- `advisor.is_recruiting` (bool|null) — 是否在当前周期招生
+- `advisor.recruiting_confidence` (float 0-1) — **新增列**
+- `advisor.reputation_tag` (enum, **新增列**) — positive / neutral / negative / unknown
+- `advisor.enriched_summary` (text, **新增列**) — agent 写的 1-2 句话综合判断
+- `advisor.last_enriched_at` (datetime, **新增列**) — 上次跑 enrich 的时间，用于增量
+- `evaluation` 表：每条证据一行（已有，agent 已经在写）
+- `quota_info` 表：明确招生名额一行（已有，agent 已经在写）
+
+CLI 一条 `claw enrich --source agent --school pku` 就能把整校跑出来。
+
+最终 `claw export --recruiting-only --format csv` 出来的表能直接拿来排投递优先级。
+
+---
+
+## 2. 现状盘点（已有的）
+
+`enrichers/web_research.py` 框架已经成熟，**不重写**，只补功能：
+
+- ✅ DeepSeek tool calling 循环 (`research_advisor`)
+- ✅ Tools: `search_web`, `read_page`, `submit_evaluation`, `submit_quota`, `finish`
+- ✅ Playwright + cn.bing.com（无登录、低验证码）+ BrowserContext pool
+- ✅ BLOCKED_DOMAINS 黑名单（百度百科、Wikipedia 等）
+- ✅ TUI 展示（`enrichers/research_display.py` + Nerd Font icons）
+- ✅ CLI `claw research --school pku` 已能跑
 
 缺口：
 
-1. 没有 quota 抽取器模块。
-2. crawl 期间没有从 bio 中切出"招生段"，`raw_quota_text` 大多 NULL。
-3. CLI 没有 `enrich` 子命令。
-4. 没有评估脚本（人工标注 → 准确率回归）。
+1. agent 没有总结性输出 — 现在只往 evaluation/quota_info 写零散行，没有"该导师值不值得投"的总结字段
+2. Advisor 表缺 4 列（confidence / reputation_tag / enriched_summary / last_enriched_at）
+3. 没有增量恢复：跑一半挂了重启会重复跑（`only_missing` 只判断有没有 evaluation 行，不够精细）
+4. 没有 token / 成本统计
+5. 命令是 `research`，从命名上看像"调研"工具，不像批量 enrichment 入口
+6. agent 现在偏保守，对"已确认招生 / 无招生信号"两种情况都倾向不提交 — 需要新的 `submit_report` 工具明确收口
 
 ---
 
-## 2. 模块设计
+## 3. 设计
 
-### 2.1 招生段定位（不调 LLM，纯本地启发式）
+### 3.1 数据库迁移
 
-新增 `src/claw/core/quota_text.py`：
+SQLite + SQLModel，直接 `ALTER TABLE` 加列，做幂等迁移函数：
 
 ```python
-KEYWORDS = (
-    "招生", "招收", "招聘", "招博", "招硕",
-    "名额", "指标", "保研", "推免",
-    "欢迎报考", "欢迎加入", "欢迎咨询",
-    "recruit", "Ph.D", "PhD", "Master",
-    "openings", "positions",
-)
+# models/db.py 新增字段
+class Advisor(SQLModel, table=True):
+    ...
+    is_recruiting: bool | None = None
+    recruiting_confidence: float | None = None      # NEW
+    reputation_tag: str | None = None               # NEW: positive|neutral|negative|unknown
+    enriched_summary: str | None = None             # NEW: agent 写的 1-2 句话
+    last_enriched_at: datetime | None = None        # NEW
 
-def extract_quota_segment(bio_text: str, *, window: int = 400) -> str | None:
-    """在 bio 里找第一处关键词命中，向前后各取 window 字符。
-    返回的段落保证 <= 2 * window + len(keyword) 字符；多关键词命中合并相邻窗口。
-    无命中时返回 None。"""
+def _ensure_enrichment_columns(engine):
+    """幂等：检查 advisor 表是否缺新列，缺则 ALTER ADD。"""
+    cols = {row[1] for row in engine.execute("PRAGMA table_info(advisor)")}
+    for col, ddl in [
+        ("recruiting_confidence", "REAL"),
+        ("reputation_tag", "TEXT"),
+        ("enriched_summary", "TEXT"),
+        ("last_enriched_at", "DATETIME"),
+    ]:
+        if col not in cols:
+            engine.execute(f"ALTER TABLE advisor ADD COLUMN {col} {ddl}")
 ```
 
-要求：
-- 多个关键词窗口若重叠或相邻 (<100 字符)，合并成一段。
-- 命中段最长截到 2KB（DeepSeek prompt 预算）。
-- 单测覆盖：(a) 单关键词、(b) 多关键词合并、(c) 无命中、(d) 跨段落（按 `\n\n` 切片不能破坏窗口）。
+`init_db()` 末尾调用一次。
 
-### 2.2 回填 `raw_quota_text`
+### 3.2 新的 agent 工具：`submit_report`
 
-新增 CLI 子命令 `claw backfill-quota-text`：扫所有 `bio_text IS NOT NULL AND raw_quota_text IS NULL` 的 advisor，跑 `extract_quota_segment`，写 `advisor.raw_quota_text`。
-
-也在 `pipeline/runner._process_profile` 里加一次调用——下次 crawl 直接产出，老数据用 backfill 命令补。
-
-### 2.3 LLM 抽取器
-
-新增 `src/claw/enrichers/quota_extractor.py`：
+在 `enrichers/web_research.py` 的 tools schema 加：
 
 ```python
-SYSTEM = """你是中国高校研究生招生信息抽取助手。给定一段导师主页的自我介绍文本，
-判断该导师当前是否招生，并给出每个学位类型（博士/硕士/博后）的年度名额。
-严格输出 JSON，schema 见 user。无证据宁可留空也不要编造。"""
-
-USER_TEMPLATE = """导师：{name}（{school} {dept}）
-主页文本片段：
-\"\"\"{quota_segment}\"\"\"
-
-请输出如下 JSON：
-{{
-  "is_recruiting": true | false | null,         # null = 无信号
-  "items": [
-    {{
-      "degree": "PhD" | "MS" | "Postdoc",
-      "year": 2026 | null,
-      "count": 1 | null,
-      "evidence": "原文片段（≤80字）"
-    }}
-  ],
-  "confidence": 0.0~1.0,                        # 综合置信度
-  "notes": "..."                                 # 可选
-}}"""
-
-@dataclass
-class QuotaResult:
-    is_recruiting: bool | None
-    items: list[QuotaItem]
-    confidence: float
-    notes: str = ""
-
-def extract_quota(advisor_name: str, school: str, dept: str,
-                  quota_segment: str) -> QuotaResult: ...
+{
+    "type": "function",
+    "function": {
+        "name": "submit_report",
+        "description": "最终总结：必须在 finish 之前调用一次。综合本轮搜索读到的所有证据，给出该导师投递参考的结构化判断。",
+        "parameters": {
+            "type": "object",
+            "required": ["is_recruiting", "recruiting_confidence", "reputation_tag", "summary"],
+            "properties": {
+                "is_recruiting": {"type": ["boolean", "null"], "description": "true=明确招生 / false=明确不招 / null=未知"},
+                "recruiting_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                "reputation_tag": {"enum": ["positive", "neutral", "negative", "unknown"]},
+                "summary": {"type": "string", "maxLength": 400, "description": "1-2 句话给读者的投递参考"}
+            }
+        }
+    }
+}
 ```
 
-约束：
-- 入参 `quota_segment` 必须非空，否则跳过，不调 LLM。
-- 调用 `llm.chat_json(SYSTEM, USER_TEMPLATE.format(...))`，model 默认 `deepseek-chat`（V4）。
-- 解析失败（JSON 损坏 / schema 不匹配）→ 重试 1 次（temperature=0.1）→ 仍失败记 `confidence=0.0`、空 items。
-- `confidence < 0.5`：**只**写 `raw_quota_text`，不写 `is_recruiting`，不写 `quota_info` 行（避免污染）。
-- `confidence >= 0.5`：写 `advisor.is_recruiting` + 每个 `items[i]` 一行 `quota_info`（`extractor="deepseek"`）。
+入参校验后写回 `advisor` 表 4 个新列 + 更新 `last_enriched_at = utcnow()`。
 
-### 2.4 批量 pipeline
+System prompt 加强：
+- "最终轮必须先调用 `submit_report`，再调用 `finish`"
+- "evidence 不足时 `confidence` 给低分但仍然要提交"
 
-新增 `src/claw/pipeline/enrich_runner.py`：
+### 3.3 Seed prompt（省 token + 提高召回）
+
+在拼 user prompt 时附带：
+
+- 已有 bio_text（截 800 字）
+- crawler 抽出的 keyword 命中段（如有）— 用现有 `bio_text` 跑一遍 keyword 扫描（不调 LLM）
+- 已有 evaluation 行的简短摘要（如果是增量重跑）
+- 提示 agent 优先去课题组官网（搜 "{name} {school} 课题组" / "{name} group"）和知乎
+
+### 3.4 批量 driver + 增量
+
+新增 `pipeline/enrich_runner.py`（轻量包装 `research_advisor`）：
 
 ```python
-async def enrich_quota(
+async def enrich_with_agent(
     *,
-    school_code: str | None = None,
-    only_missing: bool = True,    # 已有 deepseek 抽取结果就跳过
+    school_code: str,
+    dept_codes: list[str] | None = None,
+    only_missing: bool = True,        # last_enriched_at 为空 或 > N 天前
+    stale_days: int = 30,
     limit: int | None = None,
-    concurrency: int = 3,         # DeepSeek 并发上限
+    max_iter: int = 8,
+    concurrency: int = 2,             # 并发跑 advisor（每个独占一个 BrowserContext）
+    headed: bool = False,
 ) -> EnrichStats:
-    """1. 选目标 advisor（bio_text 非空，且 raw_quota_text 非空 或 现场抽段）
-       2. asyncio.Semaphore(concurrency) 控并发
-       3. 每条 advisor 调 extract_quota → 写库
-       4. 失败重试 2 次（指数退避，基于 tenacity）"""
+    ...
 ```
 
-`EnrichStats`：`{candidates, processed, written, low_confidence, errors}`。
+`EnrichStats`：candidates / processed / submitted_report / no_report / errors / total_tokens / wall_seconds。
 
-### 2.5 CLI
+跑完打印一行总结，并把详细 token usage 落到 `data/enrich_logs/<timestamp>.jsonl`（每行 = 一位 advisor 的 token 用量 + 报告摘要）。
 
-新增 `src/claw/cli/__init__.py` 里：
+### 3.5 CLI
+
+`cli/__init__.py` 新增：
 
 ```bash
-claw enrich --source quota [--school <code>] [--limit N] [--concurrency 3] [--redo]
-claw backfill-quota-text [--school <code>]
+# 主入口
+claw enrich --source agent --school pku [--dept ai] [--limit 20] [--max-iter 8] \
+            [--concurrency 2] [--all]            # --all 强制重跑（忽略 last_enriched_at）
+            [--headed]                            # 调试用
+
+# 旧的 research 子命令保留为别名，但内部走同一个 enrich_runner
 ```
 
-`--redo` 强制对已有 `extractor="deepseek"` 的 advisor 重抽（覆盖前先 DELETE 旧 quota_info 行）。
+### 3.6 BLOCKED_DOMAINS 微调
+
+继续黑名单百度百科 / Wikipedia / 维基。**新增白名单优先级**（agent 看到这些来源时把 confidence 加权）：
+
+- `zhihu.com/question/*` / `zhihu.com/answer/*` — 学生评价高密度
+- `xiaohongshu.com` — 近年招生海报转发
+- `*.edu.cn/group/*` / `*.lab.*` — 课题组官网
+
+不强制，只在 system prompt 里给 agent 提示。
 
 ---
 
-## 3. 数据流
+## 4. 落地步骤（按 commit 提交）
 
-```
-crawl (已落库)
-  └─ advisor.bio_text
-        └─ backfill-quota-text  →  advisor.raw_quota_text
-              └─ enrich --source quota
-                    ├─ raw_quota_text 非空? 否 → skip
-                    ├─ DeepSeek chat_json → QuotaResult
-                    ├─ confidence < 0.5  → 仅留 raw_quota_text
-                    └─ confidence ≥ 0.5  → write advisor.is_recruiting
-                                         + write quota_info rows
-```
+| step | 内容 | 验收 |
+|---|---|---|
+| 1 | DB 迁移：4 个新列 + `_ensure_enrichment_columns()` | `claw doctor` 后用 `PRAGMA table_info(advisor)` 看到新列 |
+| 2 | `submit_report` 工具 + system prompt 改造 + 写回 advisor 4 列 | pku 抽 3 人手动跑 `claw research --school pku --name X` 能看到 enriched_summary 入库 |
+| 3 | Seed prompt：bio 关键词段 + 已有 evaluation 摘要 | 同 3 人重跑，token 用量明显下降（基线对比） |
+| 4 | `pipeline/enrich_runner.py` + token telemetry + jsonl 日志 | 小批 5 人跑通，日志写出 |
+| 5 | CLI `claw enrich --source agent` | `claw enrich --source agent --school pku --limit 5` 跑通 |
+| 6 | pku 全量跑（207 人，预计 ~1.5 小时 × concurrency=2）| `claw stats` recruiting 列从 4 跳到 ≥40，export csv 抽样合理 |
+| 7 | `docs/reports/enrich_v0.3_report.md` | 覆盖率、风评分布、成本、典型错例 |
 
 ---
 
-## 4. 测试与评估
+## 5. 成本预估（DeepSeek V4）
 
-### 4.1 单元测试（`tests/test_quota.py`）
+- 单 advisor 6-8 轮 tool calling，每轮 ~2-3K input + ~300 output tokens
+- ≈ 20K input + 2K output / advisor
+- DeepSeek 价格：输入 ¥2/M、输出 ¥8/M
+- 单 advisor ≈ ¥0.06，pku 207 人 ≈ **¥12-15**
+- 7 校 ~3000 人全量一轮 ≈ **¥150-200**
 
-- `extract_quota_segment`：4 个用例（见 2.1）。
-- `QuotaResult` schema 解析：mock `chat_json` 返回 JSON dict，验证字段映射与 `confidence` 阈值分支。
-- `enrich_runner` 主流程：mock `extract_quota`，验证 only_missing / limit / 并发不会重复写入。
-
-### 4.2 端到端评估（`tests/test_quota_eval.py`，可选 marker `@pytest.mark.live`）
-
-- 准备 `tests/fixtures/quota_labels.jsonl`：30 条人工标注样本，字段 `{name, school, dept, raw_quota_text, expected_is_recruiting, expected_count_phd}`。
-- 跑真实 DeepSeek，比对预期。验收线：`is_recruiting` 准确率 ≥ 85%，`count` 误差 ≤ 1 的比例 ≥ 70%。
-- 默认 `pytest -m "not live"` 跳过。
-
-### 4.3 成本预估
-
-- 命中段平均 ~800 字符 ≈ 400 tokens；输出 ~200 tokens。
-- DeepSeek V4 价格：输入 ¥2/M tokens，输出 ¥8/M tokens（按 deepseek.com 公开价）。
-- 3000 advisor × (400 in + 200 out) ≈ 1.2M in + 0.6M out ≈ **¥7 / 全量一轮**。
+第一次跑只跑 pku 单校做对照（¥15 试错成本可控）。
 
 ---
 
-## 5. 风险与降级
+## 6. 验收清单
+
+- [ ] DB 迁移幂等（重复跑 `claw doctor` 不报错）
+- [ ] 单人 `claw research --school pku --name "张三"` 跑完后 advisor 表 4 列全填
+- [ ] `claw enrich --source agent --school pku --limit 10 --concurrency 2` 端到端成功
+- [ ] 增量：第二次跑同一批人，默认 skip（除非加 `--all`）
+- [ ] `data/enrich_logs/*.jsonl` 含 token usage + 报告摘要
+- [ ] pku 207 人全量跑完：recruiting 字段非空率 ≥ 60%，reputation_tag 非 unknown 率 ≥ 40%
+- [ ] 成本 ≤ ¥20 / pku
+
+---
+
+## 7. 暂不做（明确划线 v0.4+）
+
+- 知乎登录态复用（agent 当前用未登录访问，部分内容会被遮挡 —— 接受这个损失）
+- mysupervisor / urfire 等评价站（需登录或 IP 限制，留 v0.4 人工辅助）
+- 手工 CSV 评价导入（v0.4）
+- Web UI（v0.5）
+- 跨学院聘任去重的二次合并（已有 appointment 表能用，UI 出来再说）
+
+---
+
+## 8. 风险
 
 | 风险 | 应对 |
 |---|---|
-| 招生信息在子页面（不在 bio 里） | v0.3 不处理；标记 `raw_quota_text=NULL` 走 v0.4 web_research |
-| LLM 编造（hallucination） | 强制要求 `evidence` 字段必须是原文子串；后处理校验，校验失败 → confidence × 0.3 |
-| YAML / 字段变动后历史抽取需要重跑 | `--redo` + `extractor` 字段做版本标记 |
-| DeepSeek 限流 | concurrency 默认 3；tenacity 指数退避 |
-| 隐私（误抽出个人手机号等） | 抽取器只关心招生字段；prompt 显式禁止输出联系方式 |
-
----
-
-## 6. 落地步骤（按顺序提交）
-
-1. `core/quota_text.py` + 单测 → commit `feat(quota): bio 招生段定位启发式`
-2. `pipeline/runner._process_profile` 接入 quota_text 抽取 + `cli backfill-quota-text` → commit `feat(quota): 入库即抽段 + backfill 命令`
-3. `enrichers/quota_extractor.py` + 单测（mock LLM） → commit `feat(quota): DeepSeek 招生抽取器`
-4. `pipeline/enrich_runner.py` + `cli enrich --source quota` → commit `feat(quota): 批量 enrich pipeline + CLI`
-5. `tests/fixtures/quota_labels.jsonl`（30 条手标）+ live 评估脚本 → commit `test(quota): 人工标注样本 + live 评估`
-6. 全量跑一遍（WSL 本地）→ 出 `docs/reports/quota_v0.3_report.md`：覆盖率、confidence 分布、抽样错例。
-
----
-
-## 7. 验收清单
-
-- [ ] `uv run pytest tests/test_quota.py` 全绿
-- [ ] `uv run claw backfill-quota-text` 在 7 校全量库上不报错，`raw_quota_text` 命中率 ≥ 60%
-- [ ] `uv run claw enrich --source quota --school tsinghua --limit 20` 端到端成功，至少 50% 写入 `is_recruiting`
-- [ ] 全量跑完后：DB 里 `advisor.is_recruiting IS NOT NULL` 的占比 ≥ 30%
-- [ ] live 评估 `is_recruiting` 准确率 ≥ 85%
-- [ ] 全量一轮 DeepSeek 费用 ≤ ¥10
+| agent 跑 8 轮还没拿到信号 | `submit_report(is_recruiting=null, confidence=0.1, reputation_tag=unknown)` 也算成功，下次手工补 |
+| Bing 验证码 | 已有 BrowserContext 切 headed + 人工通过；超过 N 次 captcha 自动暂停 |
+| 知乎反爬 | agent 看 snippet 即可，不强求完整答案 |
+| DeepSeek 限流 | concurrency 默认 2；tenacity 已封装重试 |
+| 跑到一半电脑挂了 | 增量机制 (`last_enriched_at` + `--only-missing`) 直接续跑 |
