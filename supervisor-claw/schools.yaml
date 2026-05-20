@@ -242,3 +242,27 @@ schools:
         name_cn: 清源研究院
         list_urls:
           - http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html
+
+  - code: sysu
+    name_cn: 中山大学
+    name_en: Sun Yat-sen University
+    departments:
+      # 计算机学院 真正的入口是 cse.sysu.edu.cn (sdcs.sysu.edu.cn 已不可达)。
+      # /teacher 单页渲染全部 ~110 位专任教师 (Drupal 10 facultyblock 卡片)。
+      - code: cs
+        name_cn: 计算机学院
+        list_urls:
+          - https://cse.sysu.edu.cn/teacher
+      # 软件工程学院 (珠海校区). /teacher 是 aggregate 全名单 (教授/副教授/
+      # 助理教授/讲师/研究员 一页) ≈ 40 人. 同结构子页可按需补:
+      #   /teacher/professor /teacher/associate_professor /teacher/assistant_professor
+      #   /teacher/lecturer /teacher/researcher
+      - code: sw
+        name_cn: 软件工程学院
+        list_urls:
+          - https://sse.sysu.edu.cn/teacher
+      # 人工智能学院 (珠海校区). 注意 URL 是复数 /teachers, 不同于 sse 的 /teacher.
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://sai.sysu.edu.cn/teachers
