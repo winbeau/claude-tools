@@ -22,6 +22,7 @@ Per advisor: max_iter LLM turns, total time bounded by Playwright timeouts.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -260,6 +261,48 @@ FINAL_TOOL_NAMES: set[str] = {
 
 
 _VALID_REPUTATION_TAGS = {"positive", "neutral", "negative", "unknown"}
+
+
+_RECRUIT_KW = re.compile(
+    r"(招生|招收|招聘|招博|招硕|名额|指标|保研|推免|欢迎报考|欢迎加入|欢迎咨询|"
+    r"recruit\w*|Ph\.?D|PhD|Master|openings|positions)",
+    re.IGNORECASE,
+)
+
+
+def _bio_recruit_excerpt(bio_text: str | None, *, window: int = 220) -> str | None:
+    """Return a short excerpt around the first recruit-keyword hit in bio_text.
+
+    Heuristic only — no LLM. Caller should drop the result into the agent's
+    seed prompt to (a) save a homepage read, (b) bias the agent toward the
+    actual recruitment phrasing on that homepage. Returns None on miss.
+    """
+    if not bio_text:
+        return None
+    m = _RECRUIT_KW.search(bio_text)
+    if not m:
+        return None
+    start = max(0, m.start() - window)
+    end = min(len(bio_text), m.end() + window)
+    excerpt = bio_text[start:end].strip().replace("\n", " / ")
+    prefix = "…" if start > 0 else ""
+    suffix = "…" if end < len(bio_text) else ""
+    return f"{prefix}{excerpt}{suffix}"
+
+
+def _prior_evidence_summary(session, advisor_id: int) -> str | None:
+    """When an advisor is being re-enriched, surface a one-line summary of
+    what we already have so the agent doesn't waste tokens re-deriving it."""
+    evs = session.exec(select(Evaluation).where(Evaluation.advisor_id == advisor_id).limit(5)).all()
+    qs = session.exec(select(QuotaInfo).where(QuotaInfo.advisor_id == advisor_id).limit(5)).all()
+    if not evs and not qs:
+        return None
+    bits: list[str] = []
+    if evs:
+        bits.append(f"{len(evs)} 条已存评价")
+    if qs:
+        bits.append(f"{len(qs)} 条已存招生信号")
+    return "（上次调研已有：" + " · ".join(bits) + "，请基于此补全或更新，不要重复同源 URL）"
 
 
 @dataclass
@@ -545,17 +588,47 @@ class ResearchAgent:
             return self._tool_finish(args.get("reason", ""))
         return {"ok": False, "error": f"unknown tool {name}"}
 
+    # ----- seed prompt builder -----
+
+    def _build_user_intro(self) -> str:
+        adv = self.advisor
+        parts: list[str] = [
+            f"调研对象：{adv.name_cn}（{self.school_name} · {self.dept_name}）",
+            f"职称：{adv.title or '未知'}",
+            f"研究方向：{adv.research_interests_raw or '未知'}",
+            f"邮箱：{adv.email or '未知'}",
+            f"主页：{adv.homepage or '未知'}",
+        ]
+
+        # already-crawled bio: include up to 800 chars so the agent doesn't
+        # waste a read_page round-trip on the homepage we already have
+        bio = (adv.bio_text or "").strip()
+        if bio:
+            parts.append("")
+            parts.append("【官网 bio 摘要（已爬，无需重读主页）】")
+            parts.append(bio[:800] + ("…" if len(bio) > 800 else ""))
+
+        # if bio contains recruit-keyword hit, surface it explicitly
+        excerpt = _bio_recruit_excerpt(adv.bio_text)
+        if excerpt:
+            parts.append("")
+            parts.append("【bio 中检出的招生相关片段（启发式）】")
+            parts.append(excerpt)
+
+        # incremental re-run hint
+        prior = _prior_evidence_summary(self.session, adv.id or -1)
+        if prior:
+            parts.append("")
+            parts.append(prior)
+
+        parts.append("")
+        parts.append("请用工具调用开始调研。最后**务必** submit_report + finish。")
+        return "\n".join(parts)
+
     # ----- main loop -----
 
     async def run(self) -> AgentResult:
-        user_intro = (
-            f"调研对象：{self.advisor.name_cn}（{self.school_name} · {self.dept_name}）\n"
-            f"职称：{self.advisor.title or '未知'}\n"
-            f"研究方向：{self.advisor.research_interests_raw or '未知'}\n"
-            f"邮箱：{self.advisor.email or '未知'}\n"
-            f"主页：{self.advisor.homepage or '未知'}\n\n"
-            f"请用工具调用开始调研。"
-        )
+        user_intro = self._build_user_intro()
         messages: list[dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_intro},
