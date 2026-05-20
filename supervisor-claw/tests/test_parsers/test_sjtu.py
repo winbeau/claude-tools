@@ -20,6 +20,7 @@ LIST_URL_CS = "https://www.cs.sjtu.edu.cn/jiaoshiml.html"
 LIST_URL_AI = "https://soai.sjtu.edu.cn/cn/faculty/zzjs"
 LIST_URL_SEEAI = "https://sais.sjtu.edu.cn/faculty.html"
 LIST_URL_QY = "http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html"
+LIST_URL_CSE = "https://infosec.sjtu.edu.cn/Directory.aspx"
 
 
 @pytest.fixture
@@ -124,6 +125,53 @@ def test_parse_list_qingyuan_dedupes_rank_groups(adapter: SjtuAdapter) -> None:
     by_name = {it.name_cn: it for it in items}
     xu = by_name.get("徐宁仪")
     assert xu is not None and xu.title and "长聘教授" in xu.title
+
+
+def test_parse_list_cse(adapter: SjtuAdapter) -> None:
+    """infosec.sjtu.edu.cn 教师名录 (v0.4.1 add-on).
+
+    Directory.aspx is a static single-page roster; we expect ~75 PIs with
+    name + title + (mostly) email + photo carried on the list card itself.
+    A small fraction (~5) cross-link to www.cs.sjtu.edu.cn/PeopleDetail.aspx —
+    the adapter must keep those absolute URLs so the cs.sjtu profile parser
+    handles them later.
+    """
+    html = (FIX / "list_cse_directory.html").read_text(encoding="utf-8")
+    items = adapter.parse_list(html, LIST_URL_CSE)
+    # 75 local + 5 cross-link = 80 PI per the 2026-05 snapshot; require >=50
+    # to stay resilient against minor roster turnover.
+    assert len(items) >= 50, f"expected >=50 CSE teachers, got {len(items)}"
+
+    # 100% name + profile_url coverage
+    assert all(it.name_cn and it.profile_url for it in items)
+    # all URLs unique
+    urls = [it.profile_url for it in items]
+    assert len(urls) == len(set(urls)), "parse_list must dedupe by URL"
+
+    # spot-check named PIs visible on Directory.aspx
+    names = {it.name_cn for it in items}
+    for known in ("谷大武", "孔令和", "邢朝平", "李建华"):
+        assert known in names, f"missing known CSE faculty: {known}"
+
+    # cross-linked PIs must keep their cs.sjtu.edu.cn host (so _dept_from_url
+    # later routes them to the cs profile parser, not back to cse).
+    xlink = [it for it in items if "cs.sjtu.edu.cn" in (it.profile_url or "")]
+    assert xlink, "expected at least one cross-linked cs.sjtu PI"
+    for it in xlink:
+        assert it.profile_url and it.profile_url.startswith("http")
+        assert "PeopleDetail.aspx" in (it.profile_url or "")
+
+    # >80% email coverage (Directory.aspx exposes 邮箱 inline)
+    with_email = [it for it in items if it.email]
+    assert len(with_email) / len(items) > 0.8, (
+        f"low email coverage: {len(with_email)}/{len(items)}"
+    )
+    for it in with_email:
+        assert "@" in (it.email or "")
+
+    # no nav text leaked as name
+    for noise in ("教师名录", "师资队伍", "教授", "院长", "首页", "全部"):
+        assert noise not in names, f"navigation token leaked: {noise!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +279,88 @@ def test_parse_profile_see_ai_non_ai_filtered(adapter: SjtuAdapter) -> None:
     )
 
 
+def test_parse_profile_cse_no_nav(adapter: SjtuAdapter) -> None:
+    """infosec.sjtu DirectoryDetail.aspx profile (谷大武 院长).
+
+    bio or research_interests must be populated, and neither bio_text nor
+    raw_quota_text may carry JS/style/site-nav debris."""
+    html = (FIX / "profile_cse_177_gudawu.html").read_text(encoding="utf-8")
+    item = ListItem(
+        name_cn="谷大武",
+        profile_url="https://infosec.sjtu.edu.cn/DirectoryDetail.aspx?id=177",
+    )
+    p = adapter.parse_profile(html, item.profile_url, item)
+    assert p.name_cn == "谷大武"
+    assert p.title and "教授" in p.title
+    # bio OR research_interests must be present (and in practice both should be)
+    assert p.bio_text or p.research_interests
+    assert p.bio_text and "密码" in p.bio_text
+    # research tags: standard cleanliness
+    assert p.research_interests, "expected research_interests for senior PI"
+    for t in p.research_interests:
+        assert 2 <= len(t) <= 25
+        assert all(c not in t for c in "。！？()（）")
+
+    # no JS / style / site-nav leak in bio or quota
+    blob = (p.bio_text or "") + "\n" + (p.raw_quota_text or "")
+    for bad in ("function(", "var ", "<script", "@media", "</style>", "setTab("):
+        assert bad not in blob, f"leaked {bad!r} in bio/quota"
+    for nav in (
+        "学院概况", "师资队伍", "通知通告", "招聘专栏", "首页",
+        "学院领导", "组织架构", "党建工作",
+    ):
+        assert nav not in blob, f"nav token {nav!r} leaked"
+
+
+def test_parse_profile_cse_email(adapter: SjtuAdapter) -> None:
+    """孔令和 — infosec CSE profile with plaintext email + phone.
+
+    Validates that:
+      * email is extracted from the left-column .fa-envelope-o <em>
+      * phone is extracted from .fa-phone <em>
+      * research_interests come from con_one_1 (研究兴趣 tab body)
+      * the school footer email (scs@) is not adopted
+      * when an email is found, email_obfuscated is False
+    """
+    html = (FIX / "profile_cse_188_konglinghe.html").read_text(encoding="utf-8")
+    item = ListItem(
+        name_cn="孔令和",
+        profile_url="https://infosec.sjtu.edu.cn/DirectoryDetail.aspx?id=188",
+    )
+    p = adapter.parse_profile(html, item.profile_url, item)
+    assert p.name_cn == "孔令和"
+    # email present in fixture
+    assert p.email == "linghe.kong@sjtu.edu.cn"
+    assert p.email_obfuscated is False
+    assert p.phone and "34208292" in p.phone
+    assert p.title and "教授" in p.title
+    # research tags include IoT/AI keywords
+    assert p.research_interests
+    assert any("物联网" in t or "人工智能" in t for t in p.research_interests)
+
+
+def test_parse_profile_cse_xlink_routes_to_cs(adapter: SjtuAdapter) -> None:
+    """A cross-linked PI from the CSE roster whose profile_url points to
+    www.cs.sjtu.edu.cn/PeopleDetail.aspx?id=N must be routed to the cs.sjtu
+    profile parser (which, as of 2026-05, returns a stub because PeopleDetail
+    redirects to /; the list-level seed metadata in ListItem must survive)."""
+    html = (FIX / "profile_cse_xlink_cs_96_liushengli.html").read_text(encoding="utf-8")
+    item = ListItem(
+        name_cn="刘胜利",
+        profile_url="http://www.cs.sjtu.edu.cn/PeopleDetail.aspx?id=96",
+        title="特聘教授",
+        email="liu-sl@cs.sjtu.edu.cn",
+    )
+    p = adapter.parse_profile(html, item.profile_url, item)
+    # routing fell through to the cs.sjtu profile parser (which yields a
+    # stub since the page is now a homepage redirect target); list-item
+    # seeds must therefore appear unchanged on the partial.
+    assert p.name_cn == "刘胜利"
+    assert p.title == "特聘教授"
+    assert p.email == "liu-sl@cs.sjtu.edu.cn"
+    assert p.source_url == item.profile_url
+
+
 def test_parse_profile_qingyuan_extracts_bio_and_email(adapter: SjtuAdapter) -> None:
     """徐宁仪 — qingyuan profile; bio woven with 研究方向 prose."""
     html = (FIX / "profile_qingyuan_xuningyi.html").read_text(encoding="utf-8")
@@ -276,6 +406,12 @@ def test_no_js_or_style_leak_in_any_bio(adapter: SjtuAdapter) -> None:
          "https://sais.sjtu.edu.cn/faculty/caochengxi.html", "曹成喜"),
         ("profile_qingyuan_xuningyi.html",
          "http://www.qingyuan.sjtu.edu.cn/a/xu-ning-yi-1.html", "徐宁仪"),
+        ("profile_cse_177_gudawu.html",
+         "https://infosec.sjtu.edu.cn/DirectoryDetail.aspx?id=177", "谷大武"),
+        ("profile_cse_188_konglinghe.html",
+         "https://infosec.sjtu.edu.cn/DirectoryDetail.aspx?id=188", "孔令和"),
+        ("profile_cse_132_xingchaoping.html",
+         "https://infosec.sjtu.edu.cn/DirectoryDetail.aspx?id=132", "邢朝平"),
     ]
     for fname, url, name in cases:
         html = (FIX / fname).read_text(encoding="utf-8")

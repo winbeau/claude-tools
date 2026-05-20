@@ -254,6 +254,15 @@ schools:
         name_cn: 清源研究院
         list_urls:
           - http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html
+      # 网络空间安全学院 = infosec.sjtu.edu.cn (v0.4.1 add-on; missed in v0.4).
+      # Directory.aspx is a static 67 KB single-page roster grouped by 职称.
+      # ~75 PI total; ~5 senior PI cross-link to www.cs.sjtu.edu.cn —
+      # adapter keeps those URLs absolute so they route to the cs.sjtu profile
+      # parser. Profile pages: DirectoryDetail.aspx?id=<int>.
+      - code: cse
+        name_cn: 网络空间安全学院
+        list_urls:
+          - https://infosec.sjtu.edu.cn/Directory.aspx
 
   - code: shtech
     name_cn: 上海科技大学
