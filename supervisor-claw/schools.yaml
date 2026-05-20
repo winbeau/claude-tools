@@ -357,3 +357,41 @@ schools:
         list_urls:
           - https://iai.buaa.edu.cn/szdw/ayjsdsjs.htm
           - https://iai.buaa.edu.cn/szdw/jcrc.htm
+
+  - code: hust
+    name_cn: 华中科技大学
+    name_en: HUST
+    departments:
+      # cs.hust.edu.cn 的"师资队伍"有两个 sibling 入口：
+      #   - szdw/jsml/axmpyszmlb.htm   按姓名拼音首字母列表 (字母分组)
+      #   - szdw/jsml/ayjslb.htm       按研究所列表 (≈11 个研究所分组)
+      # 两份在静态 GET 下都能拿到全部 ~150 个 PI；选 ayjslb.htm 是因为
+      # 它的 <h6> 里写的是研究所名 (存储所/数据库所/计算理论所/...)，
+      # adapter 把这个标签作为 soft title-hint 带回 ListItem。
+      - code: cs
+        name_cn: 计算机科学与技术学院
+        list_urls:
+          - https://cs.hust.edu.cn/szdw/jsml/ayjslb.htm
+      # 软件学院 sse.hust.edu.cn 按职称分桶，每桶一页：
+      #   - js_yjy.htm   教授/研究员
+      #   - fjs.htm      副教授
+      #   - js1.htm      讲师
+      # 跳过 jzjs (兼职)/cyjs (产业)/spjs (双聘) —— 不是全职 CS 教师。
+      # 国家高层次人才 gjgccrc.htm 仅是已收录人的 highlight 子集 —— pipeline
+      # 按 (school,name,email) 去重，附加它不增加新人。
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://sse.hust.edu.cn/szdw1/js_yjy.htm
+          - https://sse.hust.edu.cn/szdw1/fjs.htm
+          - https://sse.hust.edu.cn/szdw1/js1.htm
+      # 人工智能与自动化学院 aia.hust.edu.cn 是 自动化 + AI 合并学院。
+      # 师资入口 szdw/xysz/axlb.htm 按职称分组 (正高/副高/中级) ≈ 117 人；
+      # axmpyszmlb.htm 按姓名拼音 ≈ 120 人，两者高度重叠 (pipeline 去重)，
+      # 我们选 axlb.htm 因为分组标签更短、对下游报表更有用。
+      # **known limitation**：本期不区分 AI vs 控制/电机 方向，全院收下，
+      # 由 v0.3 DeepSeek enricher 过滤纯控制方向 PI。
+      - code: ai
+        name_cn: 人工智能与自动化学院
+        list_urls:
+          - https://aia.hust.edu.cn/szdw/xysz/axlb.htm
