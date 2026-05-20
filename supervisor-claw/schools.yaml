@@ -67,6 +67,18 @@ schools:
         list_urls:
           - https://cfcs.pku.edu.cn/people/faculty/index.htm
           - https://cfcs.pku.edu.cn/people/directors/index.htm
+      # 软件与微电子学院 = ss.pku.edu.cn (v0.4.1 补漏 dept).
+      # 师资按学位类型分桶：xssbsz = 工学博士 (~15 PIs)，
+      # qygcbssz = 电子信息博士 (~67 PIs, 多为校本部 / 工学院 双聘).
+      # 列表卡片是 ``<li><a [href]><div class="name"><span>姓名</span></div></a></li>``：
+      # 大量条目 <a> 无 href（合署/双聘老师在 ss.pku 没独立 profile 页）,
+      # adapter 仍以 name-only ListItem 收下, 由 pipeline + 后续 enricher
+      # 处理。profile 页公开信息里没有邮箱, 全部走 email_obfuscated=True。
+      - code: ss
+        name_cn: 软件与微电子学院
+        list_urls:
+          - https://ss.pku.edu.cn/sztd/xssbsz/index.htm
+          - https://ss.pku.edu.cn/sztd/qygcbssz/index.htm
 
   - code: nju
     name_cn: 南京大学
