@@ -601,3 +601,41 @@ schools:
         name_cn: 计算机科学与工程学院、软件学院、人工智能学院
         list_urls:
           - https://cse.seu.edu.cn/49355/list.htm
+
+  - code: xidian
+    name_cn: 西安电子科技大学
+    name_en: Xidian University
+    departments:
+      # 计算机科学与技术学院 = cs.xidian.edu.cn. 院系师资统一汇总到三个 dept-side
+      # 表格页, 每页 cell 内是 <a href="https://faculty.xidian.edu.cn/<id>/zh_CN/index.htm">姓名</a>:
+      #   - szdw/rcpy.htm  人才培养  (~162 PIs, 覆盖最全)
+      #   - szdw/dsjs.htm  导师介绍  (~91  PIs, 一部分非 rcpy)
+      #   - szdw/xkky.htm  学科科研  (~139 PIs, 高度与 rcpy 重叠)
+      # 三个 list 合并后 union ≈ 207 PI; pipeline 按 (school,name,email) 去重.
+      - code: cs
+        name_cn: 计算机科学与技术学院
+        list_urls:
+          - https://cs.xidian.edu.cn/szdw/rcpy.htm
+          - https://cs.xidian.edu.cn/szdw/dsjs.htm
+          - https://cs.xidian.edu.cn/szdw/xkky.htm
+      # 网络与信息安全学院 = ce.xidian.edu.cn. 院网没有完整师资页, 师资统一通过
+      # faculty.xidian.edu.cn/xyjslb.jsp 暴露, **每个 sub-tree id 上限 ~20 PIs**
+      # 且无 URL 分页参数; 我们枚举 4 个二级系 id (信息安全系 / 网络工程系 /
+      # 密码系 / 教学单位) 共 ~80 PIs. **known limitation**: 全院真实 PI > 100,
+      # 静态抓不全, v0.3 应该接 Playwright 走拼音首字母索引.
+      - code: cse
+        name_cn: 网络与信息安全学院
+        list_urls:
+          - https://faculty.xidian.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&st=0&id=1929&lang=zh_CN  # 信息安全系
+          - https://faculty.xidian.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&st=0&id=1930&lang=zh_CN  # 网络工程系
+          - https://faculty.xidian.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&st=0&id=2661&lang=zh_CN  # 密码系
+          - https://faculty.xidian.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&st=0&id=3203&lang=zh_CN  # 教学单位
+          - https://faculty.xidian.edu.cn/xyjslb.jsp?urltype=tsites.CollegeTeacherList&wbtreeid=1001&st=0&id=1596&lang=zh_CN  # 学院总览
+      # 人工智能学院 = sai.xidian.edu.cn. /yjspy/dszy1.htm 一页平铺 75 位 PI:
+      # 大部分链接到 faculty.xidian.edu.cn 主页平台, 少数 (~6) senior PI 链接
+      # 到 web.xidian.edu.cn/<userid>/ 个人主页 (adapter parse_profile 对后者
+      # 返回 link-only AdvisorPartial, 等 v0.3 enricher 补全).
+      - code: ai
+        name_cn: 人工智能学院
+        list_urls:
+          - https://sai.xidian.edu.cn/yjspy/dszy1.htm
