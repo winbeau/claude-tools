@@ -465,3 +465,51 @@ schools:
           - https://cs.nankai.edu.cn/szdw/js/1.htm    # 教授 (p2)
           - https://cs.nankai.edu.cn/szdw/fjs.htm     # 副教授
           - https://cs.nankai.edu.cn/szdw/js2.htm     # 讲师
+
+  - code: uestc
+    name_cn: 电子科技大学
+    name_en: UESTC
+    departments:
+      # 计算机科学与工程学院 / 网络空间安全学院 = www.scse.uestc.edu.cn.
+      # **Known limitation (v0.4)**: scse 已切换到 TS-WAF JS-challenge 防爬墙
+      # —— 静态 httpx GET 仅能拿到 ~2.4 KB stub (HTTP 202 + <meta
+      # id="sx6c1KC7YLcx">). Adapter 在检测到 stub 时返回空列表，等待
+      # crawl pipeline 接入 Playwright fetch 后才能正式启用。
+      # URL 形态与 sice 同构 (/szdw/jsml1/<rank>.htm)，body 里的 ``var ret = [...]``
+      # JSON blob 是同一套模板，所以 Playwright 落地后即可复用 sice 解析路径。
+      - code: cs
+        name_cn: 计算机科学与工程学院（网络空间安全学院）
+        list_urls:
+          - https://www.scse.uestc.edu.cn/szdw/jsml1/js.htm     # 教授
+          - https://www.scse.uestc.edu.cn/szdw/jsml1/fjs.htm    # 副教授
+          - https://www.scse.uestc.edu.cn/szdw/jsml1/yjy.htm    # 研究员
+          - https://www.scse.uestc.edu.cn/szdw/jsml1/fyjy.htm   # 副研究员
+          - https://www.scse.uestc.edu.cn/szdw/jsml1/jsjyx.htm  # 讲师及以下
+      # 信息与软件工程学院 = sise.uestc.edu.cn.  同样在 TS-WAF 后，HTTP 412 ——
+      # adapter 同样需要 Playwright；模板一致。
+      - code: sw
+        name_cn: 信息与软件工程学院（示范性软件学院）
+        list_urls:
+          - https://sise.uestc.edu.cn/szdw/jsml1/js.htm
+          - https://sise.uestc.edu.cn/szdw/jsml1/fjs.htm
+          - https://sise.uestc.edu.cn/szdw/jsml1/jsjyx.htm
+      # 信息与通信工程学院 (sice) 是 v0.4 唯一能静态抓的 UESTC CS/AI
+      # 相关学院。师资按职称分桶：
+      #   - js.htm       教授           (~112)
+      #   - fjs.htm      副教授         (~91)
+      #   - yjy.htm      研究员         (~18)
+      #   - fyjy.htm     副研究员       (~18)
+      #   - gjgcs.htm    高级工程师/实验师 (~12)
+      #   - jsjyx.htm    讲师及以下     (~21)
+      # 列表数据嵌在 inline ``var ret = [...]`` JSON 里 (页面右下 jQuery
+      # 走分页 + AJAX 渲染)；adapter 直接吃 JSON，所以即便 ``<ul>``
+      # 客户端为空也能拿全。
+      - code: ai
+        name_cn: 信息与通信工程学院
+        list_urls:
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/js.htm
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/fjs.htm
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/yjy.htm
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/fyjy.htm
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/gjgcs.htm
+          - https://www.sice.uestc.edu.cn/szdw/jsml1/jsjyx.htm
