@@ -1,7 +1,8 @@
 """Shanghai Jiao Tong University (SJTU) adapter.
 
 v0.2 covers four departments whose homepages span four sub-domains and three
-very different rendering styles:
+very different rendering styles. v0.4.1 appends a fifth department
+(网络空间安全学院 / infosec.sjtu.edu.cn) that was missed in v0.4.
 
 Departments
 -----------
@@ -22,6 +23,24 @@ Departments
 * ``qingyuan``  — 清源研究院 (www.qingyuan.sjtu.edu.cn). 全职教师 page lists
   ~10 tenure-track faculty with names + photos. Same template used for
   profile pages (``div.t_d_title`` + ``div.tel_info`` + ``div.text``).
+* ``cse``       — 网络空间安全学院 (infosec.sjtu.edu.cn, v0.4.1). Static .NET
+  WebForms template; ``Directory.aspx`` is a 67 KB single-page roster with
+  ~75 teachers grouped by 职称 section (``<div class="Faculty">``). Profile
+  pages live at ``DirectoryDetail.aspx?id=<int>`` and use a ``<div class="TeamDetail">``
+  layout: left column has phone/email/address ``<em>`` icons, right column
+  has ``<h2>name</h2><h3>title</h3>`` plus a tabbed content area with
+  ``<li id="oneN">研究兴趣 / 教育背景 / ...</li>`` headers and
+  ``<div id="con_one_N">body</div>`` panels mapped by index.
+
+  A small fraction (~5) of senior PI in the CSE roster link out to
+  ``http://www.cs.sjtu.edu.cn/PeopleDetail.aspx?id=N`` instead of the local
+  ``DirectoryDetail.aspx``. The list parser keeps these absolute URLs as-is
+  so that ``_dept_from_url`` routes them back to the cs.sjtu profile parser.
+  As of 2026-05 the PeopleDetail.aspx endpoint at cs.sjtu redirects to ``/``
+  (the cs.sjtu CMS migration retired that URL pattern), so ``_parse_profile_cs``
+  yields a stub partial — but the list-level metadata (name + email + title +
+  photo, all carried on the infosec Directory.aspx page) survives via the
+  ListItem fallback inside ``_empty_partial``.
 
 Known oddities
 --------------
@@ -151,6 +170,12 @@ def _looks_like_faculty(title: str | None) -> bool:
 
 def _dept_from_url(url: str) -> str:
     host = (urlparse(url).hostname or "").lower()
+    # CSE first — its host is fully distinct (infosec.sjtu.edu.cn) and we want
+    # to route before any catch-all. Cross-linked cs.sjtu PIs from the CSE
+    # roster keep their cs.sjtu.edu.cn host string so they still fall into
+    # the cs branch on profile_url, which is what we want.
+    if "infosec.sjtu.edu.cn" in host:
+        return "cse"
     if "cs.sjtu.edu.cn" in host:
         return "cs"
     if "soai.sjtu.edu.cn" in host or "sai.sjtu.edu.cn" in host:
@@ -429,6 +454,89 @@ def _parse_list_qingyuan(html: str, list_url: str) -> list[ListItem]:
                 continue
             seen.add(absurl)
             items.append(ListItem(name_cn=name, profile_url=absurl))
+    return items
+
+
+def _parse_list_cse(html: str, list_url: str) -> list[ListItem]:
+    """infosec.sjtu.edu.cn 教师名录 (Directory.aspx).
+
+    Layout: <div class="Faculty"> sections grouped by 职称 (院士, 讲席教授,
+    特聘教授, ...), each containing a <ul><li><a href="..."><img>+<h2>name</h2>
+    +<h5>职称：...</h5>+<p>研究兴趣：...</p>+<p>邮箱：...</p></a></li></ul>.
+
+    A small fraction of senior PI cross-link to www.cs.sjtu.edu.cn:
+
+        <a href="http://www.cs.sjtu.edu.cn/PeopleDetail.aspx?id=96" target="_blank">
+
+    For these we keep the absolute cs.sjtu URL so ``_dept_from_url`` routes
+    them to the cs.sjtu profile parser. List metadata (name / title / email
+    / photo / research_interests) is still scraped from the infosec card.
+    """
+    tree = parse(html)
+    items: list[ListItem] = []
+    seen: set[str] = set()
+    for a in tree.css("li a"):
+        href = (a.attributes.get("href") or "").strip()
+        if not href:
+            continue
+        # Profile shapes accepted:
+        #   DirectoryDetail.aspx?id=N          (local infosec teacher)
+        #   http://www.cs.sjtu.edu.cn/PeopleDetail.aspx?id=N  (cross-link)
+        is_local = "DirectoryDetail.aspx" in href
+        is_xlink = "PeopleDetail.aspx" in href
+        if not (is_local or is_xlink):
+            continue
+
+        # name lives in <h2> directly under the <a>
+        h2 = a.css_first("h2")
+        name = text_of(h2) if h2 is not None else ""
+        name = name.replace("　", "").strip()
+        if not name or len(name) > 20:
+            continue
+
+        # title: <h5>职称：xxx</h5> — strip leading 职称：
+        h5 = a.css_first("h5")
+        title: str | None = None
+        if h5 is not None:
+            raw_title = text_of(h5).strip().rstrip("。")
+            if raw_title.startswith("职称"):
+                raw_title = raw_title.split("：", 1)[-1].strip() if "：" in raw_title else raw_title
+            title = raw_title or None
+
+        # email + photo + a hint of research_interests in <p> tags
+        email: str | None = None
+        photo_url: str | None = None
+        for p in a.css("p"):
+            t = text_of(p)
+            if "@" in t:
+                em, _ = extract_email(t)
+                if em and not email:
+                    email = em
+        img = a.css_first("img")
+        if img is not None:
+            src = img.attributes.get("src") or ""
+            if src:
+                photo_url = absolutize(list_url, src)
+
+        # Absolutise: keep cross-link absolute, normalise local relatives.
+        if is_xlink:
+            absurl = href if href.startswith("http") else absolutize(list_url, href)
+        else:
+            absurl = absolutize(list_url, href)
+
+        if absurl in seen:
+            continue
+        seen.add(absurl)
+
+        items.append(
+            ListItem(
+                name_cn=name,
+                profile_url=absurl,
+                title=title,
+                email=email,
+                photo_url=photo_url,
+            )
+        )
     return items
 
 
@@ -929,6 +1037,190 @@ def _parse_profile_qingyuan(
     )
 
 
+_CSE_TAB_LABELS_FALLBACK: tuple[str, ...] = (
+    "研究兴趣",  # con_one_1
+    "教育背景",  # con_one_2
+    "工作经验",  # con_one_3
+    "教授课程",  # con_one_4
+    "论文发表",  # con_one_5
+    "项目资助",  # con_one_6
+    "获奖信息",  # con_one_7
+    "学术服务",  # con_one_8
+)
+
+
+def _cse_tab_labels(tree) -> list[str]:
+    """Return tab labels in display order for the .Tab block on a
+    DirectoryDetail.aspx profile.
+
+    The template uses ``<li id="one1" ...>研究兴趣</li>`` through
+    ``<li id="oneN" ...>...</li>``; we read them positionally and fall back
+    to the canonical labels seen across all sampled fixtures if a page has
+    a non-standard ordering or count.
+    """
+    labels: list[str] = []
+    tab_box = tree.css_first("div.Tab")
+    if tab_box is None:
+        return list(_CSE_TAB_LABELS_FALLBACK)
+    for li in tab_box.css("li"):
+        lid = (li.attributes.get("id") or "").strip()
+        if not lid.startswith("one"):
+            continue
+        label = text_of(li).strip().rstrip("：:")
+        if label:
+            labels.append(label)
+    return labels or list(_CSE_TAB_LABELS_FALLBACK)
+
+
+def _parse_profile_cse(
+    html: str, profile_url: str, list_item: ListItem
+) -> AdvisorPartial:
+    """infosec.sjtu.edu.cn DirectoryDetail.aspx?id=N profile.
+
+    Layout:
+        <div class="TeamDetail">
+          <div class="w180 fl">
+            <em><i class="fa fa-phone"></i>021-...</em>
+            <em><i class="fa fa-envelope-o"></i>x@sjtu.edu.cn</em>
+            <em><i class="fa fa-map-marker"></i>address</em>
+            <img src="...">  (some pages)
+          </div>
+          <div class="w510 fr">
+            <h2>姓名</h2>
+            <h3>职称</h3>
+            <p><span>...bio prose...</span></p>
+          </div>
+          <div class="Tab">
+            <li id="one1" class="Current">研究兴趣</li>
+            <li id="one2">教育背景</li>
+            ...
+          </div>
+          <div id="con_one_1" class="lh250">研究方向 tag list</div>
+          <div id="con_one_2" class="lh250 none">...</div>
+          ...
+        </div>
+    """
+    tree = parse(html)
+    detail = tree.css_first("div.TeamDetail")
+    if detail is None:
+        return _empty_partial(list_item, profile_url)
+
+    name = list_item.name_cn
+    title = list_item.title
+    email = list_item.email
+    phone = list_item.phone
+    photo_url = list_item.photo_url
+
+    # --- right column: name / title / bio prose ----------------------------
+    right = detail.css_first("div.w510")
+    bio: str | None = None
+    if right is not None:
+        h2 = right.css_first("h2")
+        if h2 is not None:
+            n = text_of(h2)
+            if n:
+                name = n
+        h3 = right.css_first("h3")
+        if h3 is not None and not title:
+            t = text_of(h3)
+            if t:
+                title = t
+        # bio: collect <p> direct children but skip the contact-icon emboss
+        bio_chunks: list[str] = []
+        for p in right.css("p"):
+            txt = p.text(separator=" ", strip=True)
+            if not txt:
+                continue
+            # skip lines that are just labels or contact remnants
+            if txt.startswith("邮箱") or txt.startswith("电话") or txt.startswith("地址"):
+                continue
+            bio_chunks.append(txt)
+        if bio_chunks:
+            joined = "\n".join(bio_chunks).strip()
+            if joined:
+                bio = joined[:1500]
+
+    # --- left column: contact icons ----------------------------------------
+    left = detail.css_first("div.w180")
+    if left is not None:
+        for em in left.css("em"):
+            t = em.text(separator=" ", strip=True)
+            if not t:
+                continue
+            if "@" in t and not email:
+                e, _ = extract_email(t)
+                if e and not e.startswith("scs@"):
+                    email = e
+            # phone: <em><i></i>021-34208292</em>
+            elif not phone and re.search(r"\d{3,4}-?\d{6,}", t):
+                m = re.search(r"[\d\-]{6,}", t)
+                if m:
+                    phone = m.group(0)
+        img = left.css_first("img")
+        if img is not None and not photo_url:
+            src = img.attributes.get("src") or ""
+            if src:
+                photo_url = absolutize(profile_url, src)
+
+    # --- tab contents (con_one_1 ..) ---------------------------------------
+    labels = _cse_tab_labels(tree)
+    sections: dict[str, str] = {}
+    for idx, label in enumerate(labels, start=1):
+        node = tree.css_first(f"#con_one_{idx}")
+        if node is None:
+            continue
+        body_text = node.text(separator="\n", strip=True)
+        if not body_text:
+            continue
+        key = label.strip().rstrip("：:")
+        if key:
+            sections[key] = body_text
+
+    research_tags: list[str] = []
+    research_raw = ""
+    for key in ("研究兴趣", "研究方向", "研究领域"):
+        if key in sections and sections[key].strip():
+            research_raw = sections[key]
+            research_tags = _split_interests(research_raw)
+            if research_tags:
+                break
+
+    # bio_text preference: explicit 个人简介 (rare on infosec) > prose collected
+    # from <div class="w510"> right column above.
+    for key in ("个人简介", "简介"):
+        if key in sections and sections[key].strip():
+            bio = sections[key].strip()[:1500]
+            break
+
+    # --- scoped recruit/email/phone scan -----------------------------------
+    scope_text = detail.text(separator=" ", strip=True)
+
+    if not email:
+        em, _ = extract_email(scope_text)
+        if em and not em.startswith("scs@"):
+            email = em
+
+    recruit_chunks = find_recruit_paragraphs(scope_text)
+    raw_quota_text = "\n\n".join(recruit_chunks[:3]) if recruit_chunks else None
+
+    email_obfuscated = email is None  # no plaintext email anywhere
+
+    return AdvisorPartial(
+        name_cn=name,
+        title=title,
+        email=email,
+        email_obfuscated=email_obfuscated,
+        phone=phone,
+        photo_url=photo_url,
+        homepage=profile_url,
+        bio_text=bio,
+        research_interests=research_tags,
+        raw_quota_text=raw_quota_text,
+        is_recruiting=True if recruit_chunks else None,
+        source_url=profile_url,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Adapter
 # ---------------------------------------------------------------------------
@@ -937,7 +1229,7 @@ def _parse_profile_qingyuan(
 @register
 class SjtuAdapter(SchoolAdapter):
     school_code = "sjtu"
-    supports = {"cs", "see-ai", "ai", "qingyuan"}
+    supports = {"cs", "see-ai", "ai", "qingyuan", "cse"}
 
     def parse_list(self, html: str, list_url: str) -> list[ListItem]:
         dept = _dept_from_url(list_url)
@@ -949,6 +1241,8 @@ class SjtuAdapter(SchoolAdapter):
             return _parse_list_see_ai(html, list_url)
         if dept == "qingyuan":
             return _parse_list_qingyuan(html, list_url)
+        if dept == "cse":
+            return _parse_list_cse(html, list_url)
         return []
 
     def parse_profile(
@@ -963,4 +1257,6 @@ class SjtuAdapter(SchoolAdapter):
             return _parse_profile_see_ai(html, profile_url, list_item)
         if dept == "qingyuan":
             return _parse_profile_qingyuan(html, profile_url, list_item)
+        if dept == "cse":
+            return _parse_profile_cse(html, profile_url, list_item)
         return _empty_partial(list_item, profile_url)
