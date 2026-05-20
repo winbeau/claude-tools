@@ -1,16 +1,21 @@
 """Batch agent-enrichment pipeline (v0.3).
 
 Drives `enrichers.web_research.research_advisor` across many advisors with:
-- last_enriched_at filter for incremental re-runs
+- last_enriched_at filter for incremental re-runs (resume-safe by default)
 - bounded concurrency (Semaphore + per-task SQLModel session)
 - per-advisor token-usage telemetry written to data/enrich_logs/<ts>.jsonl
 - aggregate EnrichStats returned to the caller
+- pre-flight banner + PID-based lock file (v0.3.1) to make accidental
+  re-runs visible and prevent two enrich processes from clobbering each other
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
+import os
+import sys
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
@@ -25,6 +30,63 @@ from ..enrichers.web_research import AgentResult, research_advisor
 from ..models.db import Advisor, Appointment, Department, School, init_db, session_scope
 
 log = get_logger(__name__)
+
+
+# ---- v0.3.1 lock file ----------------------------------------------------
+
+LOCK_PATH = Path("data/enrich.lock")
+
+
+class EnrichLocked(RuntimeError):
+    """Another enrich is already running."""
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # exists but we can't signal it
+    return True
+
+
+@contextlib.asynccontextmanager
+async def _acquire_lock(force: bool = False):
+    """File-based mutex on data/enrich.lock (async-context for clean nesting).
+
+    - if lock exists and the writer PID is alive → raise EnrichLocked
+    - if lock exists but the writer PID is dead → stale, overwrite with warning
+    - on clean exit (or signal) → remove the lock
+    """
+    LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if LOCK_PATH.exists():
+        try:
+            payload = json.loads(LOCK_PATH.read_text())
+            other_pid = int(payload.get("pid", 0))
+        except Exception:
+            other_pid = 0
+        if other_pid and _pid_alive(other_pid) and not force:
+            raise EnrichLocked(
+                f"another enrich is running (pid={other_pid}, "
+                f"started={payload.get('start')}). Use --force to override."
+            )
+        log.warning(
+            "stale enrich lock at %s (pid=%s no longer alive); overwriting",
+            LOCK_PATH, other_pid,
+        )
+
+    me = {
+        "pid": os.getpid(),
+        "start": datetime.utcnow().isoformat() + "Z",
+        "cmd": " ".join(sys.argv),
+    }
+    LOCK_PATH.write_text(json.dumps(me, ensure_ascii=False))
+    try:
+        yield
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            LOCK_PATH.unlink()
 
 
 @dataclass
@@ -88,6 +150,26 @@ def _select_targets(
     return targets
 
 
+def _count_states(school_code: str, stale_days: int) -> tuple[int, int, int]:
+    """(total, fresh_enriched, pending) — for the pre-flight banner.
+
+    'fresh_enriched' = last_enriched_at within stale_days; these would be
+    skipped under --only-missing. 'pending' = total - fresh_enriched.
+    """
+    cutoff = datetime.utcnow() - timedelta(days=stale_days)
+    with session_scope() as s:
+        school = s.exec(select(School).where(School.code == school_code)).first()
+        if school is None:
+            return (0, 0, 0)
+        advs = s.exec(select(Advisor).where(Advisor.school_id == school.id)).all()
+        total = len(advs)
+        fresh = sum(
+            1 for a in advs
+            if a.last_enriched_at is not None and a.last_enriched_at > cutoff
+        )
+        return total, fresh, total - fresh
+
+
 def _log_path() -> Path:
     out = Path("data/enrich_logs")
     out.mkdir(parents=True, exist_ok=True)
@@ -128,9 +210,21 @@ async def enrich_with_agent(
     max_iter: int = 8,
     concurrency: int = 2,
     headed: bool = False,
+    force_lock: bool = False,
     on_advisor_done=None,  # callable(idx, total, target, res, err) — for CLI progress
+    on_preflight=None,     # callable(total, fresh_enriched, pending, will_run) — for CLI banner
 ) -> EnrichStats:
     """Run the research agent on a batch of advisors.
+
+    Resume semantics (v0.3.1):
+    - only_missing=True (default) → skip advisors enriched within stale_days;
+      this is the safe "resume from where we stopped" mode
+    - only_missing=False (--force-redo / --all) → redo everyone, will be loud
+      about already-fresh rows in the pre-flight banner
+
+    Process safety (v0.3.1):
+    - A PID-keyed lock file at data/enrich.lock prevents two concurrent
+      enrich processes from clobbering each other's DB writes.
 
     Concurrency: shared BrowserPool + shared bing context with multiple pages
     open in parallel. DeepSeek calls are I/O-bound; the practical ceiling is
@@ -141,16 +235,33 @@ async def enrich_with_agent(
     if find_school(school_code) is None:
         raise ValueError(f"School '{school_code}' not in schools.yaml")
 
+    # ---- pre-flight banner ----------------------------------------------
+    total, fresh, pending = _count_states(school_code, stale_days)
+    will_run = pending if only_missing else total
+    if on_preflight is not None:
+        on_preflight(total, fresh, pending, will_run)
+    else:
+        log.info(
+            "preflight: school=%s total=%d already_enriched_<=%dd=%d pending=%d "
+            "mode=%s will_run=%d",
+            school_code, total, stale_days, fresh, pending,
+            "only-missing" if only_missing else "force-redo (--all)",
+            will_run,
+        )
+    if not only_missing and fresh > 0:
+        log.warning(
+            "⚠️  --force-redo / --all will REDO %d already-enriched advisor(s). "
+            "If you meant 'resume from where we stopped', drop --all.",
+            fresh,
+        )
+
     targets = _select_targets(school_code, dept_codes, only_missing, stale_days, limit)
     stats = EnrichStats(candidates=len(targets))
     log_path = _log_path()
     stats.log_path = str(log_path)
 
     if not targets:
-        log.info(
-            "enrich: 0 candidates for school=%s only_missing=%s",
-            school_code, only_missing,
-        )
+        log.info("enrich: nothing to do (0 candidates) for school=%s", school_code)
         return stats
 
     log.info(
@@ -163,7 +274,7 @@ async def enrich_with_agent(
     done_n = 0
     done_lock = asyncio.Lock()
 
-    async with browser_pool(headless=not headed) as pool:
+    async with _acquire_lock(force=force_lock), browser_pool(headless=not headed) as pool:
 
         async def _one(idx: int, t: _Target) -> None:
             nonlocal done_n

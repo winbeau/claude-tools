@@ -286,11 +286,14 @@ def enrich(
     concurrency: int = typer.Option(2, "--concurrency", help="parallel advisor agents (1-4)"),
     only_missing: bool = typer.Option(
         True,
-        "--only-missing/--all",
-        help="skip advisors with recent last_enriched_at (default); --all re-runs everyone",
+        "--only-missing/--force-redo",
+        help="default: skip advisors enriched within --stale-days (resume-safe). "
+             "--force-redo: redo everyone, including already-enriched.",
     ),
+    all_alias: bool = typer.Option(False, "--all", help="alias for --force-redo (legacy)"),
     stale_days: int = typer.Option(30, "--stale-days", help="how old last_enriched_at must be to re-run"),
     headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
+    force_lock: bool = typer.Option(False, "--force-unlock", help="override data/enrich.lock (use only after confirming no other enrich is running)"),
 ) -> None:
     """Batch enrichment: run agent across all (or filtered) advisors of a school."""
     setup_logging()
@@ -299,7 +302,22 @@ def enrich(
         console.print(f"[red]unsupported --source[/red] {source!r}; only 'agent' is implemented in v0.3")
         raise typer.Exit(2)
 
-    from ..pipeline.enrich_runner import enrich_with_agent
+    from ..pipeline.enrich_runner import EnrichLocked, enrich_with_agent
+
+    # --all is a legacy alias for --force-redo (which is now expressed as
+    # `--only-missing/--force-redo` → only_missing=False)
+    if all_alias:
+        only_missing = False
+
+    def _preflight(total: int, fresh: int, pending: int, will_run: int) -> None:
+        mode = "[green]only-missing (resume-safe)[/]" if only_missing else "[red]force-redo (will REDO already-enriched)[/]"
+        console.print()
+        console.print(f"  [bold]{school_code}[/]: {total} advisors total")
+        console.print(f"    already enriched (<={stale_days}d): [cyan]{fresh}[/]")
+        console.print(f"    pending: [yellow]{pending}[/]")
+        console.print(f"    mode: {mode} → will run [bold]{will_run}[/]")
+        if not only_missing and fresh > 0:
+            console.print(f"  [red]⚠️  --force-redo will REDO {fresh} fresh advisor(s). Ctrl-C in 3s to abort.[/]")
 
     def _progress(n: int, total: int, t, res, err) -> None:
         from ..pipeline.enrich_runner import _short_summary
@@ -309,17 +327,23 @@ def enrich(
         console.print(f"{tag} [{n:>3}/{total}] [bold]{t.name_cn}[/] · {t.dept_name} — {_short_summary(res, err)}")
 
     console.rule(f"[bold blue]enrich {school_code} (source=agent)")
-    stats = asyncio.run(enrich_with_agent(
-        school_code=school_code,
-        dept_codes=dept or None,
-        only_missing=only_missing,
-        stale_days=stale_days,
-        limit=limit or None,
-        max_iter=max_iter,
-        concurrency=concurrency,
-        headed=headed,
-        on_advisor_done=_progress,
-    ))
+    try:
+        stats = asyncio.run(enrich_with_agent(
+            school_code=school_code,
+            dept_codes=dept or None,
+            only_missing=only_missing,
+            stale_days=stale_days,
+            limit=limit or None,
+            max_iter=max_iter,
+            concurrency=concurrency,
+            headed=headed,
+            force_lock=force_lock,
+            on_preflight=_preflight,
+            on_advisor_done=_progress,
+        ))
+    except EnrichLocked as e:
+        console.print(f"[red]✗ enrich locked:[/] {e}")
+        raise typer.Exit(3)
     console.rule(f"[bold green]done {school_code}")
     console.print(
         f"candidates={stats.candidates} processed={stats.processed} "
