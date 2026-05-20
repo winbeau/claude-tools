@@ -242,3 +242,29 @@ schools:
         name_cn: 清源研究院
         list_urls:
           - http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html
+
+  - code: buaa
+    name_cn: 北京航空航天大学
+    name_en: Beihang University
+    departments:
+      # scse.buaa.edu.cn 师资队伍按职称分三个 rank-page；每个 rank-page 内部
+      # 反序分页 (`/szdw/qtjs/js.htm` 是第1页, 后续是 `js/6.htm` → `js/1.htm`)。
+      - code: cs
+        name_cn: 计算机学院
+        list_urls:
+          - https://scse.buaa.edu.cn/szdw/qtjs/js.htm    # 教授
+          - https://scse.buaa.edu.cn/szdw/qtjs/fjs.htm   # 副教授
+          - https://scse.buaa.edu.cn/szdw/qtjs/js1.htm   # 讲师 / 助理教授
+      # soft.buaa.edu.cn 是 VSB SiteBuilder，按 wbtreeid 切教授/副教授/助理教授。
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://soft.buaa.edu.cn/tu-list-1.jsp?wbtreeid=1224   # 教授
+          - https://soft.buaa.edu.cn/tu-list-1.jsp?wbtreeid=1262   # 副教授
+          - https://soft.buaa.edu.cn/tu-list-1.jsp?wbtreeid=1263   # 助理教授
+      # iai.buaa.edu.cn 的 ayjsdsjs 是按研究生导师的统一列表，jcrc 是杰出人才。
+      - code: ai
+        name_cn: 人工智能研究院
+        list_urls:
+          - https://iai.buaa.edu.cn/szdw/ayjsdsjs.htm
+          - https://iai.buaa.edu.cn/szdw/jcrc.htm
