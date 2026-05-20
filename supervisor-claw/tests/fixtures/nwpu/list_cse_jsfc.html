@@ -1,0 +1,424 @@
+﻿<!DOCTYPE html>
+<html><head>
+
+    
+        <meta charset="utf-8">
+        <title>教师风采-西北工业大学网络空间安全学院</title><meta name="pageType" content="2">
+<meta name="pageTitle" content="教师风采">
+<META Name="keywords" Content="西北工业大学网络空间安全学院,教师风采" />
+
+        <!--Announced by Visual SiteBuilder 9-->
+        <link href="css/style.css" rel="stylesheet">
+        <script src="js/bdtxk.js"></script>
+        <script src="js/SuperSlide.js"></script>
+    <!--Announced by Visual SiteBuilder 9-->
+<link rel="stylesheet" type="text/css" href="_sitegray/_sitegray_d.css" />
+<script language="javascript" src="_sitegray/_sitegray.js"></script>
+<!-- CustomerNO:77656262657232306975475152555742000200014156 -->
+<link rel="stylesheet" type="text/css" href="list.vsb.css" />
+<script type="text/javascript" src="/system/resource/js/vsbscreen.min.js" id="_vsbscreen" devices="pc|pad"></script>
+<script type="text/javascript" src="/system/resource/js/counter.js"></script>
+<script type="text/javascript">_jsq_(1090,'/list.jsp',-1,1570493975)</script>
+<script type="text/javascript" src="/system/resource/js/CustomizeLinkJumpRules.js"></script>
+<script type="text/javascript">
+    new outsideLinkJudgmentAndRedirectionFunc();
+    // 使用 new 来调用插件
+    // new outsideLinkJudgmentAndRedirectionFunc('自定义网站标题');  // 传入自定义标题
+    // 或者
+    // new outsideLinkJudgmentAndRedirectionFunc();  // 使用页面的 title 作为默认标题
+</script></head>
+    <body>
+<!-- top -->
+<div class="top">
+            <div class="top-c width">
+                <div class="logo fl">
+                    
+<!-- 网站logo图片地址请在本组件"内容配置-网站logo"处填写 -->
+<a href="index.htm" title="网络空间安全学院"><img src="images/logo.png" width="524" height="64" border="0" alt="网络空间安全学院" title="网络空间安全学院"></a>
+                </div>
+                <div class="search fr">
+                <p class="pho_sj">        <a href="javascript:void(0);" title="手机版" onclick="_vsb_multiscreen.setDevice('mobile')">手机版</a>
+&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp; <script language="javascript" src="/system/resource/js/dynclicks.js"></script><script language="javascript" src="/system/resource/js/openlink.js"></script>   <a href="English/Home.htm" target="_blank" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1570493975, 62824)">English</a>
+</p>
+                    <!-- 3.1.3版本 -->
+
+
+
+<script language="javascript" src="/system/resource/js/base64.js"></script><script language="javascript" src="/system/resource/js/jquery/jquery-latest.min.js"></script><script language="javascript" src="/system/resource/vue/vue.js"></script><script language="javascript" src="/system/resource/vue/bluebird.min.js"></script><script language="javascript" src="/system/resource/vue/axios.js"></script><script language="javascript" src="/system/resource/vue/polyfill.js"></script><script language="javascript" src="/system/resource/vue/token.js"></script><LINK href="/system/resource/vue/static/element/index.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/vue/static/element/index.js"></script><script language="javascript" src="/system/resource/vue/static/public.js"></script><script language="javascript" src="/system/resource/openapp/search/js/containsHtmlTags.js"></script><script language="javascript" src="/system/resource/openapp/search/layui/layui.js"></script><style>
+    #appu3 .tj{
+        border: 0;}
+</style>
+<div id="divu3"></div>
+<script type="text/html" id="htmlu3">
+    <div id="appu3">
+        <div v-if="!isError" class="search_form">
+            <input type="text"   autocomplete=off v-model=query.keyWord @keyup.enter="onSubmit">
+            <input name="submit_button" type="image" src="images/searchico.png" v-on:click="onSubmit()"/>
+        </div>
+        <div v-if="isError" style="color: #b30216; font-size:18px;text-align: center;padding:20px;">
+            应用维护中！
+        </div>
+    </div>
+</script>
+<script>
+    $("#divu3").html($("#htmlu3").text());
+</script>
+<script>
+    var appOwner = "1570493975";
+    var token = 'tourist';
+    var urlPrefix = "/aop_component/";
+
+    jQuery.support.cors = true;
+    $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+    });
+
+    new Vue({
+        el: "#appu3",
+        data: function () {
+            return {
+                query: {
+                    keyWord: "",//搜索关键词
+                    owner: appOwner,
+                    token: token,
+                    urlPrefix: urlPrefix,
+                    lang:"i18n_zh_CN"
+                },
+                isError: false
+            }
+        },
+        mounted: function () {
+            var _this = this;
+            // _this.init();
+        },
+        methods: {
+            init: function(){
+                $.ajax({
+                    url: "/aop_component//webber/search/test",
+                    type: "get",
+                    success: function (response) {
+                        if (response.code == "0000") {
+                        } else if (response.code == "220") {
+                            _this.isError = true;
+                            console.log(response);
+                        } else if (!response.code) {
+                            _this.isError = true;
+                            console.log(response);
+                        }
+                    },
+                    error: function (response) {
+                        _this.isError = true;
+                    }
+                });
+            },
+            onSubmit: function (e) {
+                var url = "/aop_views/search/modules/resultpc/soso.html";
+                if ("10" == "1" || "10" == "2") {
+                    url = "" + url;
+                }
+                var _this = this;
+                var query = _this.query;
+                if (url.indexOf("?") > -1) {
+                    url = url.split("?")[0];
+                }
+                if (query.keyWord) {
+                    var query = new Base64().encode(JSON.stringify(query));
+                    window.open(url + "?query=" + query);
+                } else {
+                    alert("请填写搜索内容")
+                }
+            },
+        }
+    })
+</script>
+
+<script>
+   var appElementu3 = document.querySelector("#appu3");
+   if (appElementu3 && appElementu3.__vue__) {
+
+   } else {
+      $("#divu3").html($("#htmlu3").text());
+      var appOwner = "1570493975";   
+      var urlPrefix = "/aop_component/";
+      var ifLogin="";
+      var token = ifLogin=='true'?gettoken(10, true).trim():'tourist';
+      if (containsHtmlTags(token) || !token) { 
+         token = 'tourist';
+      }
+      jQuery.support.cors = true;
+      $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+      });
+      var queryInfou3 = {
+        query: {
+            keyWord: "",//搜索关键词
+            owner: appOwner,
+            token: token,
+            urlPrefix: urlPrefix,
+            lang:"i18n_zh_CN"
+        },
+        isError: false
+      };
+      function keyUpFunu3(e){
+        var theEvent = e || window.event;
+        var keyCode = theEvent.keyCode || theEvent.which || theEvent.charCode;
+        if(keyCode == 13){
+          onSubmitu3();
+        }
+      };
+
+      function onSubmitu3(e) {
+        queryInfou3.query.keyWord= $("#appu3  .qwss").val();
+        
+        var url = "/aop_views/search/modules/resultpc/soso.html";      
+        if ("10" == "1" || "10" == "2") {
+           url = "" + url;
+        }
+        var query = queryInfou3.query;
+        if (url.indexOf("?") > -1) {
+            url = url.split("?")[0];
+        }
+        if (query.keyWord) {
+            var query = new Base64().encode(JSON.stringify(query));
+            window.open(url + "?query=" + query);
+        } else {
+            alert("请填写搜索内容")
+        }
+      };
+   }
+</script>
+                </div>
+            </div>
+        </div>
+
+<!-- 导航 -->
+<div class="menu">
+    <div class="menu-c width">
+        <ul class="nav clearfix" id="nav">
+<li class="nLi ">
+<h3><a href="index.htm" title="首页">首页</a></h3>
+</li>
+<li class="nLi ">
+<h3><a href="xygk/xyjj.htm" title="学院概况">学院概况</a></h3>
+<ul class="sub">
+<li><a href="xygk/xyjj.htm" title="学院简介">学院简介</a></li>
+<li><a href="xygk/xyld1/wlkjaqxyld.htm" title="学院领导">学院领导</a></li>
+<li><a href="xygk/zzjg.htm" title="组织机构">组织机构</a></li>
+<li><a href="xygk/jgwyh.htm" title="机构委员会">机构委员会</a></li>
+<li><a href="xygk/lxwm.htm" title="联系我们">联系我们</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="szdw/rczp.htm" title="师资队伍">师资队伍</a></h3>
+<ul class="sub">
+<li><a href="szdw/rczp.htm" title="人才招聘">人才招聘</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="jxdt/jxdt.htm" title="人才培养">人才培养</a></h3>
+<ul class="sub">
+<li><a href="jxdt/jxdt.htm" title="教学动态">教学动态</a></li>
+<li><a href="jxdt/bkspy1/zysz.htm" title="本科生培养">本科生培养</a></li>
+<li><a href="jxdt/yjspy1/tzgg.htm" title="研究生培养">研究生培养</a></li>
+<li><a href="jxdt/zsxx.htm" title="招生信息">招生信息</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="kxyj/kydt.htm" title="科学研究">科学研究</a></h3>
+<ul class="sub">
+<li><a href="kxyj/kydt.htm" title="科研动态">科研动态</a></li>
+<li><a href="kxyj/kypt.htm" title="科研平台">科研平台</a></li>
+<li><a href="kxyj/bmyaq.htm" title="保密与安全">保密与安全</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="jypx/bmjypx.htm" title="教育培训">教育培训</a></h3>
+<ul class="sub">
+<li><a href="jypx/bmjypx.htm" title="保密教育培训">保密教育培训</a></li>
+<li><a href="jypx/sxsbmjysxpt.htm" title="陕西省保密教育实训平台">陕西省保密教育实训平台</a></li>
+<li><a href="jypx/lxwm.htm" title="联系我们">联系我们</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="dqgz/dzgk.htm" title="党群工作">党群工作</a></h3>
+<ul class="sub">
+<li><a href="dqgz/dzgk.htm" title="党委概况">党委概况</a></li>
+<li><a href="dqgz/djdt.htm" title="党建动态">党建动态</a></li>
+<li><a href="dqgz/llxx.htm" title="理论学习">理论学习</a></li>
+<li><a href="dqgz/ghgz.htm" title="工会工作">工会工作</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="xsgz/xggk.htm" title="学生工作">学生工作</a></h3>
+<ul class="sub">
+<li><a href="xsgz/xggk.htm" title="学工概况">学工概况</a></li>
+<li><a href="xsgz/xgdw.htm" title="学工队伍">学工队伍</a></li>
+<li><a href="xsgz/xsdt.htm" title="学生动态">学生动态</a></li>
+</ul>
+</li>
+<li class="nLi ">
+<h3><a href="jlyhz/xshy.htm" title="交流与合作">交流与合作</a></h3>
+<ul class="sub">
+<li><a href="jlyhz/xshy.htm" title="学术会议">学术会议</a></li>
+<li><a href="jlyhz/gnhz.htm" title="国内合作">国内合作</a></li>
+<li><a href="jlyhz/gjhz.htm" title="国际合作">国际合作</a></li>
+</ul>
+</li>
+</ul>
+    </div>
+</div>  
+    <script id="jsID" type="text/javascript">
+        
+        jQuery("#nav").slide({ 
+            type:"menu",// 效果类型，针对菜单/导航而引入的参数（默认slide）
+            titCell:".nLi", //鼠标触发对象
+            targetCell:".sub", //titCell里面包含的要显示/消失的对象
+            effect:"slideDown", //targetCell下拉效果
+            delayTime:300 , //效果时间
+            triggerTime:0, //鼠标延迟触发时间（默认150）
+            returnDefault:true //鼠标移走后返回默认状态，例如默认频道是“预告片”，鼠标移走后会返回“预告片”（默认false）
+        });
+    </script>
+    
+<!-- banner -->
+<div class="nybanner">
+    <img src="images/topbanner.jpg">
+
+</div>
+
+
+<!-- 内容 -->
+<div class="container">
+    <div class="container-c width">
+        <div class="jjy-l fl">
+            <div class="lanm"><h3>
+教师风采</h3></div>
+            <ul>
+                
+            </ul>
+        </div>      
+        <div class="jjy-r fr">
+            <div class="current">
+<div class="fl">
+<span style="font-weight:bold;font-size:20px;color:#2267b1;">教师风采</span></div>
+<div class="fr">当前位置: 
+<a href="index.htm">首页</a>
+</div>
+<div style="clear:both"></div>
+</div>
+             <div class="listnr">
+                <script language="javascript" src="/system/resource/js/centerCutImg.js"></script><script language="javascript" src="/system/resource/js/ajax.js"></script><UL>
+<li id="line_u10_0">
+<a href="info/1090/16640.htm" title="把时间刻进网安人才培养的年轮——记网络空间安全学院郭达伟老师">把时间刻进网安人才培养的年轮——记网络空间安全学院郭达伟老师</a>
+<span>2025-12-09</span>
+</li>
+<li id="line_u10_1">
+<a href="info/1090/14630.htm" title="深耕空天安全，潜心立德树人——记网络空间安全学院张尚伟副教授">深耕空天安全，潜心立德树人——记网络空间安全学院张尚伟副教授</a>
+<span>2025-09-08</span>
+</li>
+<li id="line_u10_2">
+<a href="info/1090/13320.htm" title="以心育人，以研促教，以教铸魂——记网络空间安全学院蔡文静老师">以心育人，以研促教，以教铸魂——记网络空间安全学院蔡文静老师</a>
+<span>2025-06-06</span>
+</li>
+<li id="line_u10_3">
+<a href="info/1090/11090.htm" title="丹心育桃李，青春绽芳华——记网络空间安全学院朱丹副教授">丹心育桃李，青春绽芳华——记网络空间安全学院朱丹副教授</a>
+<span>2025-03-18</span>
+</li>
+<li id="line_u10_4">
+<a href="info/1090/9460.htm" title="翱翔6G，潜心育才——记网络空间安全学院毛伯敏教授">翱翔6G，潜心育才——记网络空间安全学院毛伯敏教授</a>
+<span>2024-12-13</span>
+</li>
+<li id="line_u10_5">
+<a href="info/1090/8660.htm" title="榜样的力量｜永远在一线 永远在状态 永远在前列——记2024年校先进工作者王海洪老师">榜样的力量｜永远在一线 永远在状态 永远在前列——记2024年校先进工作者王海洪老师</a>
+<span>2024-09-13</span>
+</li>
+<li id="line_u10_6">
+<a href="info/1090/7780.htm" title="初心致远，安全筑梦——记网络空间安全学院金增旺副教授">初心致远，安全筑梦——记网络空间安全学院金增旺副教授</a>
+<span>2024-06-03</span>
+</li>
+<li id="line_u10_7">
+<a href="info/1090/6850.htm" title="潜心育人，润物无声——记网络空间安全学院张慧翔副教授">潜心育人，润物无声——记网络空间安全学院张慧翔副教授</a>
+<span>2024-03-06</span>
+</li>
+<li id="line_u10_8">
+<a href="info/1090/6880.htm" title="热烈祝贺我校王震教授入选IEEE Fellow">热烈祝贺我校王震教授入选IEEE Fellow</a>
+<span>2023-11-23</span>
+</li>
+<li id="line_u10_9">
+<a href="info/1090/6890.htm" title="热烈祝贺我院王震教授荣获第三届全国创新争先奖章">热烈祝贺我院王震教授荣获第三届全国创新争先奖章</a>
+<span>2023-06-01</span>
+</li>
+<li id="line_u10_10">
+<a href="info/1090/6900.htm" title="我院王震教授荣获2023年全国五一劳动奖章">我院王震教授荣获2023年全国五一劳动奖章</a>
+<span>2023-05-04</span>
+</li>
+<li id="line_u10_11">
+<a href="info/1090/3080.htm" title="【在我们身边】胡伟：服务国家网安和集成电路战略、坚持立德树人、育网安英才">【在我们身边】胡伟：服务国家网安和集成电路战略、坚持立德树人、育网安英才</a>
+<span>2022-12-01</span>
+</li>
+<li id="line_u10_12">
+<a href="info/1090/2840.htm" title="明道以知责，修身以立德，传道以树人 —网络空间安全学院孙文教授">明道以知责，修身以立德，传道以树人 —网络空间安全学院孙文教授</a>
+<span>2022-09-13</span>
+</li>
+<li id="line_u10_13">
+<a href="info/1090/2708.htm" title="知行合一育人才——“十育人”先进个人刘航副教授">知行合一育人才——“十育人”先进个人刘航副教授</a>
+<span>2022-06-30</span>
+</li>
+<li id="line_u10_14">
+<a href="info/1090/2596.htm" title="以青春之我，奋斗之我，担时代之责 —祝贺王震同志荣获第26届“中国青年五四奖章”">以青春之我，奋斗之我，担时代之责 —祝贺王震同志荣获第26届“中国青年五四奖章”</a>
+<span>2022-05-04</span>
+</li>
+<li id="line_u10_15">
+<a href="info/1090/3630.htm" title="上善若水，沥心耕耘——网络空间安全学院陈旿副教授">上善若水，沥心耕耘——网络空间安全学院陈旿副教授</a>
+<span>2021-11-24</span>
+</li>
+<li id="line_u10_16">
+<a href="info/1090/1907.htm" title="三实一新，求真务实——记网络空间安全学院洪亮老师的入校十五年">三实一新，求真务实——记网络空间安全学院洪亮老师的入校十五年</a>
+<span>2021-09-22</span>
+</li>
+</UL>
+<link rel="stylesheet" Content-type="text/css" href="/system/resource/css/pagedown/sys.css"><div class="pb_sys_common pb_sys_normal pb_sys_style1" style="margin-top:10px;text-align:center;"><span class="p_t">共17条</span> <span class="p_pages"><span class="p_first_d p_fun_d">首页</span><span class="p_prev_d p_fun_d">上页</span><span class="p_no_d">1</span><span class="p_next_d p_fun_d">下页</span><span class="p_last_d p_fun_d">尾页</span></span></div><script>_showDynClickBatch(['dynclicks_u10_16640','dynclicks_u10_14630','dynclicks_u10_13320','dynclicks_u10_11090','dynclicks_u10_9460','dynclicks_u10_8660','dynclicks_u10_7780','dynclicks_u10_6850','dynclicks_u10_6880','dynclicks_u10_6890','dynclicks_u10_6900','dynclicks_u10_3080','dynclicks_u10_2840','dynclicks_u10_2708','dynclicks_u10_2596','dynclicks_u10_3630','dynclicks_u10_1907'],[16640,14630,13320,11090,9460,8660,7780,6850,6880,6890,6900,3080,2840,2708,2596,3630,1907],"wbnews", 1570493975)</script>
+             </div> 
+             
+        </div>
+        <div class="clear"></div>
+    </div>
+</div>
+
+
+<div class="clear"></div>
+<!-- 底部 -->
+<div class="footer">
+    <div class="footer-c width">
+    <!-- 版权内容请在本组件"内容配置-版权"处填写 -->
+<p>© 2017- 2019 . All Rights Reserved. 西北工业大学网络空间安全学院 版权所有. 陕西西安市碑林区友谊西路127号，710072</p>
+    </div>
+</div>
+    
+    
+
+</body></html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
