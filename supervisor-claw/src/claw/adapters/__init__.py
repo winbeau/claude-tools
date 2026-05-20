@@ -5,7 +5,9 @@ from . import (  # noqa: F401
     hust,
     nankai,
     nju,
+    nwpu,
     pku,
+    seu,
     shtech,
     sjtu,
     sysu,
@@ -13,6 +15,7 @@ from . import (  # noqa: F401
     tsinghua,
     uestc,
     ustc,
+    xidian,
     xjtu,
     zju,
 )
