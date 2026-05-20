@@ -1,0 +1,1068 @@
+﻿<!DOCTYPE html><HTML><HEAD><TITLE>导师主页-西安电子科技大学-人工智能学院</TITLE><meta name="pageType" content="2">
+<meta name="pageTitle" content="导师主页">
+<META Name="keywords" Content="西安电子科技大学-人工智能学院" />
+
+
+
+
+
+<META charset="utf-8"><LINK rel="stylesheet" href="../style/public.css"><LINK rel="stylesheet" href="../style/master.css"><script type="text/javascript" src="../js/jquery.min.js"></script><script type="text/javascript" src="../js/jquery.SuperSlide.js"></script><script type="text/javascript" src="../js/index.js"></script>
+
+<!--Announced by Visual SiteBuilder 9-->
+<script language="javascript" src="../_sitegray/_sitegray.js"></script>
+<!-- CustomerNO:77656262657232306975475350545742000400004256 -->
+<link rel="stylesheet" type="text/css" href="../m_list.vsb.css" />
+<script type="text/javascript" src="/system/resource/js/counter.js"></script>
+<script type="text/javascript">_jsq_(1126,'/m_list.jsp',-1,1416541547)</script>
+</HEAD>
+<BODY><!--top-->
+<DIV class="stick"></DIV>
+<DIV class="header cleafix">
+<!-- 网站logo图片地址请在本组件"内容配置-网站logo"处填写 -->
+<a class="logo" href="../index.htm" onfocus="undefined"><img src="../images/znlogo.jpg"></a><br><!-- 3.1.3版本 -->
+
+
+
+<script language="javascript" src="/system/resource/js/base64.js"></script><script language="javascript" src="/system/resource/js/jquery/jquery-latest.min.js"></script><script language="javascript" src="/system/resource/vue/vue.js"></script><script language="javascript" src="/system/resource/vue/bluebird.min.js"></script><script language="javascript" src="/system/resource/vue/axios.js"></script><script language="javascript" src="/system/resource/vue/polyfill.js"></script><script language="javascript" src="/system/resource/vue/token.js"></script><LINK href="/system/resource/vue/static/element/index.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/vue/static/element/index.js"></script><script language="javascript" src="/system/resource/vue/static/public.js"></script><script language="javascript" src="/system/resource/openapp/search/js/containsHtmlTags.js"></script><script language="javascript" src="/system/resource/openapp/search/layui/layui.js"></script><style>
+    #appu1 .qwss{
+        height: 31px;
+        font-size: 12px;
+        min-width: 190px;
+        max-width: 600px;
+        width: 60%;
+        margin-top: -15px;
+        outline: none;
+        padding-left: 10px;
+        border-radius: 2px;
+        border: 1px solid #e4e7ed;}
+    #appu1 .tj{
+        padding-left: 6px;
+        letter-spacing: 5px;
+        color: white;
+        min-width: 53px;
+        max-width: 150px;
+        height: 32px;
+        border: 0;
+        border-radius: 2px;
+        background-color: #1890FF;
+        position: relative;
+        top: 1px;
+        width: 20%;
+        margin-top: -15px;}
+</style>
+<div id="divu1"></div>
+<script type="text/html" id="htmlu1">
+    <div id="appu1">
+        <div v-if="!isError">
+
+            <div class="search fr cleafix">
+ <span><input type="image" src="../images/search.png" align="absmiddle" style="cursor: hand" value="" v-on:click="onSubmit()"/></span>
+<input type="text" value="" class="searchText" placeholder="请输入关键字进行搜索" autocomplete=off v-model=query.keyWord @keyup.enter="onSubmit" />
+
+ </div>
+            
+            
+        </div>
+        <div v-if="isError" style="color: #b30216; font-size:18px;text-align: center;padding:20px;">
+            应用维护中！
+        </div>
+    </div>
+</script>
+<script>
+    $("#divu1").html($("#htmlu1").text());
+</script>
+<script>
+    var appOwner = "1416541547";
+    var token = 'tourist';
+    var urlPrefix = "/aop_component/";
+
+    jQuery.support.cors = true;
+    $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+    });
+
+    new Vue({
+        el: "#appu1",
+        data: function () {
+            return {
+                query: {
+                    keyWord: "",//搜索关键词
+                    owner: appOwner,
+                    token: token,
+                    urlPrefix: urlPrefix,
+                    lang:"i18n_zh_CN"
+                },
+                isError: false
+            }
+        },
+        mounted: function () {
+            var _this = this;
+            // _this.init();
+        },
+        methods: {
+            init: function(){
+                $.ajax({
+                    url: "/aop_component//webber/search/test",
+                    type: "get",
+                    success: function (response) {
+                        if (response.code == "0000") {
+                        } else if (response.code == "220") {
+                            _this.isError = true;
+                            console.log(response);
+                        } else if (!response.code) {
+                            _this.isError = true;
+                            console.log(response);
+                        }
+                    },
+                    error: function (response) {
+                        _this.isError = true;
+                    }
+                });
+            },
+            onSubmit: function (e) {
+                var url = "/aop_views/search/modules/resultpc/soso.html";
+                if ("10" == "1" || "10" == "2") {
+                    url = "" + url;
+                }
+                var _this = this;
+                var query = _this.query;
+                if (url.indexOf("?") > -1) {
+                    url = url.split("?")[0];
+                }
+                if (query.keyWord) {
+                    var query = new Base64().encode(JSON.stringify(query));
+                    window.open(url + "?query=" + query);
+                } else {
+                    alert("请填写搜索内容")
+                }
+            },
+        }
+    })
+</script>
+
+<script>
+   var appElementu1 = document.querySelector("#appu1");
+   if (appElementu1 && appElementu1.__vue__) {
+
+   } else {
+      $("#divu1").html($("#htmlu1").text());
+      var appOwner = "1416541547";   
+      var urlPrefix = "/aop_component/";
+      var ifLogin="";
+      var token = ifLogin=='true'?gettoken(10, true).trim():'tourist';
+      if (containsHtmlTags(token) || !token) { 
+         token = 'tourist';
+      }
+      jQuery.support.cors = true;
+      $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+      });
+      var queryInfou1 = {
+        query: {
+            keyWord: "",//搜索关键词
+            owner: appOwner,
+            token: token,
+            urlPrefix: urlPrefix,
+            lang:"i18n_zh_CN"
+        },
+        isError: false
+      };
+      function keyUpFunu1(e){
+        var theEvent = e || window.event;
+        var keyCode = theEvent.keyCode || theEvent.which || theEvent.charCode;
+        if(keyCode == 13){
+          onSubmitu1();
+        }
+      };
+
+      function onSubmitu1(e) {
+        queryInfou1.query.keyWord= $("#appu1  .qwss").val();
+        
+        var url = "/aop_views/search/modules/resultpc/soso.html";      
+        if ("10" == "1" || "10" == "2") {
+           url = "" + url;
+        }
+        var query = queryInfou1.query;
+        if (url.indexOf("?") > -1) {
+            url = url.split("?")[0];
+        }
+        if (query.keyWord) {
+            var query = new Base64().encode(JSON.stringify(query));
+            window.open(url + "?query=" + query);
+        } else {
+            alert("请填写搜索内容")
+        }
+      };
+   }
+</script></DIV><!--nav--><div class="nav">
+<div class="innav">
+
+<ul class="cleafix">
+
+            <li class="cur"><a class="link" href="../index.htm" title="首页">首页</a></li>
+
+
+            <li class="mainmenu">
+                <a class="link" href="../xygk.htm" title="学院概况">学院概况</a>
+                <div id="nav">
+
+
+                    <a href="../xygk/xyjj.htm" title="学院简介">学院简介</a>
+                    
+                    
+
+                    <a href="../xygk/xy.htm" title="学院领导">学院领导</a>
+                    
+                    
+
+                    <a href="../xygk/bszn.htm" title="办事指南">办事指南</a>
+                    
+                    
+
+                    <a href="../xygk/zzjg.htm" title="组织机构">组织机构</a>
+                    
+                    
+
+                    <a href="../xygk/rcdw.htm" title="人才队伍">人才队伍</a>
+                    
+                    
+
+                    <a href="../xygk/jcxy.htm" title="杰出校友">杰出校友</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../kxyj1.htm" title="科学研究">科学研究</a>
+                <div id="nav">
+
+
+                    <a href="../kxyj1/yjfx.htm" title="研究方向">研究方向</a>
+                    
+                    
+
+                    <a href="../kxyj1/xspt.htm" title="学术平台">学术平台</a>
+                    
+                    
+
+                    <a href="../kxyj1/kycg.htm" title="科研成果">科研成果</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../bkjx1.htm" title="本科教学">本科教学</a>
+                <div id="nav">
+
+
+                    <a href="../bkjx1/zyjs.htm" title="专业介绍">专业介绍</a>
+                    
+                    
+
+                    <a href="../bkjx1/jxzy.htm" title="教学资源">教学资源</a>
+                    
+                    
+
+                    <a href="../bkjx1/jxms.htm" title="教学名师">教学名师</a>
+                    
+                    
+
+                    <a href="../bkjx1/xkjs.htm" title="学科竞赛">学科竞赛</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../yjspy.htm" title="研究生培养">研究生培养</a>
+                <div id="nav">
+
+
+                    <a href="zsxk.htm" title="招生学科">招生学科</a>
+                    
+                    
+
+                    <a class="marr" href="dszy1.htm" title="导师主页">导师主页</a>
+                    
+                    
+
+                    <a href="xsjl.htm" title="学术交流">学术交流</a>
+                    
+                    
+
+                    <a href="jycg.htm" title="教育教学成果">教育教学成果</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../rcpy.htm" title="人才培养">人才培养</a>
+                <div id="nav">
+
+
+                    <a href="../rcpy/bks.htm" title="本科生">本科生</a>
+                    
+                    
+
+                    <a href="../rcpy/yjs.htm" title="研究生">研究生</a>
+                    
+                    
+
+                    <a href="../rcpy/cxcy.htm" title="创新创业">创新创业</a>
+                    
+                    
+
+                    <a href="../rcpy/gjjl.htm" title="国际交流">国际交流</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../djgz.htm" title="党建工作">党建工作</a>
+                <div id="nav">
+
+
+                    <a href="../djgz/zzjg.htm" title="组织架构">组织架构</a>
+                    
+                    
+
+                    <a href="../djgz/djdt.htm" title="党建动态">党建动态</a>
+                    
+                    
+
+                    <a href="../djgz/xxyd.htm" title="学习园地">学习园地</a>
+                    
+                    
+
+                    <a href="../djgz/cyxz.htm" title="常用下载">常用下载</a>
+                    
+                    
+                </div> 
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../tzgg.htm" title="通知公告">通知公告</a>
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../jyzp.htm" title="就业招聘">就业招聘</a>
+            </li>
+           
+           
+           
+          
+          
+           
+            <li class="mainmenu">
+                <a class="link" href="../xzzq.htm" title="下载专区">下载专区</a>
+            </li>
+           
+           
+           
+          
+          
+           
+
+ <li class="mainmenu">
+                <a class="link" href="http://ensai.xidian.edu.cn/" title="English">English</a>
+
+            </li>
+
+
+        </ul>
+
+</div></div><!--内页主体部分-->
+<DIV class="w100" style="text-align: center; height: 245px; overflow: hidden">
+
+
+
+
+<script language="javascript" src="/system/resource/js/dynclicks.js"></script>
+<table border="0" cellpadding="0" cellspacing="0">
+    <tr>
+    <td><img src="../images/banner1.png" border="0"></td>
+        </tr>
+        </table></DIV>
+<DIV class="vsb-box">
+<DIV class="vsb-container main" containerid="4" columns="4">
+<DIV class="vsb-space n_left" columns="1">
+<h2>研究生培养</h2><ul class="n_nav">
+               
+ <li><a href="zsxk.htm">招生学科</a></li>
+
+               
+ <li><a href="dszy1.htm" class="cur">导师主页</a></li>
+
+               
+ <li><a href="xsjl.htm">学术交流</a></li>
+
+               
+ <li class="marr"><a href="jycg.htm">教育教学成果</a></li>
+
+</ul></DIV>
+<DIV class="vsb-space n_right" columns="3"><div class="n_tit cleafix">
+    当前位置：
+               <a href="../index.htm">首页</a>
+               <font>></font>
+               <a href="../yjspy.htm">研究生培养</a>
+               <font>></font>
+               <a href="dszy1.htm">导师主页</a>
+</div>
+
+
+<h1 class="Title cleafix">
+                <span class="tit">人工智能学院</span>
+                
+            </h1>
+<DIV class="imgul-hh" style="text-align: center; line-height: 50px; margin: 10px 0px; height: 50px; font-size: 18px; font-weight: bold">人工智能学院博士生导师团队</DIV>
+
+<script language="javascript" src="/system/resource/js/centerCutImg.js"></script><script language="javascript" src="/system/resource/js/ajax.js"></script><ul class="pics">
+
+<li>
+<div class="li-pic"><a href="http://web.xidian.edu.cn/lchjiao/"><img src="/__local/9/DC/54/E57C08F10036F97B81809141597_B1F7B344_3EC89.jpg" /></a></div>
+<div class="li-text"><a href="http://web.xidian.edu.cn/lchjiao/">焦李成</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/SGM1/zh_CN/index.htm"><img src="/__local/2/A9/B7/509AF0CAC84EEF7B8885F855CB5_DF209197_3C30D.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/SGM1/zh_CN/index.htm">石光明</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="http://web.xidian.edu.cn/fliu/"><img src="/__local/8/D4/0F/878CD7CBDB8FD7F7031E7F35914_BB7B24DC_C7AA1.jpg" /></a></div>
+<div class="li-text"><a href="http://web.xidian.edu.cn/fliu/">刘  芳</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/XXM/zh_CN/index.htm"><img src="/__local/0/68/BB/AC2C55FA400FF5AA49AE25061FF_4EE5BF67_32384.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/XXM/zh_CN/index.htm">谢雪梅</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/HB1/zh_CN/index.htm"><img src="/__local/1/2F/CE/27D4E53A17428E4B347C33A1671_10CCB257_736B1.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/HB1/zh_CN/index.htm">侯  彪</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LJ22/zh_CN/index.htm"><img src="/__local/B/67/8D/F985E5FE35725B49F63D8BF7896_228D4FDB_7FF9.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LJ22/zh_CN/index.htm">刘  静</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/shuyuanyang/zh_CN/index.htm"><img src="/__local/4/2C/6F/E689CA73F62BA0B0B4D0310894A_F683A8A2_8F46.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/shuyuanyang/zh_CN/index.htm">杨淑媛</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/WS1/zh_CN/index.htm"><img src="/__local/0/85/6B/31BAF06B7EEE1B51C0CC0EC8DBB_3DBCFEDC_2642F.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/WS1/zh_CN/index.htm">王  爽</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LYY6/zh_CN/index.htm"><img src="/__local/1/E1/E9/F4BB9B2FD6B3A08DB34F121E60F_BB4D652C_8CC6.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LYY6/zh_CN/index.htm">李阳阳</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/WJS2/zh_CN/index.htm"><img src="/__local/0/2B/2F/DCCA53443ACC44BC453AA517CB0_76CB2FF0_9AF4.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/WJS2/zh_CN/index.htm">吴建设</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZXR4/zh_CN/index.htm"><img src="/__local/1/E7/12/28568A6364BF457B72E0D699483_6F761FAC_7CAC.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZXR4/zh_CN/index.htm">张向荣</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/SRH/zh_CN/index.htm"><img src="/__local/4/2F/48/EE67DCE872D50B198466C91EC12_9B36351A_D6AA.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/SRH/zh_CN/index.htm">尚荣华</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/DWS/zh_CN/index.htm"><img src="/__local/5/26/BD/B155A92F7DFC0C0319F47B032C8_F3CE352E_326D6.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/DWS/zh_CN/index.htm">董伟生</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/GSP2/zh_CN/index.htm"><img src="/__local/D/79/82/2AAA9F3FA4EB04EABFAA616459D_F8066A3D_CBD9.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/GSP2/zh_CN/index.htm">缑水平</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LRC2/zh_CN/index.htm"><img src="/__local/A/D5/43/AC8F582975D49CE6CCEA628BF21_AA4CA11D_7E94.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LRC2/zh_CN/index.htm">刘若辰</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LB11/zh_CN/index.htm"><img src="/__local/1/11/92/19045C27984C58ED6A94F23B624_6CB396FD_6C13F.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LB11/zh_CN/index.htm">刘  波</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LYY8/zh_CN/index.htm"><img src="/__local/D/2D/F2/C051172C23C3203E34F4F9FE62A_DA8E3514_1B177.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LYY8/zh_CN/index.htm">刘园园</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LXF6/zh_CN/index.htm"><img src="/__local/2/F3/8E/FD18B58691A79DFADFF28354BC0_C42F3FD5_11300.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LXF6/zh_CN/index.htm">梁雪峰</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/TXL1/zh_CN/index.htm"><img src="/__local/2/8B/7B/3641263F4887960391FE54A3E02_31E4AE44_8BCD.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/TXL1/zh_CN/index.htm">田小林</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LF9/zh_CN/index.htm"><img src="/__local/9/1D/C0/0A457DDCF1042854FB014E1DB71_D537EFE3_A86A9.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LF9/zh_CN/index.htm">李甫</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/HandingWang/zh_CN/index/404706/list/index.htm"><img src="/__local/7/4D/08/9DAF29C425CDA57D4D801296A82_FDB52C2D_293CF.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/HandingWang/zh_CN/index/404706/list/index.htm">王晗丁</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZGH/zh_CN/index.htm"><img src="/__local/9/86/82/81D53BAC1D00B8CCBAEABDACBDA_A60EF044_A473.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZGH/zh_CN/index.htm">赵光辉</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/BJ2/zh_CN/index.htm"><img src="/__local/3/73/DA/221457E144EE81D1DC15176C0E8_2F8173C6_6362F.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/BJ2/zh_CN/index.htm">白静</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/MWP2/zh_CN/index.htm"><img src="/__local/2/2A/82/6B8F62BA47DAB7693C4B10E1ED1_66CEED79_6D4FA.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/MWP2/zh_CN/index.htm">马文萍</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/WJJ4/zh_CN/index.htm"><img src="/__local/6/72/05/F1E6BCF2341EA1CF19F3CE6972A_0E2C9854_742A2.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/WJJ4/zh_CN/index.htm">吴金建</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://web.xidian.edu.cn/ldli/"><img src="/__local/A/A4/4E/1DC381BD40650581FF987B81EF6_49255F23_36056.jpg" /></a></div>
+<div class="li-text"><a href="https://web.xidian.edu.cn/ldli/">李雷达</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/FJ2/zh_CN/index.htm"><img src="/__local/8/9E/E6/E4CDF2E5031110775170D3544E5_CE7A2BAE_80D4.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/FJ2/zh_CN/index.htm">冯  婕</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/NY1/zh_CN/index.htm"><img src="/__local/8/2B/08/833D615608F0EB39D762EA81A15_6304A55E_B63C.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/NY1/zh_CN/index.htm">牛 毅</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZXH7/zh_CN/index.htm"><img src="/__local/A/5C/AB/7429F0F8E068F28AB0EE387B3BB_CA6BB3F8_9BFD.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZXH7/zh_CN/index.htm">张小华</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/GDH1/zh_CN/index.htm"><img src="/__local/A/95/2C/EFFE5BD3E579FF542497DAA780E_5792C107_14056.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/GDH1/zh_CN/index.htm">高大化</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/QF1/zh_CN/index.htm"><img src="/__local/5/25/A2/629AC6F9B9758F4B136D53C86DE_01A58CCC_AF13.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/QF1/zh_CN/index.htm">齐  飞</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/MCH2/zh_CN/index.htm"><img src="/__local/9/A7/44/1C20982CC3E60BE76D65AD317DC_311DB2F4_A1D9.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/MCH2/zh_CN/index.htm">慕彩红</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZHM1/zh_CN/index.htm"><img src="/__local/1/88/B8/3E2F9DE59B5441F07171461B4CF_B14308CF_AA1D.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZHM1/zh_CN/index.htm">朱虎明</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/TX2/zh_CN/index.htm"><img src="/__local/C/E7/7A/8DB768ED6F0B2D863E1A490D0FD_83BDD78F_930F.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/TX2/zh_CN/index.htm">唐  旭</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LIWEIBIN/zh_CN/index/414379/list/index.htm"><img src="/__local/C/2D/FC/5FB7E9E6AFCEA70F3529547720C_EAE05B15_5D2C0.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LIWEIBIN/zh_CN/index/414379/list/index.htm">李卫斌</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/CXH2/zh_CN/index.htm"><img src="/__local/7/E5/23/B7DD8E6205EAA1044D310376903_24E204DC_A8E5.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/CXH2/zh_CN/index.htm">曹向海</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/YANGYIMIN/zh_CN/index.htm"><img src="/__local/0/90/62/5652DD11BC701B7E0E3FB0A9751_DB10F583_56B20.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/YANGYIMIN/zh_CN/index.htm">杨毅民</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/JCZ/zh_CN/index.htm"><img src="/__local/6/43/A6/AC1B705E633CCFCA11F9291525E_80584062_39A48.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/JCZ/zh_CN/index.htm">焦昶哲</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://web.xidian.edu.cn/zxfeng/"><img src="/__local/D/B1/8E/8863AD8D7EAD824535476E73CE4_25CAF7DA_106DE.jpg" /></a></div>
+<div class="li-text"><a href="https://web.xidian.edu.cn/zxfeng/">冯志玺</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/RB/zh_CN/index.htm"><img src="/__local/1/FB/99/1269B92722340008FD0765990E1_02E42D89_8F3F.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/RB/zh_CN/index.htm">任  博</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LLL2/zh_CN/index.htm"><img src="/__local/2/81/17/DBA62ABF059624B30A0BA72D124_1256C186_C861.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LLL2/zh_CN/index.htm">李玲玲</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/GYW/zh_CN/index.htm"><img src="/__local/4/FC/41/43968CD4FA5C2E0E6D5BF517DFE_66AB43A2_A5A2.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/GYW/zh_CN/index.htm">郭雨薇</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://web.xidian.edu.cn/kwu/"><img src="/__local/7/E9/49/A93EA64990BAF9F242FCF222E8B_34FE0C18_7FC1.jpg" /></a></div>
+<div class="li-text"><a href="https://web.xidian.edu.cn/kwu/">吴 凯</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://web.xidian.edu.cn/mtfeng/index.html"><img src="/__local/9/4D/80/A66C508ED0258C4B78606073739_8119CDBC_3A315.png" /></a></div>
+<div class="li-text"><a href="https://web.xidian.edu.cn/mtfeng/index.html">冯明涛</a></div>
+</li>
+<li style="clear:both;"></li>
+</ul><script>_showDynClickBatch(['dynclicks_u8_2336','dynclicks_u8_1715','dynclicks_u8_2338','dynclicks_u8_1721','dynclicks_u8_1717','dynclicks_u8_1722','dynclicks_u8_1718','dynclicks_u8_1719','dynclicks_u8_1731','dynclicks_u8_1720','dynclicks_u8_1723','dynclicks_u8_1732','dynclicks_u8_1739','dynclicks_u8_1724','dynclicks_u8_1729','dynclicks_u8_1725','dynclicks_u8_1952','dynclicks_u8_1955','dynclicks_u8_1733','dynclicks_u8_3074','dynclicks_u8_2734','dynclicks_u8_1737','dynclicks_u8_3075','dynclicks_u8_3073','dynclicks_u8_3076','dynclicks_u8_1953','dynclicks_u8_6049','dynclicks_u8_6048','dynclicks_u8_6050','dynclicks_u8_6043','dynclicks_u8_6044','dynclicks_u8_6045','dynclicks_u8_6047','dynclicks_u8_6046','dynclicks_u8_5091','dynclicks_u8_8702','dynclicks_u8_8705','dynclicks_u8_6035','dynclicks_u8_6040','dynclicks_u8_6039','dynclicks_u8_6041','dynclicks_u8_6161','dynclicks_u8_6169','dynclicks_u8_9313'],[2336,1715,2338,1721,1717,1722,1718,1719,1731,1720,1723,1732,1739,1724,1729,1725,1952,1955,1733,3074,2734,1737,3075,3073,3076,1953,6049,6048,6050,6043,6044,6045,6047,6046,5091,8702,8705,6035,6040,6039,6041,6161,6169,9313],"wbnews", 1416541547)</script>
+
+<DIV class="imgul-hh" style="text-align: center; line-height: 50px; margin: 10px 0px; height: 50px; font-size: 18px; font-weight: bold">人工智能学院客座教授 / 兼职教授</DIV>
+
+<ul class="pcs">
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/9/67/C8/43594B58F5FA998E74F7B522AB1_9F52CA58_19014.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">A.K Brown</a><p style="font-weight:normal;font-size:13px;line-height:23px;">The University of Manchester, UK</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/2/B1/AE/9318FE0242D39C8CEECADBFDE03_2431F6C2_227D0.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Chang-Wen Chen</a><p style="font-weight:normal;font-size:13px;line-height:23px;">State University of
+New York at Buffalo, US</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/D/03/98/FA650A088E3DB344A4B61B1189C_6E700C4B_2684E.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">张亚勤</a><p style="font-weight:normal;font-size:13px;line-height:23px;">百度公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/5/46/0E/1908326473B47315ECFEEEA86A8_3D603C1A_245A4.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">高  文</a><p style="font-weight:normal;font-size:13px;line-height:23px;">北京大学</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/E/41/50/8C66B8D1BCCBFB844F92AF3EFB2_278DBAD5_1FFE4.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">戴琼海</a><p style="font-weight:normal;font-size:13px;line-height:23px;">清华大学</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/0/1E/3D/34D62638B1528ACDFB2FAC82CFA_9BE77726_2796F.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Hsiao-Wuen Hon</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Microsoft Research Asia</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/4/17/2E/AE48B17ED2869BCAECFF6543CE4_72FF29E5_CDDA.png" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Qingfu Zhang</a><p style="font-weight:normal;font-size:13px;line-height:23px;">University of Essex, UK</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/D/A2/DC/C62C23888955439AC94CC2DB3E1_03CA4D24_1332B.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">姚新</a><p style="font-weight:normal;font-size:13px;line-height:23px;">南方科技大学</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/E/D7/B1/5EE68BB5094D50B7328071F569A_B02C8236_4645F.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">金耀初</a><p style="font-weight:normal;font-size:13px;line-height:23px;">University of Surrey，UK</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/6/C0/DD/890E26DD9BFA352FCA8D3285FA0_5DEB9E85_15E58.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">贾秀萍</a><p style="font-weight:normal;font-size:13px;line-height:23px;">The University of New South Wales，Australia</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/3/32/BD/2B856D6E1370CA10F04F1488E8B_57C718AD_9CA2.png" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Antonio J. Plaza</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Universidad de Extremadura，Spain</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="#"><img src="/__local/6/55/15/FB992E3B39FC9E167657C038754_3FC651F1_95699.jpg" /></a></div>
+<div class="li-txt"><a href="#">屈嵘</a><p style="font-weight:normal;font-size:13px;line-height:23px;">英国诺丁汉大学副教授</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/F/45/41/F607E3EEBF37E0E8B576311A87C_B00EFB66_DA23.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">薄列峰</a><p style="font-weight:normal;font-size:13px;line-height:23px;">京东金融</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/B/66/46/9DA9AA1FD760D9BFAD857089306_864AEBE9_3C067.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">李学龙</a><p style="font-weight:normal;font-size:13px;line-height:23px;">中国科学院光机所</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/2/68/CC/6FD69359300E59C6929BF5128D3_7087620E_1FC32.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">吴  枫</a><p style="font-weight:normal;font-size:13px;line-height:23px;">中国科学技术大学</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/7/B7/61/651D9B02F977948D95DBC2E1ED0_D0972D4B_3C6C4.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">T. Mei</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Microsoft Research Asia</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/B/34/7A/28141C29FC70806BC410BE882E9_A6338F3B_3F82E.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Q. Tian</a><p style="font-weight:normal;font-size:13px;line-height:23px;">University of Texas at San Antonio, US</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/B/7B/57/D305200D53B48B619B1E480E5FC_A32EBD5B_235EA.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Lipo Wang</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Nanyang Technological University, SG</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/3/CF/2A/572847236F9FD5AD4E7B481DFDF_B6D292B7_222AD.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Feng-hsiung Hsu</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Microsoft Research Asia</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/C/2F/DA/917EA20189D02B5E1DDDA529CA3_8BE21282_2BECF.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Zixiang Xiong</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Texas A&amp;M University, US</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/8/C4/B7/9352A37E25625D1AD16BECBD80D_A7E6C241_2DF14.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">HuJun Yin</a><p style="font-weight:normal;font-size:13px;line-height:23px;">The University of Manchester, UK</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/B/68/25/ABC913C928EB94DC869E6B62DE1_4E18E866_351B0.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Wotao Yin</a><p style="font-weight:normal;font-size:13px;line-height:23px;">University of California, Los Angeles, US</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/A/D6/6C/6C5BBD7B389715F31FBFF81B28A_5203EE81_2C75D.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">吕金虎</a><p style="font-weight:normal;font-size:13px;line-height:23px;">中国科学院数学与系统科学研究院</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/5/04/D0/0A0787D5F75EF91416879B1F509_D85D324C_1F076.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Dacheng Tao</a><p style="font-weight:normal;font-size:13px;line-height:23px;">The University of Technology Sydney, AU</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/7/5D/C8/DA56C4B0F442811BD46D4C8E4BC_248BAC1C_27C16.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Weisi Lin</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Nanyang Technological University, SG</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/3/F9/95/838D5B5C5B59A1F959B921B0398_04BA6A7A_2C196.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">Jianfei Cai</a><p style="font-weight:normal;font-size:13px;line-height:23px;">Nanyang Technological University, SG</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/9/77/DD/425B6623CC5800E25CE97663AE0_65202054_B728.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">马堃</a><p style="font-weight:normal;font-size:13px;line-height:23px;">深圳商汤科技有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/3/43/99/4563F86D1EA5FA31DF7A67761C4_877079F3_7362.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">贾颖</a><p style="font-weight:normal;font-size:13px;line-height:23px;">常州迪瑞特电子科技有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/3/6C/50/0122B66CD254D114472A5981274_F2B96C55_C09A.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">王永刚</a><p style="font-weight:normal;font-size:13px;line-height:23px;">陕西北斗康鑫信息科技股份有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/C/0F/82/87A21330078D8E7015829F43CDF_B15C7463_CD6A.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">周伟达</a><p style="font-weight:normal;font-size:13px;line-height:23px;">苏州思必驰信息科技有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/1/13/A5/B03CD029D6ECF1F0F8B28F8266B_0AC407A7_C4B8.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">李青</a><p style="font-weight:normal;font-size:13px;line-height:23px;">中国电子科技集团14研究所总体部</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/F/9A/F4/1D3BE6A390D49DEDCA0465AA82B_426E2842_AA96.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">石洪竺</a><p style="font-weight:normal;font-size:13px;line-height:23px;">阿里巴巴发展战略部高级专家</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/7/E0/EE/ED4CAE10B16DB2513016BECCD81_C6FEE4DF_E943.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">钟伟才</a><p style="font-weight:normal;font-size:13px;line-height:23px;">华为技术有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/1/1D/00/C744CC0066EDC9AEC4807675CD3_E049A467_B27E.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">凤宏晓</a><p style="font-weight:normal;font-size:13px;line-height:23px;">陕西黄河集团有限公司</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/4/27/78/B42757662C3A1144043A9176E03_D77F8469_B56C.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">丛琳</a><p style="font-weight:normal;font-size:13px;line-height:23px;">国家电网</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="javascript:void(0)"><img src="/__local/A/C6/0C/5D507C9803FC774430234B727A9_6D7AA06B_8B28.jpg" /></a></div>
+<div class="li-txt"><a href="javascript:void(0)">沙宇恒</a><p style="font-weight:normal;font-size:13px;line-height:23px;">国家电网</p></div>
+</li>
+
+<li>
+<div class="li-pc"><a href="https://faculty.xidian.edu.cn/LXL10/zh_CN/index.htm"><img src="/__local/3/E8/4C/383CBF99D4F073CC42C67D059E7_3B577E01_13297.jpg" /></a></div>
+<div class="li-txt"><a href="https://faculty.xidian.edu.cn/LXL10/zh_CN/index.htm">李小俚</a><p style="font-weight:normal;font-size:13px;line-height:23px;"></p></div>
+</li>
+</ul><script>_showDynClickBatch(['dynclicks_u9_1956','dynclicks_u9_1957','dynclicks_u9_1958','dynclicks_u9_1959','dynclicks_u9_1960','dynclicks_u9_1961','dynclicks_u9_2301','dynclicks_u9_2300','dynclicks_u9_2299','dynclicks_u9_1962','dynclicks_u9_2297','dynclicks_u9_3473','dynclicks_u9_2298','dynclicks_u9_1963','dynclicks_u9_1964','dynclicks_u9_1965','dynclicks_u9_1966','dynclicks_u9_1967','dynclicks_u9_1969','dynclicks_u9_1970','dynclicks_u9_1971','dynclicks_u9_1972','dynclicks_u9_1973','dynclicks_u9_1974','dynclicks_u9_1975','dynclicks_u9_1976','dynclicks_u9_2302','dynclicks_u9_2303','dynclicks_u9_2305','dynclicks_u9_2306','dynclicks_u9_2307','dynclicks_u9_2308','dynclicks_u9_2309','dynclicks_u9_2310','dynclicks_u9_2312','dynclicks_u9_2313','dynclicks_u9_8703'],[1956,1957,1958,1959,1960,1961,2301,2300,2299,1962,2297,3473,2298,1963,1964,1965,1966,1967,1969,1970,1971,1972,1973,1974,1975,1976,2302,2303,2305,2306,2307,2308,2309,2310,2312,2313,8703],"wbnews", 1416541547)</script>
+
+<DIV class="imgul-hh" style="text-align: center; line-height: 50px; margin: 10px 0px; height: 50px; font-size: 18px; font-weight: bold">人工智能学院硕士生导师团队</DIV>
+
+<ul class="pics">
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LDH2/zh_CN/index.htm"><img src="/__local/2/57/FA/EDB1E9D0098A9E41ED1965538F2_34B7B1DF_7954.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LDH2/zh_CN/index.htm">刘丹华</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/WXT/zh_CN/index.htm"><img src="/__local/5/C5/5B/4B23F077F16A508CA1067E767ED_3921EF04_9377.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/WXT/zh_CN/index.htm">王晓甜</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LJ37/zh_CN/index.htm"><img src="/__local/0/BA/DF/22ED8E01E87F3D92528E225825A_027D8A02_B9B2.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LJ37/zh_CN/index.htm">林  杰</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/MSS1/zh_CN/index.htm"><img src="/__local/3/B3/03/D4557A96A3E51992817C7B6D146_B5FF4D53_8164B.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/MSS1/zh_CN/index.htm">毛莎莎</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/WRF1/zh_CN/index.htm"><img src="/__local/1/25/B7/60435E387B607EEC93A7DF2A0DE_ED39EB71_98AD.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/WRF1/zh_CN/index.htm">王蓉芳</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/CPH/zh_CN/index.htm"><img src="/__local/3/72/1C/8336F17F7A6431299C5C355E1AC_48CD361E_90DD.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/CPH/zh_CN/index.htm">陈璞花</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/GJ6/zh_CN/index.htm"><img src="/__local/5/A3/31/A8ECFFADCDB3650052F7C275F37_A3C516C1_A3F2.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/GJ6/zh_CN/index.htm">古  晶</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/DJY1/zh_CN/index.htm"><img src="/__local/A/62/E3/E0D67FB408B1DEDC427C8DDE658_90194EAF_B86B.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/DJY1/zh_CN/index.htm">丁静怡</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZMX2/zh_CN/index.htm"><img src="/__local/7/15/BB/C9C2A7344250D06CE91800871A2_15377F09_A849.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZMX2/zh_CN/index.htm">张梦璇</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="#"><img src="/__local/C/CC/AA/5928FC1D584C3FC8F6EF95B1BC6_46196480_266B.jpg" /></a></div>
+<div class="li-text"><a href="#">谷 裕</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/liyang/zh_CN/index.htm"><img src="/__local/E/E6/A0/54DBCC0700DFC1319A55A09E573_EBA7FA1A_66878.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/liyang/zh_CN/index.htm">李 阳</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/renzhongle/zh_CN/index.htm"><img src="/__local/0/5B/89/D73557E4F2EC02C87711885ABD1_21580DB2_ED97.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/renzhongle/zh_CN/index.htm">任仲乐</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZHAOZHIFU/zh_CN/index.htm"><img src="/__local/1/FC/6E/1899BA2747F5846BA57068E5418_9FB77B66_12762.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZHAOZHIFU/zh_CN/index.htm">赵至夫</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/CXN/zh_CN/index.htm"><img src="/__local/3/4F/35/2343B2DB12C7CFF374F494FA0FE_F9A1CE37_1F33C.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/CXN/zh_CN/index.htm">程曦娜</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZHUHAO/zh_CN/index.htm"><img src="/__local/F/4B/B8/04C4791F4C923A29203C71859A9_EF30DA8B_17A87.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZHUHAO/zh_CN/index.htm">朱 浩</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/liuxu/zh_CN/index.htm"><img src="/__local/8/B9/08/770B7F4B1EC98978C6B0F153B05_9844FFBE_3ABE8.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/liuxu/zh_CN/index.htm">刘 旭</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="http://faculty.xidian.edu.cn/ZhangWeitong/zh_CN/index.htm"><img src="/__local/9/AE/9E/06827A95421726380258909978F_C670CA0C_3B2D7.png" /></a></div>
+<div class="li-text"><a href="http://faculty.xidian.edu.cn/ZhangWeitong/zh_CN/index.htm">张玮桐</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="http://faculty.xidian.edu.cn/junpengzhang/zh_CN/index.htm"><img src="/__local/6/77/92/03197E49E0CA92BA16107C506B6_3B1650F8_6CD4.jpg" /></a></div>
+<div class="li-text"><a href="http://faculty.xidian.edu.cn/junpengzhang/zh_CN/index.htm">张骏鹏</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/ZHAOQINGHANG/zh_CN/index.htm"><img src="/__local/4/E5/BC/2B5F71F3DB2D03EFD18C119A7BE_5248608A_6504C.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/ZHAOQINGHANG/zh_CN/index.htm">赵庆行</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/QUANDOU/zh_CN/index.htm"><img src="/__local/B/C4/DE/9A63A9A31DC4D066B385E19C25B_D2CBE67A_72B36.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/QUANDOU/zh_CN/index.htm">权豆</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/CAOZHEN/zh_CN/index.htm"><img src="/__local/3/69/81/F4FF178A88754553FBE0A8730D3_DB0A7B04_6990A.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/CAOZHEN/zh_CN/index.htm">曹 震</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/DL4/zh_CN/index.htm"><img src="/__local/F/A3/E2/71949A0E493361147769D334BC2_674C7BF9_35AA.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/DL4/zh_CN/index.htm">董 乐</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/PEICHENGQUAN/zh_CN/index.htm"><img src="/__local/6/79/11/8FFF913E925521BD2D4EA048BE5_216215BD_20564.png" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/PEICHENGQUAN/zh_CN/index.htm">裴承全</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/mjp/zh_CN/index.htm"><img src="/__local/2/52/5C/366941EDC19E48F8935106412B7_D1BA1324_C2E0.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/mjp/zh_CN/index.htm">马居坡</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LIHAOYONG/zh_CN/index.htm"><img src="/__local/A/0E/EE/A3FDE3460637A00BADFCDEEEEE1_C834DFF9_13D69.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LIHAOYONG/zh_CN/index.htm">李浩勇</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/LIRUIMIN/zh_CN/index.htm"><img src="/__local/6/0A/C2/3E6069A1F32781360BF6B75DF52_CEE6C56B_C5EF.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/LIRUIMIN/zh_CN/index.htm">李睿敏</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/cpf/zh_CN/index.htm"><img src="/__local/B/D1/8B/FB4B92E5FFBE8F169D74E85F35D_34AAB3A4_764C.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/cpf/zh_CN/index.htm">陈鹏飞</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/TONGNUO/zh_CN/index.htm"><img src="/__local/2/35/76/A0F202C1C16F1B7DAA82470695B_1DC35E28_24103.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/TONGNUO/zh_CN/index.htm">童诺</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/guozhang/zh_CN/index.htm"><img src="/__local/B/95/5D/E3F54EBA929B33D19F7D3AC3F20_149C9D52_8B23.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/guozhang/zh_CN/index.htm">郭璋</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/YANGCHEN/zh_CN/index.htm"><img src="/__local/0/FC/D8/5F75DE5B9E0A385136A42B01866_9079F862_16EE5.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/YANGCHEN/zh_CN/index.htm">杨晨</a></div>
+</li>
+
+<li>
+<div class="li-pic"><a href="https://faculty.xidian.edu.cn/MAYUE/zh_CN/index.htm"><img src="/__local/7/16/97/BD96F1E4FFB1FE2E86B739E8A6A_295DD715_7790.jpg" /></a></div>
+<div class="li-text"><a href="https://faculty.xidian.edu.cn/MAYUE/zh_CN/index.htm">马悦</a></div>
+</li>
+</ul><script>_showDynClickBatch(['dynclicks_u10_1736','dynclicks_u10_1748','dynclicks_u10_1745','dynclicks_u10_6034','dynclicks_u10_6036','dynclicks_u10_6037','dynclicks_u10_6038','dynclicks_u10_6162','dynclicks_u10_6163','dynclicks_u10_6164','dynclicks_u10_6166','dynclicks_u10_6167','dynclicks_u10_6168','dynclicks_u10_8706','dynclicks_u10_8707','dynclicks_u10_8708','dynclicks_u10_8709','dynclicks_u10_8710','dynclicks_u10_8711','dynclicks_u10_8713','dynclicks_u10_8712','dynclicks_u10_6285','dynclicks_u10_18282','dynclicks_u10_12012','dynclicks_u10_12032','dynclicks_u10_11772','dynclicks_u10_12042','dynclicks_u10_12052','dynclicks_u10_12062','dynclicks_u10_12072','dynclicks_u10_12082'],[1736,1748,1745,6034,6036,6037,6038,6162,6163,6164,6166,6167,6168,8706,8707,8708,8709,8710,8711,8713,8712,6285,18282,12012,12032,11772,12042,12052,12062,12072,12082],"wbnews", 1416541547)</script>
+
+<DIV class="imgul-hh" style="text-align: center; line-height: 50px; margin: 10px 0px; height: 50px; font-size: 18px; font-weight: bold">人工智能学院讲师团队</DIV>
+
+<ul class="pics">
+</ul>
+</DIV></DIV>
+<DIV class="cleafix"></DIV></DIV><!--footer-->
+<DIV class="footer" style="text-align: center; padding-bottom: 30px; padding-left: 0px; padding-right: 0px; background: #0f4c94; padding-top: 30px"><!-- 版权内容请在本组件"内容配置-版权"处填写 -->
+<p>
+    <span style="white-space: normal; word-spacing: 0px; text-transform: none; float: none; color: #ffffff; font: 14px/40px 微软雅黑; display: inline !important; letter-spacing: normal; text-indent: 0px; -webkit-text-stroke-width: 0px">Copyright © 2017 西安电子科技大学-人工智能学院 版权所有 技术支持：西安聚力</span>
+</p></DIV>
+
+</BODY></HTML>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
