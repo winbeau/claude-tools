@@ -10,6 +10,7 @@ from ..models.db import (
     Advisor,
     Appointment,
     Department,
+    EnrichmentTrace,
     Evaluation,
     QuotaInfo,
     School,
@@ -190,6 +191,30 @@ def append_evaluation(
     s.commit()
     s.refresh(ev)
     return ev
+
+
+def append_trace(
+    s: Session,
+    advisor: Advisor,
+    *,
+    run_id: str,
+    step_idx: int,
+    kind: str,
+    label: str,
+    detail: str,
+) -> EnrichmentTrace:
+    row = EnrichmentTrace(
+        advisor_id=advisor.id,
+        run_id=run_id,
+        step_idx=step_idx,
+        kind=kind,
+        label=label,
+        detail=detail,
+    )
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
 
 
 __all__ = [

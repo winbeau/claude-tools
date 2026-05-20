@@ -127,6 +127,21 @@ class SourceSnapshot(SQLModel, table=True):
     fetched_at: datetime = Field(sa_column=_ts_column())
 
 
+class EnrichmentTrace(SQLModel, table=True):
+    """Per-step record of one enrichment run (search / read / submit / final)."""
+
+    __tablename__ = "enrichment_trace"
+
+    id: int | None = Field(default=None, primary_key=True)
+    advisor_id: int = Field(foreign_key="advisor.id", index=True)
+    run_id: str = Field(index=True)
+    step_idx: int
+    kind: str  # search | read | submit | final
+    label: str
+    detail: str
+    created_at: datetime = Field(sa_column=_ts_column())
+
+
 @event.listens_for(Engine, "connect")
 def _enable_sqlite_pragmas(dbapi_conn, _conn_record):  # noqa: ANN001
     cur = dbapi_conn.cursor()

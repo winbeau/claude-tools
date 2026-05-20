@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 from urllib.parse import quote_plus, urlparse
+from uuid import uuid4
 
 from playwright.async_api import BrowserContext, TimeoutError as PWTimeoutError
 from selectolax.parser import HTMLParser
@@ -37,7 +38,7 @@ from ..core.browser import BrowserPool
 from ..core.llm import get_client
 from ..core.logging import get_logger
 from ..models.db import Advisor, Evaluation, QuotaInfo
-from ..storage.repo import append_evaluation, append_quota
+from ..storage.repo import append_evaluation, append_quota, append_trace
 
 log = get_logger(__name__)
 
@@ -321,6 +322,7 @@ class AgentResult:
     finished_reason: str | None = None
     error: str | None = None
     tool_calls: list[dict] = field(default_factory=list)
+    run_id: str | None = None
 
     @property
     def total_tokens(self) -> int:
@@ -350,7 +352,9 @@ class ResearchAgent:
         self.max_iter = max_iter
         self.model = model or get_settings().deepseek_model
         self.client = get_client()
-        self.result = AgentResult(advisor_id=advisor.id or -1)
+        self.run_id = uuid4().hex
+        self.step_idx = 0
+        self.result = AgentResult(advisor_id=advisor.id or -1, run_id=self.run_id)
         self.view = view  # research_display.AdvisorView, optional
         # set in the loop; checked in _dispatch to hard-block search/read on
         # the final iter even if DeepSeek calls them.
@@ -594,6 +598,38 @@ class ResearchAgent:
             return self._tool_finish(args.get("reason", ""))
         return {"ok": False, "error": f"unknown tool {name}"}
 
+    # ----- trace recording -----
+
+    _TRACE_KIND_LABEL: dict[str, tuple[str, str]] = {
+        "search_web": ("search", "搜索"),
+        "read_page": ("read", "阅读"),
+        "submit_evaluation": ("submit", "提交评价"),
+        "submit_quota": ("submit", "提交招生"),
+        "submit_report": ("final", "提交综合判断"),
+    }
+
+    def _record_trace(self, name: str, args: dict, result: Any) -> None:
+        mapping = self._TRACE_KIND_LABEL.get(name)
+        if mapping is None:
+            return  # finish() and unknown tools are not traced
+        kind, label = mapping
+        try:
+            detail = _trace_detail(name, args, result)
+            append_trace(
+                self.session,
+                self.advisor,
+                run_id=self.run_id,
+                step_idx=self.step_idx,
+                kind=kind,
+                label=label,
+                detail=detail,
+            )
+        except Exception as e:  # noqa: BLE001 — trace must never break the run
+            log.warning(
+                "[%s] failed to record trace step=%d tool=%s: %s",
+                self.advisor.name_cn, self.step_idx, name, e,
+            )
+
     # ----- seed prompt builder -----
 
     def _build_user_intro(self) -> str:
@@ -722,6 +758,8 @@ class ResearchAgent:
                 )
                 node = self.view.tool_started(name, args) if self.view is not None else None
                 result = await self._dispatch(name, args)
+                self._record_trace(name, args, result)
+                self.step_idx += 1
                 self.result.tool_calls.append({"iter": i + 1, "name": name, "args": args})
                 # track submission success for rescue-iter decision
                 if name in ("submit_evaluation", "submit_quota", "submit_report") and isinstance(result, dict) and result.get("ok"):
@@ -774,6 +812,54 @@ class ResearchAgent:
         if not done and not self.result.finished_reason:
             self.result.finished_reason = "max_iter reached"
         return self.result
+
+
+def _trace_detail(name: str, args: dict, result: Any) -> str:
+    """Render a richer trace.detail string than _summarize_result —
+    includes the input (query / url / source_url) so consumers can
+    reconstruct what the agent saw at each step."""
+    if name == "search_web":
+        q = (args.get("query") or "").strip()[:100]
+        n = len(result) if isinstance(result, list) else 0
+        return f'"{q}" → {n} results'
+    if name == "read_page":
+        url = (args.get("url") or "")[:120]
+        if isinstance(result, str) and result.startswith("[blocked"):
+            return f"{url} → {result[:80]}"
+        if isinstance(result, str) and result.startswith("[error"):
+            return f"{url} → {result[:80]}"
+        chars = len(result) if isinstance(result, str) else 0
+        return f"{url} → ~{chars} chars"
+    if name == "submit_evaluation":
+        src = (args.get("source_url") or "")[:80]
+        outcome = _summarize_result(name, args, result)
+        return f"{src} · {outcome}"
+    if name == "submit_quota":
+        src = (args.get("source_url") or "")[:80]
+        year = args.get("year")
+        degree = args.get("degree")
+        count = args.get("count")
+        head_bits = []
+        if year is not None:
+            head_bits.append(str(year))
+        if degree:
+            head_bits.append(str(degree))
+        if count is not None:
+            head_bits.append(f"×{count}")
+        head = " ".join(head_bits) or "(unspecified)"
+        outcome = _summarize_result(name, args, result)
+        return f"{head} @ {src} · {outcome}"
+    if name == "submit_report":
+        if isinstance(result, dict) and result.get("ok"):
+            stored = result.get("stored") or {}
+            ir = stored.get("is_recruiting")
+            ir_s = "招生" if ir is True else ("不招" if ir is False else "未知")
+            conf = stored.get("recruiting_confidence")
+            tag = stored.get("reputation_tag") or "unknown"
+            summary = (args.get("summary") or "").strip()[:80]
+            return f"{ir_s} · conf={conf} · tag={tag} · {summary}"
+        return "report failed"
+    return _summarize_result(name, args, result)
 
 
 def _summarize_result(name: str, args: dict, result: Any) -> str:

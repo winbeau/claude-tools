@@ -94,14 +94,40 @@ def crawl(
 
 @app.command()
 def export(
-    fmt: str = typer.Option("csv", "--format", help="csv | jsonl"),
-    school_code: str = typer.Option(None, "--school", help="filter by school code"),
-    recruiting_only: bool = typer.Option(False, "--recruiting-only"),
-    out: Path = typer.Option(Path("export.csv"), "--out"),
+    fmt: str = typer.Option("csv", "--format", help="csv | jsonl | sqlite"),
+    school_code: str = typer.Option(None, "--school", help="filter by school code (csv/jsonl only)"),
+    recruiting_only: bool = typer.Option(False, "--recruiting-only", help="csv/jsonl only"),
+    out: Path = typer.Option(None, "--out", help="csv/jsonl: file path (default export.csv); sqlite: dir (default ./exports)"),
 ) -> None:
-    """Export advisors to CSV or JSONL."""
+    """Export advisors to CSV / JSONL / SQLite snapshot.
+
+    sqlite mode produces ``<out>/schools.sqlite`` + ``<out>/manifest.json``
+    for downstream attach (e.g. Aurash schools page).
+    """
     setup_logging()
     init_db()
+
+    if fmt == "sqlite":
+        from ..export.sqlite_exporter import export_sqlite
+        out_dir = out or Path("./exports")
+        if school_code or recruiting_only:
+            console.print(
+                "[yellow]![/yellow] sqlite mode ignores --school/--recruiting-only (full snapshot)"
+            )
+        summary = export_sqlite(out_dir)
+        c = summary.counts
+        console.print(
+            f"[green]✓[/green] schools.sqlite: "
+            f"{c.schools} schools / {c.departments} depts / {c.advisors} advisors / "
+            f"{c.quotas} quotas / {c.evaluations} evals / {c.traces} trace rows"
+        )
+        console.print(
+            f"  {summary.db_path} ({summary.bytes:,} bytes, sha={summary.sha256[:12]}…)"
+        )
+        console.print(f"  manifest → {summary.manifest_path}")
+        return
+
+    out = out or Path("export.csv")
     with session_scope() as s:
         q = select(Advisor, School).join(School, Advisor.school_id == School.id)
         if school_code:
