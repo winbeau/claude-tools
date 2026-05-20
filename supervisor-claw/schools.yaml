@@ -673,3 +673,33 @@ schools:
           - https://wlkjaqxy.nwpu.edu.cn/jsfc.htm
           # - https://wlkjaqxy.nwpu.edu.cn/szdw.htm  # 当前 404, 待 v0.5 Playwright fetch
           # - https://teacher.nwpu.edu.cn/<id>       # TS-WAF JS-challenge 墙, 待 v0.5 Playwright fetch
+
+  - code: nudt
+    name_cn: 国防科技大学
+    name_en: National University of Defense Technology
+    # NUDT 是 PLA 直属军校 (国防七子), 公开 web 几乎不暴露师资。
+    # 三个候选 CS/AI 学院主页 (yssz/jsjxy 计算机学院 / yssz/znkxxy 智能科学
+    # 学院 / yssz/xtgcxy 系统工程学院) 都没有院内师资入口 —— 全部反向链接
+    # 到学校层面的"师资队伍"talent-roster 页 (www.nudt.edu.cn/szdw/...)。
+    # 这些页面只列**有荣誉头衔的 PI**: 院士 / 杰青 / 优青 / 百千万 /
+    # 求是杰青 / 全国优秀科技工作者, 全部 name-only (无 profile URL、无邮
+    # 箱、无研究方向、无照片)。
+    # 我们因此把六个 honour-roster 页合并到单个 synthetic ``cs`` dept,
+    # 全部 ~133 条 ListItem 在 pipeline (school,name_cn,email) 去重后剩
+    # ~83 个 unique PI —— 对一所军校已经是能拿到的极限。
+    # known-limitation: 非荣誉头衔的多数 PI 内网 only, v0.4 无法覆盖。
+    departments:
+      - code: cs
+        name_cn: 公开荣誉师资合集 (CS/AI/系统工程交集)
+        list_urls:
+          - https://www.nudt.edu.cn/szdw/lyys/index.htm            # 两院院士 (CAS+CAE, ~21)
+          - https://www.nudt.edu.cn/szdw/gjjcqnkxjjhdz/index.htm   # 国家杰青 (~17)
+          - https://www.nudt.edu.cn/szdw/gjyxqnkxjj/index.htm      # 国家优青 (~16)
+          - https://www.nudt.edu.cn/szdw/bqwrcgcgjjrx/index.htm    # 百千万人才工程 (~34)
+          - https://www.nudt.edu.cn/szdw/gjkxqsjcqnsygcjhdz/index.htm  # 求是杰出青年实用工程奖 (~23)
+          - https://www.nudt.edu.cn/szdw/qgyxkjgzz/index.htm       # 全国优秀科技工作者 (~22)
+          # 以下学院主页**不挂师资目录**, v0.5 若上 Playwright + 学者
+          # 主页爬取再补:
+          # - https://www.nudt.edu.cn/yssz/jsjxy/index.htm   # 计算机学院主页, 无 PI 列表
+          # - https://www.nudt.edu.cn/yssz/znkxxy/index.htm  # 智能科学学院主页, 同上
+          # - https://www.nudt.edu.cn/yssz/xtgcxy/index.htm  # 系统工程学院主页, 同上
