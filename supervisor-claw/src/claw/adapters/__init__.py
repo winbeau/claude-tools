@@ -5,6 +5,7 @@ from . import (  # noqa: F401
     hust,
     nankai,
     nju,
+    nudt,
     nwpu,
     pku,
     seu,
