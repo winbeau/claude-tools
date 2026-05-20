@@ -14,7 +14,7 @@ from tenacity import (
 )
 
 
-def _make_legacy_friendly_ssl_context() -> ssl.SSLContext:
+def make_legacy_friendly_ssl_context() -> ssl.SSLContext:
     """Cert-verifying SSL context that also accepts legacy ciphers/hashes.
 
     Several Chinese university web servers (e.g. cs.nju.edu.cn, software.nju)
@@ -54,7 +54,7 @@ class Fetcher:
             timeout=timeout,
             follow_redirects=True,
             http2=True,
-            verify=_make_legacy_friendly_ssl_context(),
+            verify=make_legacy_friendly_ssl_context(),
         )
 
     async def aclose(self) -> None:

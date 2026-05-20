@@ -9,7 +9,10 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
+from .http import make_legacy_friendly_ssl_context
 from .logging import get_logger
+
+_SSL_CTX = make_legacy_friendly_ssl_context()
 
 log = get_logger(__name__)
 
@@ -26,7 +29,7 @@ def _fetch(robots_url: str, user_agent: str) -> RobotFileParser:
     rp = RobotFileParser()
     rp.set_url(robots_url)
     try:
-        r = httpx.get(robots_url, headers={"User-Agent": user_agent}, timeout=10.0)
+        r = httpx.get(robots_url, headers={"User-Agent": user_agent}, timeout=10.0, verify=_SSL_CTX)
         if r.status_code == 200:
             rp.parse(r.text.splitlines())
         else:
