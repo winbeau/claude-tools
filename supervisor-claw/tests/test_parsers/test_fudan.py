@@ -90,14 +90,19 @@ def test_parse_list_cs_drops_placeholder_photo(adapter):
 
 def test_parse_list_cs_includes_known_double_appointed_advisor(adapter):
     """邱锡鹏 (NLP / MOSS) appears in the merged faculty roster — sanity-check
-    that the filter doesn't accidentally drop him."""
+    that the filter doesn't accidentally drop him.
+
+    NOTE: his exField1 in the live JSON is "教师、博导" (not "教授"); we
+    accept any standard advisor-title keyword rather than requiring "教授"
+    literally.
+    """
     payload = (FIX / "list_cs.json").read_text(encoding="utf-8")
     items = adapter.parse_list(payload, CS_LIST_URL)
     names = {it.name_cn for it in items}
     assert "邱锡鹏" in names
     qiu = next(it for it in items if it.name_cn == "邱锡鹏")
     assert qiu.email == "xpqiu@fudan.edu.cn"
-    assert qiu.title and "教授" in qiu.title
+    assert qiu.title and any(k in qiu.title for k in ("教授", "教师", "博导", "研究员"))
 
 
 # ---------------------------------------------------------------------------

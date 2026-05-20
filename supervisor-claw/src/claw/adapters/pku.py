@@ -697,20 +697,18 @@ def _profile_cfcs(
 def _dept_from_url(url: str) -> str:
     """Identify which PKU department a URL belongs to.
 
-    Routing is purely host-based:
-        cs.pku.edu.cn         -> eecs
-        www.cis.pku.edu.cn    -> ai
-        www.icst.pku.edu.cn   -> wangxuan
-        cfcs.pku.edu.cn       -> cfcs
+    Order matters: ``cfcs.pku.edu.cn`` and ``cis.pku.edu.cn`` both contain
+    the substring ``cs.pku.edu.cn``/``is.pku.edu.cn``, so test the more
+    specific subdomains first.
     """
-    if "cs.pku.edu.cn" in url and "cis.pku" not in url:
-        return "eecs"
+    if "cfcs.pku.edu.cn" in url:
+        return "cfcs"
     if "cis.pku.edu.cn" in url:
         return "ai"
     if "icst.pku.edu.cn" in url:
         return "wangxuan"
-    if "cfcs.pku.edu.cn" in url:
-        return "cfcs"
+    if "cs.pku.edu.cn" in url:
+        return "eecs"
     return "eecs"  # safe default - cs.pku is the largest dept
 
 
