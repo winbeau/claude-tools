@@ -639,3 +639,37 @@ schools:
         name_cn: 人工智能学院
         list_urls:
           - https://sai.xidian.edu.cn/yjspy/dszy1.htm
+
+  - code: nwpu
+    name_cn: 西北工业大学
+    name_en: Northwestern Polytechnical University
+    departments:
+      # 计算机学院 = jsj.nwpu.edu.cn. "师资名单" /snew/szdw/szmd.htm 是
+      # Word 导出的大表，div#vsb_content 内按 系 (智能计算系统系 / 计算机
+      # 科学与软件系 / 计算机信息工程系 / 网络与机器人系统系 / 计算机基础
+      # 教学与实验中心 / 高性能中心) → 职称 (正高 / 副高 / 其他) 嵌套。
+      # 每个老师是 <a href="https://teacher.nwpu.edu.cn/...">姓名</a>，共
+      # ~175 个，去掉一条空 anchor (zhangkailong) 后稳定取到 174 人。
+      - code: cs
+        name_cn: 计算机学院
+        list_urls:
+          - https://jsj.nwpu.edu.cn/snew/szdw/szmd.htm
+      # 软件学院 = ruanjian.nwpu.edu.cn (非 xinst — xinst 是另一所
+      # "学位认证" 站点). /szdw/jsdw.htm 网格卡片 ~60 人 = ~45 PI + ~15
+      # 博士后；adapter 在 list 层过滤掉博士后。
+      - code: sw
+        name_cn: 软件学院
+        list_urls:
+          - https://ruanjian.nwpu.edu.cn/szdw/jsdw.htm
+      # 网络空间安全学院 = wlkjaqxy.nwpu.edu.cn (host 是 wlkjaqxy 拼音
+      # "网络空间安全学院" 首字母, 不是 cse). /szdw.htm 与
+      # /szdw/szgk.htm 都不暴露个体老师页面 —— 唯一可静态抓的入口是
+      # /jsfc.htm "教师风采", 内嵌 ~17 篇 info/1090/<id>.htm 单人事迹。
+      # adapter 通过正则从锚文本回收 (name, title), 是 v0.5 上 Playwright
+      # 之前的 partial coverage 折中。
+      - code: cse
+        name_cn: 网络空间安全学院
+        list_urls:
+          - https://wlkjaqxy.nwpu.edu.cn/jsfc.htm
+          # - https://wlkjaqxy.nwpu.edu.cn/szdw.htm  # 当前 404, 待 v0.5 Playwright fetch
+          # - https://teacher.nwpu.edu.cn/<id>       # TS-WAF JS-challenge 墙, 待 v0.5 Playwright fetch

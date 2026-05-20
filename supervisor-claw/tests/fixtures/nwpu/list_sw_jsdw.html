@@ -1,0 +1,1313 @@
+﻿<!DOCTYPE html>
+<HTML><HEAD><TITLE>教师队伍-软件学院</TITLE><meta name="pageType" content="2">
+<meta name="pageTitle" content="教师队伍">
+<META Name="keywords" Content="软件学院,专任教师" />
+
+
+
+
+
+<META charset="utf-8"><LINK rel="stylesheet" type="text/css" href="../css/base.css"><LINK rel="stylesheet" type="text/css" href="../css/layouts.css">
+<!--[if lt IE 9]>  
+ <script type="text/javascript">  
+ var str = "你的浏览器版本有点低了,请升级至最新或者使用以下推荐!";  
+ var str2 = "推荐使用:谷歌,"  
+ + "火狐,"  
+ + "其他双核极速模式";  
+ document.writeln("<pre style='text-align:center;color:#fff;background-color:#0cc; height:100%;border:0;position:fixed;top:0;left:0;width:100%;z-index:1234'>" +  
+ "<h2 style='padding-top:200px;margin:0'><strong>" + str + "<br/></strong></h2><h2>" +  
+ str2 + "</h2><h2 style='margin:0'><strong>如果你的使用的是双核浏览器,请切换到极速模式访问<br/></strong></h2></pre>");  
+ document.execCommand("Stop");  
+ </script>  
+ <![endif]--> 
+<!--Announced by Visual SiteBuilder 9-->
+<link rel="stylesheet" type="text/css" href="../_sitegray/_sitegray_d.css" />
+<script language="javascript" src="../_sitegray/_sitegray.js"></script>
+<!-- CustomerNO:77656262657232306975475152555742000200014156 -->
+<link rel="stylesheet" type="text/css" href="../teacher2.vsb.css" />
+<script type="text/javascript" src="/system/resource/js/vsbscreen.min.js" id="_vsbscreen" devices="pc|pad"></script>
+<script type="text/javascript" src="/system/resource/js/counter.js"></script>
+<script type="text/javascript">_jsq_(1019,'/teacher2.jsp',-1,1681987036)</script>
+<script type="text/javascript" src="/system/resource/js/CustomizeLinkJumpRules.js"></script>
+<script type="text/javascript">
+    new outsideLinkJudgmentAndRedirectionFunc();
+    // 使用 new 来调用插件
+    // new outsideLinkJudgmentAndRedirectionFunc('自定义网站标题');  // 传入自定义标题
+    // 或者
+    // new outsideLinkJudgmentAndRedirectionFunc();  // 使用页面的 title 作为默认标题
+</script></HEAD>
+<BODY>
+<DIV class="div"><!-- 头部区域 --><!-- 头部区域 -->
+<DIV class="header">
+<DIV class="web clearfix"><!-- 3.1.3版本 -->
+
+
+
+<script language="javascript" src="/system/resource/js/base64.js"></script><script language="javascript" src="/system/resource/js/jquery/jquery-latest.min.js"></script><script language="javascript" src="/system/resource/vue/vue.js"></script><script language="javascript" src="/system/resource/vue/bluebird.min.js"></script><script language="javascript" src="/system/resource/vue/axios.js"></script><script language="javascript" src="/system/resource/vue/polyfill.js"></script><script language="javascript" src="/system/resource/vue/token.js"></script><LINK href="/system/resource/vue/static/element/index.css" type="text/css" rel="stylesheet"><script language="javascript" src="/system/resource/vue/static/element/index.js"></script><script language="javascript" src="/system/resource/vue/static/public.js"></script><script language="javascript" src="/system/resource/openapp/search/js/containsHtmlTags.js"></script><script language="javascript" src="/system/resource/openapp/search/layui/layui.js"></script>
+<div id="divu0"></div>
+<script type="text/html" id="htmlu0">
+    <div id="appu0">
+        <div v-if="!isError" class="searchbox fr">
+            <input type="text" placeholder="请输入查询内容" class="text" autocomplete=off v-model=query.keyWord @keyup.enter="onSubmit">
+            <input class="submit" name="submit_button" type="button"  v-on:click="onSubmit()"/>
+        </div>
+        <div v-if="isError" style="color: #b30216; font-size:18px;text-align: center;padding:20px;">
+            应用维护中！
+        </div>
+    </div>
+</script>
+<script>
+    $("#divu0").html($("#htmlu0").text());
+</script>
+<script>
+    var appOwner = "1681987036";
+    var token = 'tourist';
+    var urlPrefix = "/aop_component/";
+
+    jQuery.support.cors = true;
+    $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+    });
+
+    new Vue({
+        el: "#appu0",
+        data: function () {
+            return {
+                query: {
+                    keyWord: "",//搜索关键词
+                    owner: appOwner,
+                    token: token,
+                    urlPrefix: urlPrefix,
+                    lang:"i18n_zh_CN"
+                },
+                isError: false
+            }
+        },
+        mounted: function () {
+            var _this = this;
+            // _this.init();
+        },
+        methods: {
+            init: function(){
+                $.ajax({
+                    url: "/aop_component//webber/search/test",
+                    type: "get",
+                    success: function (response) {
+                        if (response.code == "0000") {
+                        } else if (response.code == "220") {
+                            _this.isError = true;
+                            console.log(response);
+                        } else if (!response.code) {
+                            _this.isError = true;
+                            console.log(response);
+                        }
+                    },
+                    error: function (response) {
+                        _this.isError = true;
+                    }
+                });
+            },
+            onSubmit: function (e) {
+                var url = "/aop_views/search/modules/resultpc/soso.html";
+                if ("10" == "1" || "10" == "2") {
+                    url = "" + url;
+                }
+                var _this = this;
+                var query = _this.query;
+                if (url.indexOf("?") > -1) {
+                    url = url.split("?")[0];
+                }
+                if (query.keyWord) {
+                    var query = new Base64().encode(JSON.stringify(query));
+                    window.open(url + "?query=" + query);
+                } else {
+                    alert("请填写搜索内容")
+                }
+            },
+        }
+    })
+</script>
+
+<script>
+   var appElementu0 = document.querySelector("#appu0");
+   if (appElementu0 && appElementu0.__vue__) {
+
+   } else {
+      $("#divu0").html($("#htmlu0").text());
+      var appOwner = "1681987036";   
+      var urlPrefix = "/aop_component/";
+      var ifLogin="";
+      var token = ifLogin=='true'?gettoken(10, true).trim():'tourist';
+      if (containsHtmlTags(token) || !token) { 
+         token = 'tourist';
+      }
+      jQuery.support.cors = true;
+      $.ajaxSetup({
+        beforeSend: function (request, settings) {
+            request.setRequestHeader("Authorization", token);
+            request.setRequestHeader("owner", appOwner);
+        }
+      });
+      var queryInfou0 = {
+        query: {
+            keyWord: "",//搜索关键词
+            owner: appOwner,
+            token: token,
+            urlPrefix: urlPrefix,
+            lang:"i18n_zh_CN"
+        },
+        isError: false
+      };
+      function keyUpFunu0(e){
+        var theEvent = e || window.event;
+        var keyCode = theEvent.keyCode || theEvent.which || theEvent.charCode;
+        if(keyCode == 13){
+          onSubmitu0();
+        }
+      };
+
+      function onSubmitu0(e) {
+        queryInfou0.query.keyWord= $("#appu0  .qwss").val();
+        
+        var url = "/aop_views/search/modules/resultpc/soso.html";      
+        if ("10" == "1" || "10" == "2") {
+           url = "" + url;
+        }
+        var query = queryInfou0.query;
+        if (url.indexOf("?") > -1) {
+            url = url.split("?")[0];
+        }
+        if (query.keyWord) {
+            var query = new Base64().encode(JSON.stringify(query));
+            window.open(url + "?query=" + query);
+        } else {
+            alert("请填写搜索内容")
+        }
+      };
+   }
+</script><script language="javascript" src="/system/resource/js/dynclicks.js"></script><script language="javascript" src="/system/resource/js/openlink.js"></script>
+<a href="http://ruanjianen.nwpu.edu.cn" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62514)" class="fr button">English</a>
+
+
+<P><script language="javascript" src="/system/resource/js/calendar/simple.js"></script>               
+<script language="JavaScript">
+//阳历
+var c_Calendar263346EnDateString;
+
+var c_Calendar263346WeekDayString;
+
+//阴历
+var c_Calendar263346CnDateString;
+//节气
+var c_Calendar263346JQString;
+//年
+var c_Calendar263346YearString;
+//月
+var c_Calendar263346MonthString;
+//日
+var c_Calendar263346DayString;
+//周
+var c_Calendar263346WeekString;
+//显示
+var c_Calendar263346ShowString;
+function RunGLNL263346()
+{          
+    var  sc =new Simple_Calendar ();
+    sc.init();
+    c_Calendar263346CnDateString=sc.getCnDateString();
+    c_Calendar263346WeekDayString=sc.getCalendarWeekString();
+    c_Calendar263346JQString=sc.getJQString();
+    c_Calendar263346EnDateString=sc.getEnDateString();
+    c_Calendar263346YearString=sc.getYearString();
+    c_Calendar263346MonthString=sc.getMonthString();
+    c_Calendar263346DayString=sc.getDayString();
+    c_Calendar263346WeekString=sc.getWeekString();
+    c_Calendar263346ShowString= "";
+}
+RunGLNL263346();
+      
+c_Calendar263346ShowString+=c_Calendar263346EnDateString; 
+c_Calendar263346ShowString+="&nbsp;&nbsp;"+c_Calendar263346WeekDayString; 
+c_Calendar263346ShowString+="&nbsp;&nbsp;"+c_Calendar263346CnDateString;
+
+
+</script>
+<div id="c_lunar263346" class="fontstyle263346"></div>
+<script>
+	document.getElementById("c_lunar263346").innerHTML = c_Calendar263346ShowString;
+</script>
+</P></DIV></DIV><!-- 导航栏 -->
+<DIV class="navbar clearfix" style=" width: 1279px">
+<UL></UL>
+<DIV class="logo fl clearfix">
+
+<a href="../index.htm" title="软件学院2020"><img src="../img/rjxy.png" alt=""></a></DIV><ul class="fr clearfix">
+            <li>
+
+            <a href="../xygk.htm">学院概况</a>
+                <ul id="ul1">
+                        <li><a href="../xygk/xyxw.htm">学院新闻</a></li>
+                        <li><a href="../xygk/xyjj.htm">学院简介</a></li>
+                        <li><a href="../xygk/jgsz.htm">机构设置</a></li>
+                        <li><a href="../xygk/xrld.htm">现任领导</a></li>
+                        <li><a href="../xygk/lrld.htm">历任领导</a></li>
+                        <li><a href="../xygk/lxwm.htm">联系我们</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../szdw.htm">师资队伍</a>
+                <ul id="ul1">
+                        <li><a href="jsdw.htm">教师队伍</a></li>
+                        <li><a href="ryxx.htm">荣誉学衔</a></li>
+                        <li><a href="xswyh.htm">学术委员会</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../jyjx.htm">教育教学</a>
+                <ul id="ul1">
+                        <li><a href="../jyjx/bkspy1.htm">本科生培养</a></li>
+                        <li><a href="../jyjx/yjspy1.htm">研究生培养</a></li>
+                        <li><a href="../jyjx/xgxz.htm">相关下载</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../kxyj.htm">科学研究</a>
+                <ul id="ul1">
+                        <li><a href="../kxyj/kygk.htm">科研概况</a></li>
+                        <li><a href="../kxyj/kydt.htm">科研动态</a></li>
+                        <li><a href="../kxyj/syspt.htm">实验室平台</a></li>
+                        <li><a href="../kxyj/xgxz.htm">相关下载</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../djyd.htm">党建园地</a>
+                <ul id="ul1">
+                        <li><a href="../djyd/dwgk.htm">党委概况</a></li>
+                        <li><a href="../djyd/llxx.htm">理论学习</a></li>
+                        <li><a href="../djyd/djdt.htm">党建动态</a></li>
+                        <li><a href="../djyd/qtgz.htm">群团工作</a></li>
+                        <li><a href="../djyd/zbhd.htm">支部活动</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../xsgz.htm">学生工作</a>
+                <ul id="ul1">
+                        <li><a href="../xsgz/xshd.htm">学生活动</a></li>
+                        <li><a href="../xsgz/xsfc.htm">学生风采</a></li>
+                        <li><a href="../xsgz/jyzd1.htm">就业指导</a></li>
+                        <li><a href="../xsgz/gzzd.htm">规章制度</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../hzjl.htm">合作交流</a>
+                <ul id="ul1">
+                        <li><a href="../hzjl/gzdt.htm">工作动态</a></li>
+                        <li><a href="../hzjl/gjhz.htm">国际合作</a></li>
+                        <li><a href="../hzjl/gjxsy.htm">国际学术月</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../xyzj.htm">校友之家</a>
+                <ul id="ul1">
+                        <li><a href="../xyzj/xyfc.htm">校友风采</a></li>
+                        <li><a href="../xyzj/xyhd.htm">校友活动</a></li>
+                </ul>
+
+        </li>
+        <li>
+
+            <a href="../rczp.htm">人才招聘</a>
+                <ul id="ul1">
+                        <li><a href="../rczp/bshzp.htm">博士后招聘</a></li>
+                        <li><a href="../rczp/rcyj.htm">人才引进</a></li>
+                </ul>
+
+        </li>
+</ul>
+
+
+
+</DIV><!--内页banner-->
+<DIV class="ny-banner">        
+     
+               
+                 
+                   
+                        <img src="../img/ny-banner.jpg" border="0">
+                   
+             
+    
+</DIV>
+<DIV class="ny-main clearfix">
+<DIV class="wrap clearfix">
+<DIV class="main-left fl">
+<H3>
+师资队伍</H3>
+<DIV style="height: 200px"><ul class="cleafix">
+            <li class="on"><a href="jsdw.htm" title="教师队伍">教师队伍</a></li>
+        <li><a href="ryxx.htm" title="荣誉学衔">荣誉学衔</a></li>
+        <li><a href="xswyh.htm" title="学术委员会">学术委员会</a></li>
+</ul></DIV></DIV>
+<DIV class="main-right fr">
+<DIV class="content">
+<DIV class="Current">  
+                <a href="../index.htm">首页</a>
+
+                >>
+                <a href="../szdw.htm">师资队伍</a>
+
+                >>
+                <a href="jsdw.htm">教师队伍</a>
+</DIV>
+
+<script language="javascript" src="/system/resource/js/centerCutImg.js"></script><div>
+    
+    <span style="color: rgb(51, 51, 51); line-height: 2em; font-size: 20px;font-weight:bold">教授（含准聘教授）</span>
+    <div style="height:2px;background: rgb(33, 101, 181);"></div>
+    <div style="height:10px;"></div>
+</div>
+
+<table cellpadding="2" cellspacing="0" border="0">
+    <tr width="100%">
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/zhengjiangbin.html" target="_blank" title="郑江滨">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/3/61/10/92ECB4827E1AA7AEE9D13E3635F_19F84966_5A97.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">郑江滨</h3>
+            <h3 style="font-size:14px;color:#888;">长聘教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/wujunsheng.html" target="_blank" title="武君胜">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/7/77/F3/3021CF792A8BCD03623EEC6F418_35D21C06_9F007.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">武君胜</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/dongyunwei.html" target="_blank" title="董云卫">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/F/35/B9/F7E4D963BBC8F417E0602B0D940_BC9F67A8_33D12.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">董云卫</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/zhangshijin.html" target="_blank" title="张仕进">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/2/94/AB/67090278D435101308BABC74AFB_38E4B73A_17C6B.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">张仕进</h3>
+            <h3 style="font-size:14px;color:#888;">国家级高层次人才 长聘教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/heliang.html" target="_blank" title="贺亮">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/3/2F/11/AE98694CCAC10EDFFFFEB6D9CF5_5CAC18E6_64304.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">贺亮</h3>
+            <h3 style="font-size:14px;color:#888;">国家级青年人才 教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/zhangtao.html" target="_blank" title="张涛">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/B/DB/33/1E19529F29B47DB8060C4974678_6CB351BE_90AC6.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">张涛</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/zhangkailong.html" target="_blank" title="张凯龙">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/E/48/C2/CE09F13023E31852F8F49B37E5A_716A4C18_9A10D.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">张凯龙</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/machunyan.html" target="_blank" title="马春燕">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/4/82/FA/C4A625ADE3A94D2489DA2AEC96C_F89A323F_1D0DE3.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">马春燕</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/xutao.html" target="_blank" title="徐韬">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/8/48/83/BE2D3E8BAD689126889E7313FC7_26D12A51_16AC3B.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">徐韬</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="25%" valign="top">
+        <div style="margin-top:7px;margin-right:50px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2026010018.html" target="_blank" title="王雨佳">
+            <div style="width:100%;text-align:center;margin-bottom: 13px;margin-left: 20px">
+            <img src="/__local/9/5E/72/B309E32DE5AC372D656FA423725_5C271C98_379EB.png" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">王雨佳</h3>
+            <h3 style="font-size:14px;color:#888;">准聘教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+</table><script>_showDynClickBatch(['dynclicks_u9_3628','dynclicks_u9_3562','dynclicks_u9_8666','dynclicks_u9_3611','dynclicks_u9_3975','dynclicks_u9_4728','dynclicks_u9_4691','dynclicks_u9_11196','dynclicks_u9_14336','dynclicks_u9_14406'],[3628,3562,8666,3611,3975,4728,4691,11196,14336,14406],"wbnews", 1681987036)</script>
+
+<div style="margin-top:10px;">
+    
+    <span style="color: rgb(51, 51, 51); line-height: 2em; font-size: 20px;font-weight:bold">副教授（含准聘副教授）</span>
+    <div style="height:2px;background: rgb(33, 101, 181);"></div>
+    <div style="height:10px;"></div>
+</div>
+
+<table cellpadding="2" cellspacing="0" border="0">
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/6A8B95B2489E4CC287F78C807DC2414D.html" target="_blank" title="石玲娟">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/7E/37/FDD3A023A7AB5DD6D19D2401ADB_765C3ECC_203014.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">石玲娟</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2016010197.html" target="_blank" title="魏倩茹">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/0/36/E9/6B7F6321353C1B3B8A542ACF0FC_BA2D3045_15386.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">魏倩茹</h3>
+            <h3 style="font-size:14px;color:#888;">长聘副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2024050011.html" target="_blank" title="李玉珂">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/E3/6B/939AB459E9F34676D6305FA0FC0_D6DAFFC9_1A8CB.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">李玉珂</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2023050026.html" target="_blank" title="张玉芳">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/7/7C/94/7E95A48FC95DB8DBC20183B0158_3840F2B5_102AF.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">张玉芳</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/liangxu.html" target="_blank" title="梁旭">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/9/0A/FA/9C5B645B35CD1B4AD2BFAE99C86_46FE832F_15807.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">梁旭</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/majiaman.html" target="_blank" title="马佳曼">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/96/55/2E299391E556A227E6D8BDFBC50_D602578F_37667.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">马佳曼</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2023050016.html" target="_blank" title="王君波">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/B/54/11/B4225D11E65354A0B7D0CE29B4A_C22C9AC1_4509.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">王君波</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2017010189.html" target="_blank" title="罗建超">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/1/E7/0A/B7DF1DF6CD71FB958B9BE735FB5_FBDAE0DB_218F2.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">罗建超</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2023055001.html" target="_blank" title="Ali Turab">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/6/D4/CF/B60A8A4E51222989269B8C635B7_B274C0B5_236BE.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Ali Turab</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/yilei.html" target="_blank" title="石亦磊">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/C/D1/63/97955E11CD5F55247350352858A_8AB1A13C_F919.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">石亦磊</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/qgking.html" target="_blank" title="金强国">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/8/EB/60/60B2EEBE256656ED0D2968B8917_B7C21843_11815.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">金强国</h3>
+            <h3 style="font-size:14px;color:#888;">长聘副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/B9CB90EBBCE7D77FE053640A280AF0A8" target="_blank" title="方振宇">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/2/E5/F4/9680ED0BAFC6D69409BC2E2EF9B_B72A27FB_190AA.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">方振宇</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/wangbingshu.html" target="_blank" title="王兵书">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/7/7D/15/A9038A8F3CAA88CC26346B80A25_21EAC07D_22B0BB.png" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">王兵书</h3>
+            <h3 style="font-size:14px;color:#888;">长聘副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2020050020.html" target="_blank" title="干红平">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/7/76/CF/536D3691A8916F61765447253E2_344AE051_94E73.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">干红平</h3>
+            <h3 style="font-size:14px;color:#888;">长聘副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2019010242.html" target="_blank" title="刘春">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/A/58/20/2AAF9575AEC631AA4AD80453D56_D7846298_192A22.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">刘春</h3>
+            <h3 style="font-size:14px;color:#888;">长聘副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/zhengwei.html" target="_blank" title="郑炜">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/E/05/1F/B284C17926BBA4F14256E76FAE6_4728C9CA_73CC4.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">郑炜</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/niexuan.html" target="_blank" title="聂烜">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/8/69/7D/F87C610D693CC0641D55890E5AF_AC7F0994_2344A3.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">聂烜</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/yinming.html" target="_blank" title="殷茗">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/A0/AC/F7302B74192E33A9ADC950A000A_49D4FBA9_B3155.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">殷茗</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/liweigang.html" target="_blank" title="李伟刚">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/A/48/2D/2BD40D5F42AAC95FC35B825A58A_DBC635A8_1A4E35.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">李伟刚</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/libing" target="_blank" title="黎昞">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/C/57/8C/8907EBD9F57D44D7B040317C82C_DFA8E1FC_19F3EE.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">黎昞</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/guojia.html" target="_blank" title="郭佳">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/14/F7/73C02758728134A76CCAE8FAA12_7B9ADA2A_12ACD9.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">郭佳</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/A8B97BAE214935DBE053640A280A7594.html" target="_blank" title="张卫平">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/45/71/6212A26E5FE67500D4260E730C0_B3F7022A_4EF61.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">张卫平</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/BCB3469649091421E053650A280ABBD0.html" target="_blank" title="刘杰">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/9D/E8/E0D63EF0538756C9D007A98D8FF_C98F062D_85B65.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">刘杰</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2021050004.html" target="_blank" title="汪连坡">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/A/CA/B9/15A5F2B96E011159C5C95AE7F92_ED21DFFE_12BA1F.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">汪连坡</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/lihongqi.html" target="_blank" title="李鸿岐">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/7C/27/04121F13D64A4142AF9AF5DA153_D83E48BB_1B446.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">李鸿岐</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/jizhe2021.html" target="_blank" title="季哲">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/CB/C8/3164453803C6F7FC85F6D396A8F_FDCEF7BB_126602.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">季哲</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/yanma.html" target="_blank" title="马延">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/2/60/7E/CE24B1555CA41EFED302A87CE1B_74740E63_222D3.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">马延</h3>
+            <h3 style="font-size:14px;color:#888;">副教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+    </tr>
+</table><script>_showDynClickBatch(['dynclicks_u10_14686','dynclicks_u10_12466','dynclicks_u10_9726','dynclicks_u10_8716','dynclicks_u10_8446','dynclicks_u10_8436','dynclicks_u10_7746','dynclicks_u10_7006','dynclicks_u10_6986','dynclicks_u10_6966','dynclicks_u10_4321','dynclicks_u10_3614','dynclicks_u10_3581','dynclicks_u10_3578','dynclicks_u10_3577','dynclicks_u10_4275','dynclicks_u10_3575','dynclicks_u10_3635','dynclicks_u10_2256','dynclicks_u10_3612','dynclicks_u10_3576','dynclicks_u10_3613','dynclicks_u10_3627','dynclicks_u10_3979','dynclicks_u10_3977','dynclicks_u10_3976','dynclicks_u10_4322'],[14686,12466,9726,8716,8446,8436,7746,7006,6986,6966,4321,3614,3581,3578,3577,4275,3575,3635,2256,3612,3576,3613,3627,3979,3977,3976,4322],"wbnews", 1681987036)</script>
+
+<div style="margin-top:10px">
+    
+    <span style="color: rgb(51, 51, 51); line-height: 2em; font-size: 20px;font-weight:bold">讲师（含助理教授）</span>
+    <div style="height:2px;background: rgb(33, 101, 181);"></div>
+    <div style="height:10px;"></div>
+</div>
+
+<table cellpadding="2" cellspacing="0" border="0">
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/zhaokaixing.html" target="_blank" title="赵凯星">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/70/42/2153C3444A10E0F74594D092035_8DA895DC_7D08.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">赵凯星</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/yantingwang.html" target="_blank" title="汪彦婷">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/6/19/8B/479BA1F39E9016AC3EF0575C2A3_606ACE3B_247336.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">汪彦婷</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/wangli.html" target="_blank" title="王丽">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/B/95/FB/9716872C57C2B8EBA5727660271_1D296CCE_180CEC.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">王丽</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/fengxikang.html" target="_blank" title="冯喜康">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/4A/97/87EF9F25EA22B863B617C3A917E_DF0C2BDD_BC3.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">冯喜康</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="http://teacher.nwpu.edu.cn/haoguo.html" target="_blank" title="郭昊">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/E/3A/8F/6DFBBF4787834698A52738C5932_0DEDDAE9_749E.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">郭昊</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2021050010.html" target="_blank" title="吴逾强">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/7/00/FF/B8BD7D009E236EAA2F984BFD33C_88A50070_3F959.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">吴逾强</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/lipenggao.html" target="_blank" title="高利鹏">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/A0/B5/96F6BC9EF1E9DAE7C7FE62E5345_C5B8802A_6BD8B.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">高利鹏</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/nwpuyin.html" target="_blank" title="印佳奇">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/0/B2/8D/539017394DC232AFB76C92C0490_89FC190E_2BEC.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">印佳奇</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+</table><script>_showDynClickBatch(['dynclicks_u11_4084','dynclicks_u11_3586','dynclicks_u11_3585','dynclicks_u11_3587','dynclicks_u11_3588','dynclicks_u11_3981','dynclicks_u11_4382','dynclicks_u11_4695'],[4084,3586,3585,3587,3588,3981,4382,4695],"wbnews", 1681987036)</script>
+
+<div style="margin-top:10px">
+    
+    <span style="color: rgb(51, 51, 51); line-height: 2em; font-size: 20px;font-weight:bold">博士后</span>
+    <div style="height:2px;background: rgb(33, 101, 181);"></div>
+    <div style="height:10px;"></div>
+</div>
+
+<table cellpadding="2" cellspacing="0" border="0">
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="Swardiantara Silalahi">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/BD/35/AEC38F93515ACEBDDEC6AF7A7CD_04288F0B_943D.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Swardiantara Silalahi</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2025031111.html" target="_blank" title="Hafiz Muhammad">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/A/26/A4/F9BD2D5ECD7BB6C6E95011A35B1_CE097B1E_638B.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Hafiz Muhammad</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2025031098.html" target="_blank" title="Fahad Khan">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/B/53/75/2766B5C72983EC85A94258535F8_1C2D1D9A_434BB.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Fahad Khan</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2025031103" target="_blank" title="白云鹏">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/93/77/5B5B4290C4FDE990215263C7D3E_A39A3F14_9CD5.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">白云鹏</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/en/abid" target="_blank" title="Abid Hussain">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/8A/02/A4E05E269909B3551EA6330450E_0DAFE283_91CC.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Abid Hussain</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/en/waqasjunaid" target="_blank" title="Waqas Junaid">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/CD/31/E27DAD8011CFE3EE89616FFC8B3_F4D403DE_1032C.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Waqas Junaid</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/en/kazi" target="_blank" title="Kazi Istiaque Ahmed">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/34/93/9A53CD1DC27BB90B28D727B6562_9739631C_8063.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Kazi Istiaque Ahmed</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/yasir.html" target="_blank" title="Glani Yasir">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/7/F0/EF/8E9BBF81F8B2F4DE4870C0182A7_DBD751D0_174CE.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Glani Yasir</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2024050021.html" target="_blank" title="Ahsan">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/0/C5/31/8E0978F8D4BF66738778FC98708_C47FA6C5_12E3A.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Ahsan</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2024050019.html" target="_blank" title="陈明">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/36/D7/5FEEB1B1651D5E44EE8F6BBE12C_CDC38A86_12519.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">陈明</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/drrazzaq.html" target="_blank" title="Abdul Razzaq">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/59/C6/0561F3CA42E29960F893C0A48EA_436CDB7F_5000.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Abdul Razzaq</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2024050009.html" target="_blank" title="Latif Jahanzaib">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/6F/72/CFD8FE4914DA794B654BD07DFA6_F493EBBD_9637.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Latif Jahanzaib</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/jingfang.html" target="_blank" title="方婧">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/0A/67/EAEA17DE7A783B3DD58832CB902_520B8F54_321B6.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">方婧</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/drusman.html" target="_blank" title="Usman Akhtar">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/D/50/28/FA87899BACC93C43E0D9FFA4E81_B05EC951_13615.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">Usman Akhtar</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2022054002.html" target="_blank" title="高杨">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/8/93/6A/67EED1EFF93439DD8B3CD737257_169CDDFB_275F9.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">高杨</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="https://teacher.nwpu.edu.cn/2022054001.html" target="_blank" title="芦山">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/E/52/BC/5B7ACD6A3BC7FBF2D9B45E8A29A_EB6FDF96_23735.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">芦山</h3>
+            <h3 style="font-size:14px;color:#888;">博士后</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+</table><script>_showDynClickBatch(['dynclicks_u12_14636','dynclicks_u12_14326','dynclicks_u12_14036','dynclicks_u12_14026','dynclicks_u12_13856','dynclicks_u12_13846','dynclicks_u12_13546','dynclicks_u12_12946','dynclicks_u12_12476','dynclicks_u12_11186','dynclicks_u12_10746','dynclicks_u12_10736','dynclicks_u12_10726','dynclicks_u12_10716','dynclicks_u12_4384','dynclicks_u12_4383'],[14636,14326,14036,14026,13856,13846,13546,12946,12476,11186,10746,10736,10726,10716,4384,4383],"wbnews", 1681987036)</script>
+
+<div><div style="margin-top:10px">
+    
+    <span style="color: rgb(51, 51, 51); line-height: 2em; font-size: 20px;font-weight:bold">实验教学中心</span>
+    <div style="height:2px;background: rgb(33, 101, 181);"></div>
+    <div style="height:10px;"></div>
+</div>
+
+<table cellpadding="2" cellspacing="0" border="0">
+
+    <tr width="100%">
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="王犇">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/F/A0/8C/2E6164A492097666936540A4135_896D190E_1CE2CB.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">王犇</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="翟书颖">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/2/09/06/DC1521E8E2F248987BD4E19262A_7F8B3B7B_3C418.png" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">翟书颖</h3>
+            <h3 style="font-size:14px;color:#888;">教授</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="李易">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/5/2A/E2/580379A80C7B69C5F2E06AF58A5_A3C19409_139E14.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">李易</h3>
+            <h3 style="font-size:14px;color:#888;">高级工程师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="李勇">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/4/2C/63/1E7F37093A26529DE314A386365_BF2A4A0E_326C8.jpg" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">李勇</h3>
+            <h3 style="font-size:14px;color:#888;">高级工程师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+        <td width="20%" valign="top">
+        <div style="margin-top:7px;margin-right:0px;border-bottom: 1px solid #D3D3D3;width:180px;">
+        <a href="" target="_blank" title="陈勇">
+            <div style="width:100%;text-align:center;margin-bottom: 13px">
+            <img src="/__local/3/ED/EB/A8227BF3041A01D707B454539C0_68424656_36B33.png" width="120" height="160"></img>
+            
+            <h3 style="font-size:16px;line-height:2em;font-weight:bold">陈勇</h3>
+            <h3 style="font-size:14px;color:#888;">讲师</h3>
+            </div>
+        </a>
+        </div>
+        </td>
+
+    </tr>
+
+</table><script>_showDynClickBatch(['dynclicks_u13_13686','dynclicks_u13_13726','dynclicks_u13_13676','dynclicks_u13_13716','dynclicks_u13_13696'],[13686,13726,13676,13716,13696],"wbnews", 1681987036)</script>
+</div>
+</DIV></DIV></DIV></DIV><!-- 底部区域 -->
+<DIV class="footer">
+<DIV class="clearfix">    
+
+        <a href="javascript:void(0)" class="fr"><img src="../images/qrcode_for_gh_c3d02c67ba8e_258.jpg" alt="" style="width:85px">
+            <p>学院官方微信公众号：软语秦仓</p>
+        </a>
+
+
+<DIV class="footGrop fr">
+<UL>
+<LI style="margin-bottom: 16px"><ul>
+    <LI><a href="http://news.nwpu.edu.cn" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62515)">新闻网</a></li>
+    <LI><a href="/system/go.jsp?site=km1" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62516)">发展规划处</a></li>
+    <LI><a href="/system/go.jsp?site=km9" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62517)">保密处</a></li>
+    <LI><a href="http://ruanjianold.nwpu.edu.cn" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62519)">软件学院</a></li>
+    <LI><a href="http://jiaowu.nwpu.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62581)">教务处</a></li>
+    <LI><a href="https://gs.nwpu.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62582)">研究生院</a></li>
+    <LI><a href="https://renshi.nwpu.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62583)">人事处</a></li>
+    <LI><a href="http://xgb.nwpu.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62584)">党委学生工作部</a></li>
+    <LI><a href="http://xgb.nwpu.edu.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62585)">党委研究生工作部</a></li>
+    <LI><a href="https://news.nwpu.edu.cn/xcb/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62586)">党委宣传部</a></li>
+</ul>
+ <a href="javascript:void(0)">校内连接</a>
+<LI><ul>
+    <LI><a href="http://www.moe.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62588)">中华人民共和国教育部</a></li>
+    <LI><a href="https://www.miit.gov.cn/" title="" onclick="_addDynClicks(&#34;wburl&#34;, 1681987036, 62589)">中华人民共和国工业和信息化部</a></li>
+</ul>
+ <a href="javascript:void(0)">校外连接</a></LI></UL></DIV>
+<DIV class="fl banQ"><!-- 版权内容请在本组件"内容配置-版权"处填写 -->
+<p>地址：西安市长安区东祥路1号 &nbsp; &nbsp;邮编:710129</p><p>版权所有 西北工业大学软件学院 &nbsp; &nbsp;电话：029-88431588</p></DIV></DIV></DIV></DIV><script type="text/javascript" src="../js/jquery.min.js"></script><script type="text/javascript" src="../js/jquery.SuperSlide.js"></script><script type="text/javascript" src="../js/index.js"></script>
+
+</BODY></HTML>
+
+
+
+
+
+
