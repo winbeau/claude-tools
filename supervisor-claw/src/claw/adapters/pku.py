@@ -13,6 +13,7 @@ Departments
 * ``wangxuan`` - 王选计算机研究所 (www.icst.pku.edu.cn). The "official"
   www.wangxuan.pku.edu.cn is a Vue SPA memorial site - do *not* use it.
 * ``cfcs`` - 前沿计算研究中心 (cfcs.pku.edu.cn).
+* ``ss``   - 软件与微电子学院 (ss.pku.edu.cn). Added in v0.4.1.
 
 Known oddities
 --------------
@@ -33,6 +34,16 @@ Known oddities
    under different ``<div id="g{N}">`` blocks. We don't try to label them
    per-category; just keep faculty-level entries (everyone with a profile
    link + a title that isn't obviously student/alumni).
+7. ss.pku list pages (sztd/<rank>/index.htm) render every PI as
+   ``<li><a [href]><div class="name"><span class="name-text fs19">NAME</span></div></a></li>``.
+   Many entries are 合署/双聘 教师 whose ``<a>`` has no ``href`` (they don't
+   own a profile page on ss.pku). We still surface them as name-only
+   ``ListItem``s so downstream dedup + enrichment can find them.
+8. ss.pku profile pages keep the content inside ``div.left-info`` with
+   ``div.zw`` (rank line) + ``div.jianjie`` (bio paragraph) + repeated
+   ``div.item`` (each labelled 研究方向 / 讲授课程 / 学术论文 / 科研项目
+   / 社会服务). No public email anywhere — we set ``email=None`` and
+   ``email_obfuscated=True`` so the DeepSeek enrichment layer fills in.
 """
 
 from __future__ import annotations
@@ -690,6 +701,191 @@ def _profile_cfcs(
 
 
 # ---------------------------------------------------------------------------
+# ss.pku.edu.cn (软件与微电子学院) - list + profile parsers
+# ---------------------------------------------------------------------------
+
+
+# Strip ss.pku.edu.cn nav / footer leftovers — global menu strings that
+# selectolax may pick up if a body-text extraction goes too wide.
+_SS_NAV_TOKENS: tuple[str, ...] = (
+    "学院概况", "组织机构", "师资团队", "人才培养", "学术研究",
+    "招生就业", "国际合作", "党建工作", "学生工作", "校友天地",
+    "信息公开", "联系我们", "学院首页", "返回上一级",
+)
+
+
+def _parse_list_ss(html: str, list_url: str) -> list[ListItem]:
+    """ss.pku.edu.cn /sztd/<rank>/index.htm faculty list:
+
+    <li>
+      <a [href="<32hex>.htm"]>
+        <div class="name">
+          <span class="name-text fs19">姓名</span>
+        </div>
+      </a>
+    </li>
+
+    Many entries are 合署/双聘 teachers without a per-person profile page
+    on ss.pku — ``<a>`` has no ``href`` in that case. We keep them as
+    name-only ``ListItem`` so dedup + enrichment can still pick them up.
+    """
+    tree = parse(html)
+    items: list[ListItem] = []
+    seen_names: set[str] = set()
+    seen_urls: set[str] = set()
+    for li in tree.css("li"):
+        span = li.css_first("span.name-text")
+        if span is None:
+            continue
+        name = text_of(span)
+        if not name:
+            continue
+        # Must contain CJK to reject the EN menu items / pagination links.
+        if not any("一" <= c <= "鿿" for c in name):
+            continue
+        a = li.css_first("a")
+        href = (a.attributes.get("href") or "").strip() if a is not None else ""
+        absurl: str | None = None
+        # Only treat per-person filenames (32-hex .htm) as profile_url.
+        # Reject obvious navigation hrefs like ``../../index.htm``.
+        if href and href.endswith(".htm") and "/" not in href and "index" not in href:
+            absurl = absolutize(list_url, href)
+        if absurl is not None:
+            if absurl in seen_urls:
+                continue
+            seen_urls.add(absurl)
+        else:
+            # name-only dedup — same person may appear in both 工学博士 and
+            # 电子信息博士 buckets (pipeline runs each list_url separately,
+            # but a single bucket should never list a name twice).
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+        items.append(
+            ListItem(
+                name_cn=name,
+                profile_url=absurl,
+            )
+        )
+    return items
+
+
+def _profile_ss(
+    html: str, profile_url: str, list_item: ListItem
+) -> AdvisorPartial:
+    """ss.pku.edu.cn profile pages structure inside ``div.left-info``:
+
+    * ``<div class="zw fs16">``     -> 学位 + 职称 line, e.g.
+                                       "博士 教授 博士生导师 ..."
+    * ``<div class="jianjie ...">`` -> bio paragraph
+    * one or more ``<div class="item">``, each with
+        ``<div class="title"><span class="text">LABEL</span></div>``
+        ``<div class="jianjie1 ...">BODY</div>``
+      where LABEL ∈ {研究方向, 讲授课程, 学术论文, 科研项目, 社会服务, ...}.
+
+    No public email anywhere on ss.pku profiles -> email=None,
+    email_obfuscated=True (so the enrichment layer knows to retry).
+    """
+    tree = parse(html)
+    container = tree.css_first("div.left-info")
+    if container is None:
+        # Fall back to the body so we don't return nothing on a broken page.
+        container = tree.body
+
+    title: str | None = list_item.title
+    bio: str | None = None
+    sections: dict[str, str] = {}
+
+    if container is not None:
+        # Rank / title line.
+        zw = container.css_first("div.zw")
+        if zw is not None:
+            zw_text = text_of(zw)
+            if zw_text:
+                # Pick the first faculty-keyword token as title hint when
+                # caller didn't pass one.
+                if title is None:
+                    for kw in _FACULTY_TITLE_KEYWORDS:
+                        if kw in zw_text:
+                            title = kw
+                            break
+
+        # Bio paragraph.
+        jj = container.css_first("div.jianjie")
+        if jj is not None:
+            bt = jj.text(separator="\n", strip=True)
+            if bt:
+                # Drop nav leakage just in case.
+                lines = [
+                    ln.strip()
+                    for ln in bt.split("\n")
+                    if ln.strip() and ln.strip() not in _SS_NAV_TOKENS
+                ]
+                if lines:
+                    bio = "\n".join(lines)[:1000]
+
+        # Sectioned items.
+        for item in container.css("div.item"):
+            label_node = item.css_first("span.text") or item.css_first("div.title")
+            label = text_of(label_node).strip().rstrip("：:") if label_node else ""
+            if not label:
+                continue
+            body_node = item.css_first("div.jianjie1")
+            if body_node is None:
+                # Fall back to subtracting the label from item.text.
+                full = item.text(separator="\n", strip=True)
+                body_text = full
+                if body_text.startswith(label):
+                    body_text = body_text[len(label):].lstrip("：: \n")
+            else:
+                body_text = body_node.text(separator="\n", strip=True)
+            if body_text:
+                sections[label] = body_text
+
+    research_tags: list[str] = []
+    for key in ("研究方向", "研究兴趣", "研究领域", "Research Interests"):
+        if key in sections:
+            research_tags = _split_interests(sections[key])
+            if research_tags:
+                break
+
+    # If we didn't get a 研究方向 section but the bio has hints, try to
+    # promote the bio's lead line to interests — leave alone otherwise.
+
+    scope_text = (
+        container.text(separator=" ", strip=True) if container is not None else ""
+    )
+    recruit_chunks = find_recruit_paragraphs(scope_text)
+    raw_quota_text = "\n\n".join(recruit_chunks[:3]) if recruit_chunks else None
+
+    # No email on public ss.pku pages — flag obfuscated so enricher retries.
+    email = list_item.email
+    email_obf = False
+    if not email:
+        # Try a last-ditch plain-text scan in case future pages add a mailto.
+        em_body, was_obf = extract_email(scope_text)
+        if em_body:
+            email, email_obf = em_body, was_obf
+        else:
+            email_obf = True
+
+    return AdvisorPartial(
+        name_cn=list_item.name_cn,
+        title=title,
+        email=email,
+        email_obfuscated=email_obf,
+        phone=list_item.phone,
+        photo_url=list_item.photo_url,
+        homepage=profile_url,
+        bio_text=bio,
+        research_interests=research_tags,
+        raw_quota_text=raw_quota_text,
+        is_recruiting=True if recruit_chunks else None,
+        source_url=profile_url,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Routing helpers
 # ---------------------------------------------------------------------------
 
@@ -699,7 +895,9 @@ def _dept_from_url(url: str) -> str:
 
     Order matters: ``cfcs.pku.edu.cn`` and ``cis.pku.edu.cn`` both contain
     the substring ``cs.pku.edu.cn``/``is.pku.edu.cn``, so test the more
-    specific subdomains first.
+    specific subdomains first. Likewise ``ss.pku.edu.cn`` shares the
+    ``s.pku.edu.cn`` tail with ``cs.pku.edu.cn``, so we test ``ss`` before
+    ``cs`` to avoid a substring match collision.
     """
     if "cfcs.pku.edu.cn" in url:
         return "cfcs"
@@ -707,6 +905,8 @@ def _dept_from_url(url: str) -> str:
         return "ai"
     if "icst.pku.edu.cn" in url:
         return "wangxuan"
+    if "ss.pku.edu.cn" in url:
+        return "ss"
     if "cs.pku.edu.cn" in url:
         return "eecs"
     return "eecs"  # safe default - cs.pku is the largest dept
@@ -720,7 +920,7 @@ def _dept_from_url(url: str) -> str:
 @register
 class PkuAdapter(SchoolAdapter):
     school_code = "pku"
-    supports = {"eecs", "ai", "wangxuan", "cfcs"}
+    supports = {"eecs", "ai", "wangxuan", "cfcs", "ss"}
 
     def parse_list(self, html: str, list_url: str) -> list[ListItem]:
         dept = _dept_from_url(list_url)
@@ -732,6 +932,8 @@ class PkuAdapter(SchoolAdapter):
             return _parse_list_wangxuan(html, list_url)
         if dept == "cfcs":
             return _parse_list_cfcs(html, list_url)
+        if dept == "ss":
+            return _parse_list_ss(html, list_url)
         return []
 
     def parse_profile(
@@ -744,6 +946,8 @@ class PkuAdapter(SchoolAdapter):
             return _profile_wangxuan(html, profile_url, list_item)
         if dept == "cfcs":
             return _profile_cfcs(html, profile_url, list_item)
+        if dept == "ss":
+            return _profile_ss(html, profile_url, list_item)
         # Defensive: fall back to the vsb-style parser (matches the most
         # common pku template).
         return _profile_vsb_style(html, profile_url, list_item)

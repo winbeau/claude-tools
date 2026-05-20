@@ -248,3 +248,104 @@ def test_parse_profile_has_research_or_bio_cfcs(adapter: PkuAdapter) -> None:
         _stub_item("程宽"),
     )
     assert p.bio_text and len(p.bio_text) > 50
+
+
+# ---------------------------------------------------------------------------
+# v0.4.1 — 软件与微电子学院 (ss.pku.edu.cn) addon tests
+# ---------------------------------------------------------------------------
+
+
+def test_parse_list_ss_xssbsz(adapter: PkuAdapter) -> None:
+    """xssbsz = 工学博士. List has ~15 PIs; only a handful own a profile
+    page on ss.pku (most are 校本部 / 工学院 双聘) — we must keep the
+    name-only entries instead of dropping them."""
+    html = (FIX / "list_ss_xssbsz.html").read_text(encoding="utf-8")
+    url = "https://ss.pku.edu.cn/sztd/xssbsz/index.htm"
+    items = adapter.parse_list(html, url)
+
+    assert len(items) >= 15, f"got only {len(items)} items"
+    # All names populated and CJK.
+    for it in items:
+        assert it.name_cn.strip()
+        assert any("一" <= c <= "鿿" for c in it.name_cn), (
+            f"non-Chinese list item: {it.name_cn!r}"
+        )
+    # Some entries should expose a real profile_url (32-hex .htm).
+    with_url = [it for it in items if it.profile_url]
+    assert len(with_url) >= 3, (
+        f"only {len(with_url)} entries had a profile_url; expected >= 3"
+    )
+    # And — crucially — name-only entries MUST be retained, not dropped.
+    name_only = [it for it in items if it.profile_url is None]
+    assert len(name_only) >= 5, (
+        f"only {len(name_only)} name-only PIs; layout expects ~10"
+    )
+    # The handful with a profile_url end in .htm and absolutize correctly.
+    for it in with_url:
+        assert it.profile_url.endswith(".htm")
+        assert it.profile_url.startswith("https://ss.pku.edu.cn/")
+
+
+def test_parse_list_ss_qygcbssz(adapter: PkuAdapter) -> None:
+    """qygcbssz = 电子信息博士. Larger list (~67 PIs, mostly 双聘)."""
+    html = (FIX / "list_ss_qygcbssz.html").read_text(encoding="utf-8")
+    url = "https://ss.pku.edu.cn/sztd/qygcbssz/index.htm"
+    items = adapter.parse_list(html, url)
+
+    assert len(items) >= 60, f"got only {len(items)} items"
+    # Same shape contract.
+    for it in items:
+        assert it.name_cn.strip()
+    # At least a couple of profile-bearing entries.
+    with_url = [it for it in items if it.profile_url]
+    assert len(with_url) >= 2, (
+        f"only {len(with_url)} entries had a profile_url"
+    )
+
+
+def test_parse_profile_ss_no_nav(adapter: PkuAdapter) -> None:
+    """ss.pku profile must surface bio or research; must not leak JS /
+    site nav into bio_text. Email is allowed to be None but the partial
+    should flag ``email_obfuscated=True`` so the enricher knows to retry."""
+    html = (FIX / "profile_ss_xssbsz.html").read_text(encoding="utf-8")
+    item = _stub_item("李伟平")
+    p = adapter.parse_profile(
+        html,
+        "https://ss.pku.edu.cn/sztd/xssbsz/c6ee5dd9f3bf49c88581bb9deeb96aca.htm",
+        item,
+    )
+    assert p.bio_text or p.research_interests, "neither bio nor research"
+    if p.bio_text:
+        assert "function" not in p.bio_text
+        assert "<script" not in p.bio_text.lower()
+        # Site nav strings must not bleed into bio_text.
+        for nav in ("学院首页", "返回上一级", "联系我们", "信息公开"):
+            assert nav not in p.bio_text
+    for tag in p.research_interests:
+        assert 2 <= len(tag) <= 25
+        assert "(" not in tag and "（" not in tag
+        assert tag[-1] not in "。！？"
+    # Email may be unknown on ss.pku, but if so the obfuscation flag must
+    # be true so downstream knows to retry.
+    if p.email is None:
+        assert p.email_obfuscated is True
+    else:
+        assert "@" in p.email
+
+
+def test_parse_profile_ss_qygcbssz_sections(adapter: PkuAdapter) -> None:
+    """Second profile to confirm section parsing on the larger qygcbssz
+    bucket (different layout subtlety: bio uses 'jianjie fs18 gp-article'
+    class)."""
+    html = (FIX / "profile_ss_qygcbssz.html").read_text(encoding="utf-8")
+    item = _stub_item("张兴")
+    p = adapter.parse_profile(
+        html,
+        "https://ss.pku.edu.cn/sztd/qygcbssz/2221d3412ca74367bc5c9b74fc50d511.htm",
+        item,
+    )
+    assert p.bio_text or p.research_interests, "neither bio nor research"
+    # title hint should pick up '教授' from the zw line.
+    if p.title:
+        assert any(kw in p.title for kw in ("教授", "副教授", "研究员"))
+    assert p.homepage == p.source_url
