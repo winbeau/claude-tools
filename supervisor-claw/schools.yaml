@@ -242,3 +242,68 @@ schools:
         name_cn: 清源研究院
         list_urls:
           - http://www.qingyuan.sjtu.edu.cn/c/quanzhijiaoshi.html
+
+  - code: shtech
+    name_cn: 上海科技大学
+    name_en: ShanghaiTech University
+    departments:
+      # 上海科技大学是 single-college 模型：CS / AI / EE / 通信全部归 SIST 一个
+      # 学院管。sist.shanghaitech.edu.cn 是 Sudy-CMS SPA — 静态 /szdwx/list.htm
+      # 是空壳，师资数据由 cs_search.js 通过 POST AJAX 拉
+      # /_wp3services/generalQuery?queryObj=teacherHome 获得 (Fudan-cs 同款骨架)。
+      # 师资分 6 个 exField8 桶：常任教授 / 特聘教授 / 访问教授 / 研究人员 /
+      # 支撑人员 / 行政人员。PI 范围 = 前三类去掉访问教授 (默认隐藏)，再用
+      # exField1 过滤 博士后 / 访问学者 / 学生 (在 adapter 里做)。
+      # siteId=43 是 SIST 的 site；这套参数解出来 ~88 常任 + ~53 特聘 + ~6 研究人员
+      # 共 ~147 个 PI，对一所小规模新型研究型大学已经覆盖完整。
+      - code: sist
+        name_cn: 信息科学与技术学院
+        list_urls:
+          # 常任教授 (tenure-track Professor / Associate / Assistant)
+          - url: https://sist.shanghaitech.edu.cn/_wp3services/generalQuery?queryObj=teacherHome
+            method: POST
+            data:
+              siteId: '43'
+              columnId: ''
+              conditions: '[{"field":"published","value":"1","judge":"="},{"field":"language","value":"1","judge":"="},{"field":"exField8","value":"常任教授","judge":"="}]'
+              returnInfos: '[{"field":"title","name":"title"},{"field":"graduateSchool","name":"graduateSchool"},{"field":"degree","name":"degree"},{"field":"phone","name":"phone"},{"field":"email","name":"email"},{"field":"cnUrl","name":"cnUrl"},{"field":"headerPic","name":"headerPic"},{"field":"exField1","name":"exField1"},{"field":"exField5","name":"exField5"},{"field":"exField8","name":"exField8"},{"field":"exField9","name":"exField9"}]'
+              orders: '[{"field":"siteSort","type":"asc"}]'
+              pageIndex: '1'
+              rows: '999'
+              articleType: '1'
+              level: '1'
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://sist.shanghaitech.edu.cn/szdwx/list.htm?col=0
+          # 特聘教授 (joint / honorary chair professors)
+          - url: https://sist.shanghaitech.edu.cn/_wp3services/generalQuery?queryObj=teacherHome
+            method: POST
+            data:
+              siteId: '43'
+              columnId: ''
+              conditions: '[{"field":"published","value":"1","judge":"="},{"field":"language","value":"1","judge":"="},{"field":"exField8","value":"特聘教授","judge":"="}]'
+              returnInfos: '[{"field":"title","name":"title"},{"field":"graduateSchool","name":"graduateSchool"},{"field":"degree","name":"degree"},{"field":"phone","name":"phone"},{"field":"email","name":"email"},{"field":"cnUrl","name":"cnUrl"},{"field":"headerPic","name":"headerPic"},{"field":"exField1","name":"exField1"},{"field":"exField5","name":"exField5"},{"field":"exField8","name":"exField8"},{"field":"exField9","name":"exField9"}]'
+              orders: '[{"field":"siteSort","type":"asc"}]'
+              pageIndex: '1'
+              rows: '999'
+              articleType: '1'
+              level: '1'
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://sist.shanghaitech.edu.cn/szdwx/list.htm?col=1
+          # 研究人员 (副研究员 / 助理研究员; adapter 过滤掉同桶里的 博士后)
+          - url: https://sist.shanghaitech.edu.cn/_wp3services/generalQuery?queryObj=teacherHome
+            method: POST
+            data:
+              siteId: '43'
+              columnId: ''
+              conditions: '[{"field":"published","value":"1","judge":"="},{"field":"language","value":"1","judge":"="},{"field":"exField8","value":"研究人员","judge":"="}]'
+              returnInfos: '[{"field":"title","name":"title"},{"field":"graduateSchool","name":"graduateSchool"},{"field":"degree","name":"degree"},{"field":"phone","name":"phone"},{"field":"email","name":"email"},{"field":"cnUrl","name":"cnUrl"},{"field":"headerPic","name":"headerPic"},{"field":"exField1","name":"exField1"},{"field":"exField5","name":"exField5"},{"field":"exField8","name":"exField8"},{"field":"exField9","name":"exField9"}]'
+              orders: '[{"field":"siteSort","type":"asc"}]'
+              pageIndex: '1'
+              rows: '999'
+              articleType: '1'
+              level: '1'
+            headers:
+              X-Requested-With: XMLHttpRequest
+              Referer: https://sist.shanghaitech.edu.cn/szdwx/list.htm?col=3
