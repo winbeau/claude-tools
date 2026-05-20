@@ -511,15 +511,24 @@ class ResearchAgent:
         if name == "search_web":
             return await self._tool_search_web(args.get("query", ""), args.get("k", 5))
         if name == "read_page":
-            return await self._tool_read_page(args["url"], args.get("max_chars", 4000))
+            url = args.get("url") or ""
+            if not url:
+                return {"ok": False, "error": "missing required arg 'url'"}
+            return await self._tool_read_page(url, args.get("max_chars", 4000))
         if name == "submit_evaluation":
-            return self._tool_submit_evaluation(
-                args["content"], args["source_url"], args.get("rating")
-            )
+            content = args.get("content") or ""
+            source_url = args.get("source_url") or ""
+            if not content or not source_url:
+                return {"ok": False, "error": "missing required arg(s): content / source_url"}
+            return self._tool_submit_evaluation(content, source_url, args.get("rating"))
         if name == "submit_quota":
+            raw_text = args.get("raw_text") or ""
+            source_url = args.get("source_url") or ""
+            if not raw_text or not source_url:
+                return {"ok": False, "error": "missing required arg(s): raw_text / source_url"}
             return self._tool_submit_quota(
-                args["raw_text"],
-                args["source_url"],
+                raw_text,
+                source_url,
                 args.get("year"),
                 args.get("degree"),
                 args.get("count"),
