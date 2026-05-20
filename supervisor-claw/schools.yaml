@@ -513,3 +513,21 @@ schools:
           - https://www.sice.uestc.edu.cn/szdw/jsml1/fyjy.htm
           - https://www.sice.uestc.edu.cn/szdw/jsml1/gjgcs.htm
           - https://www.sice.uestc.edu.cn/szdw/jsml1/jsjyx.htm
+
+  - code: tju
+    name_cn: 天津大学
+    name_en: Tianjin University
+    departments:
+      # 智能与计算学部 (CIC, 2018-) 是 TJU 把计算机/软件/AI/网络空间安全等
+      # 合并而成的大学部，下挂 计算机学院 / 软件学院 / 人工智能学院 /
+      # 网络空间安全学院 等子单位。师资名录由 cic.tju.edu.cn 统一发布：
+      #   - /szdw/szmd/azcjs.htm  按职称检索（教授/副教授/讲师/...）
+      #   - /szdw/szmd/azmjs.htm  按字母检索（A/B/C/...）
+      # 两个索引指向同一师资集合（同一人在两个索引里 info/<bucket>/<id>.htm
+      # 中 <bucket> 号不同，无法靠 URL 去重；pipeline 走 (school,name,email)
+      # 去重）。by-name 索引 ~170 人是 by-title 索引 ~150 人的超集。
+      - code: ic
+        name_cn: 智能与计算学部
+        list_urls:
+          - https://cic.tju.edu.cn/szdw/szmd/azcjs.htm
+          - https://cic.tju.edu.cn/szdw/szmd/azmjs.htm
