@@ -1,6 +1,8 @@
 from . import (  # noqa: F401
     buaa,
     fudan,
+    hust,
+    nankai,
     nju,
     pku,
     shtech,
@@ -8,6 +10,7 @@ from . import (  # noqa: F401
     sysu,
     tsinghua,
     ustc,
+    xjtu,
     zju,
 )
 from .base import REGISTRY, SchoolAdapter  # noqa: F401
