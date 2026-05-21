@@ -258,44 +258,48 @@ class EnrichMonitor(App):
 
     #title_bar {
         height: 1;
-        background: $primary;
+        background: $surface-lighten-1;
         color: $text;
         padding: 0 1;
         text-style: bold;
     }
 
+    /* lanes row — sized by its children (round-cornered cards) */
     #lanes_row {
-        height: 5;
+        height: auto;
         padding: 0 1;
         margin: 1 0 0 0;
     }
 
     .lane_card {
         width: 1fr;
-        border: tall $accent;
+        height: 5;
+        border: round $accent;
         padding: 0 1;
         margin: 0 1 0 0;
         background: $surface;
     }
 
     .lane_card.idle {
-        border: tall $warning-darken-2;
+        border: round $warning-darken-2;
         color: $text-muted;
     }
 
     .lane_card.dead {
-        border: tall $error-darken-2;
+        border: round $error-darken-2;
         color: $error;
     }
 
+    /* schools table — fills the remaining vertical space (1fr) */
     #schools_table {
         height: 1fr;
+        min-height: 8;
         margin: 1 1 0 1;
-        border: tall $secondary;
+        border: round $secondary;
     }
 
     DataTable > .datatable--header {
-        background: $primary-darken-1;
+        background: $surface-lighten-2;
         color: $text;
         text-style: bold;
     }
@@ -308,36 +312,46 @@ class EnrichMonitor(App):
         background: $boost;
     }
 
+    /* stats row — also sized by children; cards are tall enough now */
     #stats_row {
-        height: 5;
+        height: auto;
         padding: 0 1;
         margin: 1 0 0 0;
     }
 
     .stat_card {
         width: 1fr;
-        border: tall $secondary;
+        height: 7;
+        border: round $secondary;
         padding: 0 1;
         margin: 0 1 0 0;
         background: $surface;
     }
 
     .stat_card.advisors {
-        border: tall $accent;
+        border: round $accent;
     }
     .stat_card.tokens {
-        border: tall $warning;
+        border: round $warning;
     }
     .stat_card.throughput {
-        border: tall $success;
+        border: round $success;
     }
 
-    .stat_label {
+    /* Footer — drop the default deep blue, blend with surface and only
+       highlight the key chips */
+    Footer {
+        background: $surface;
         color: $text-muted;
-        text-style: dim;
     }
-    .stat_value {
+    Footer > .footer-key--key {
+        background: $accent-darken-2;
+        color: $text;
         text-style: bold;
+    }
+    Footer > .footer-key--description {
+        background: $surface;
+        color: $text-muted;
     }
     """
 
