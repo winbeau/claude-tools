@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import time
-from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -366,8 +365,16 @@ class EnrichMonitor(App):
         self.db_path = Path(get_settings().claw_db_path)
         self.log_dir = Path("data/enrich_logs")
         self.lock_path = Path("data/enrich.lock")
-        # sliding window of (monotonic_ts, total_jsonl_rows) for throughput
-        self._tput_samples: deque[tuple[float, int]] = deque(maxlen=20)
+        # EMA-smoothed throughput. Sample every 10s; α=0.1 → ~2-minute
+        # effective window. Once we've ever seen progress, never revert to
+        # the "warming up" label (rate may decay slightly when momentarily
+        # idle, but won't flip back to 0).
+        self._tput_last_sample: tuple[float, int] | None = None
+        self._tput_ema: float = 0.0
+        self._tput_has_progress: bool = False
+        self._TPUT_SAMPLE_INTERVAL_S: float = 10.0
+        self._TPUT_EMA_ALPHA: float = 0.10
+        self._TPUT_IDLE_DECAY: float = 0.97  # per sample when no new rows
 
     # ------------------------------------------------------------------
 
@@ -408,23 +415,47 @@ class EnrichMonitor(App):
     # ------------------------------------------------------------------
 
     def _compute_throughput(self, total_rows: int) -> tuple[float, int]:
-        """Return (advisors_per_min, eta_seconds_remaining).
+        """Return (advisors_per_min, _).
 
-        Uses sliding window of last N samples; ignores samples that haven't
-        progressed (rows didn't grow).
+        EMA-smoothed: take a new sample every `_TPUT_SAMPLE_INTERVAL_S`
+        seconds; on each sample blend the instantaneous rate (dr/dt) into
+        `_tput_ema` with factor α. Idle samples decay slowly so the value
+        never flips back to "warming up" once any progress has been seen.
         """
         now = time.monotonic()
-        self._tput_samples.append((now, total_rows))
-        if len(self._tput_samples) < 2:
+
+        # first call → anchor and bail
+        if self._tput_last_sample is None:
+            self._tput_last_sample = (now, total_rows)
             return 0.0, 0
-        t0, r0 = self._tput_samples[0]
-        t1, r1 = self._tput_samples[-1]
-        dt = t1 - t0
-        dr = r1 - r0
-        if dt < 1 or dr <= 0:
-            return 0.0, 0
-        per_min = dr * 60 / dt
-        return per_min, 0  # eta filled by caller
+
+        t0, r0 = self._tput_last_sample
+        dt = now - t0
+
+        # haven't reached next sample tick yet → keep showing the smoothed value
+        if dt < self._TPUT_SAMPLE_INTERVAL_S:
+            return self._tput_ema, 0
+
+        dr = total_rows - r0
+
+        if dr > 0:
+            instant = dr * 60 / dt  # advisors/min over this sample
+            if self._tput_ema == 0:
+                # seed with the first observed instantaneous rate so we
+                # don't lag during the initial minute
+                self._tput_ema = instant
+            else:
+                a = self._TPUT_EMA_ALPHA
+                self._tput_ema = a * instant + (1 - a) * self._tput_ema
+            self._tput_has_progress = True
+        elif self._tput_has_progress:
+            # No new rows this tick → decay slowly toward 0 but stay > 0
+            # so the "warming up" branch is never re-entered.
+            self._tput_ema *= self._TPUT_IDLE_DECAY
+        # else: first-time warm-up, leave _tput_ema at 0
+
+        self._tput_last_sample = (now, total_rows)
+        return self._tput_ema, 0
 
     def refresh_display(self) -> None:
         now_utc = datetime.now(timezone.utc)
@@ -583,9 +614,13 @@ class EnrichMonitor(App):
             f"[dim]v4-flash · ok {totals['ok']} / err {totals['err']}[/]"
         ))
 
-        if per_min > 0:
+        if self._tput_has_progress and per_min > 0.05:
             tput_line = f"[bold green]{per_min:.1f}[/] advisor/min"
             eta_line = f"[bold]ETA[/] [cyan]{_fmt_eta(eta_s)}[/]"
+        elif self._tput_has_progress:
+            # progress seen earlier but EMA decayed near zero (long idle)
+            tput_line = "[yellow]idle…[/]"
+            eta_line = "[dim]ETA —[/]"
         else:
             tput_line = "[dim]warming up…[/]"
             eta_line = "[dim]ETA —[/]"
