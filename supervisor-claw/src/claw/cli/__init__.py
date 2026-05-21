@@ -384,6 +384,43 @@ def enrich(
     console.print(f"log: {stats.log_path}")
 
 
+@app.command("crawl-stealth")
+def crawl_stealth(
+    school: str = typer.Argument(..., help="school code, e.g. xjtu"),
+    limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all)"),
+    headed: bool = typer.Option(False, "--headed", help="show chromium (debug)"),
+    snapshot: bool = typer.Option(True, "--snapshot/--no-snapshot"),
+) -> None:
+    """Crawl with playwright-stealth + homepage warmup + wayback/dblp fallback.
+
+    For schools blocked by JS-WAF (xjtu / uestc.scse / uestc.sise / xidian
+    email-decrypt etc) where the plain httpx Fetcher only sees the WAF stub.
+    Three-tier cascade:
+      1. stealth chromium navigates to the URL (after warming up the host
+         home page so the WAF cookie is set);
+      2. if still a stub → Wayback Machine snapshot of the same URL;
+      3. if individual profile still missing → dblp author lookup so the
+         advisor row at least gets created with bibliographic context.
+    """
+    setup_logging()
+    from ..pipeline.stealth_crawler import crawl_school_with_stealth_sync
+
+    console.rule(f"[bold blue]stealth crawl {school}")
+    stats = crawl_school_with_stealth_sync(
+        school,
+        headed=headed,
+        snapshot=snapshot,
+        limit=limit if limit > 0 else None,
+    )
+    console.print(
+        f"[bold]{school}[/] advisors_upserted={stats.advisors_upserted} "
+        f"list_ok={stats.list_pages_ok} list_stub={stats.list_pages_stub} "
+        f"profile_ok={stats.profiles_ok} profile_stub={stats.profiles_stub} "
+        f"wayback={stats.wayback_fallbacks} dblp={stats.dblp_fallbacks} "
+        f"errors={stats.errors}"
+    )
+
+
 @app.command()
 def watch(
     refresh_s: float = typer.Option(1.0, "--refresh", help="seconds between TUI refreshes"),
