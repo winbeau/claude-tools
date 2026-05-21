@@ -244,11 +244,24 @@ def _parse_list_vsb(html: str, list_url: str) -> list[ListItem]:
         # Reject overly-long or empty values — these are usually nav rows.
         if not name or len(name) > 20:
             continue
-        # Reject anchors that are clearly navigation ("师资队伍" / "全体教师" etc.)
+        # Reject anchors that are clearly navigation. The first set is the
+        # original live-site nav. The second set covers stub/teaser text that
+        # appears on Wayback Machine snapshots (where ``claw crawl-stealth``
+        # falls back) and CMS "read-more" buttons.
         if name in {
+            # live-site nav
             "师资队伍", "全体教师", "教授", "副教授", "讲师", "教师名录",
             "博士生导师", "硕士生导师", "讲师及其他", "教师", "首页",
+            # snapshot / "read-more" widgets
+            "了解详细", "了解更多", "查看更多", "查看详情", "详情",
+            "更多", "More", "Read more", "Show more",
+            # 信息标签 / 邮箱占位
+            "电话", "邮箱", "办公地址", "研究方向", "个人主页",
         }:
+            continue
+        # Require at least one CJK character — drops English-only nav strings
+        # and any leaked URL/path fragments that slipped past length check.
+        if not any("一" <= ch <= "鿿" for ch in name):
             continue
 
         # 职称 lives in the first <span> inside the name <p>.
