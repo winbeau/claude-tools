@@ -203,13 +203,31 @@ async def stealth_fetch(
         with contextlib.suppress(Exception):
             await page.wait_for_load_state("networkidle", timeout=15000)
         await asyncio.sleep(settle_wait_ms / 1000)
-        html = await page.content()
+        # page.content() races with JS-driven navigation (very common on
+        # wayback's toolbar iframe). Retry once after a longer settle.
+        html = ""
+        for attempt in range(2):
+            try:
+                html = await page.content()
+                break
+            except Exception as e:  # noqa: BLE001
+                log.warning(
+                    "stealth content() failed for %s (attempt %d): %s",
+                    url, attempt + 1, e,
+                )
+                await asyncio.sleep(2.0)
+        if not html:
+            return ""
         if _looks_like_waf_stub(html):
             log.warning("stealth: WAF stub for %s (len=%d)", url, len(html))
             return ""
         return html
+    except Exception as e:  # noqa: BLE001
+        log.warning("stealth_fetch outer error for %s: %s", url, e)
+        return ""
     finally:
-        await page.close()
+        with contextlib.suppress(Exception):
+            await page.close()
 
 
 # ---------------------------------------------------------------------------
@@ -375,16 +393,23 @@ async def crawl_school_with_stealth(
                     for item in items:
                         if limit and stats.advisors_upserted >= limit:
                             return stats
-                        await _process_profile_stealth(
-                            sess=sess,
-                            adapter=adapter,
-                            school=school_row,
-                            dept=dept_row,
-                            item=item,
-                            session=s,
-                            stats=stats,
-                            snapshot=snapshot,
-                        )
+                        try:
+                            await _process_profile_stealth(
+                                sess=sess,
+                                adapter=adapter,
+                                school=school_row,
+                                dept=dept_row,
+                                item=item,
+                                session=s,
+                                stats=stats,
+                                snapshot=snapshot,
+                            )
+                        except Exception as e:  # noqa: BLE001
+                            log.exception(
+                                "stealth: profile crash for %s (%s): %s",
+                                item.name_cn, item.profile_url, e,
+                            )
+                            stats.errors += 1
 
     log.info("stealth crawl done for %s: %s", school_code, stats)
     return stats
