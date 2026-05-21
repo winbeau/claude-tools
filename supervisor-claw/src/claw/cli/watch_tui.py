@@ -555,7 +555,7 @@ class EnrichMonitor(App):
 
         self.query_one("#card_advisors", Static).update(Text.from_markup(
             f"[bold dim]ADVISORS[/]\n"
-            f"[bold $accent]{agg_enriched:,}[/]"
+            f"[bold bright_cyan]{agg_enriched:,}[/]"
             f"[dim] / {agg_total:,}[/]   [bold]{agg_pct:.1f}%[/]\n"
             f"[{agg_color}]{agg_bar}[/]\n"
             f"[dim]recruit {agg_recruit} · email {agg_email}[/]"
