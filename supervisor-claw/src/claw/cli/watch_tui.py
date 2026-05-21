@@ -360,7 +360,7 @@ class EnrichMonitor(App):
         Binding("r", "refresh_now", "Refresh"),
     ]
 
-    def __init__(self, refresh_s: float = 3.0) -> None:
+    def __init__(self, refresh_s: float = 1.0) -> None:
         super().__init__()
         self.refresh_s = max(1.0, refresh_s)
         self.db_path = Path(get_settings().claw_db_path)
@@ -597,7 +597,7 @@ class EnrichMonitor(App):
         ))
 
 
-def run_watch_tui(refresh_s: float = 3.0) -> None:
+def run_watch_tui(refresh_s: float = 1.0) -> None:
     """Entry point used by ``claw watch``."""
     init_db()
     EnrichMonitor(refresh_s=refresh_s).run()
