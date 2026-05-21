@@ -316,6 +316,66 @@ def _parse_list_vsb(html: str, list_url: str) -> list[ListItem]:
                 photo_url=photo,
             )
         )
+
+    # ------------------------------------------------------------------
+    # Second pass — cs.xjtu's actual CMS layout (only known accurately via
+    # wayback snapshots, since live cs.xjtu blocks our crawler). Cards are
+    # ``<div class="person-produce-top"> <a class="more" href="...jsnr.jsp?
+    # ...wbwbxjtuteacherid=N">了解详细</a> <h3>姓名&nbsp; (职称)</h3> </div>``.
+    # The name lives in the sibling <h3>, the profile URL in the <a class
+    # ="more">. The original-pass loop above missed these because the
+    # anchor's visible text is the "了解详细" teaser, not a name.
+    # ------------------------------------------------------------------
+    seen_names: set[str] = {it.name_cn for it in items}
+    for h3 in tree.css("h3"):
+        h3_text = text_of(h3).replace("\xa0", " ").replace("　", " ").strip()
+        # Expected pattern: "姓名 (职称)" or "姓名  职称" or just "姓名"
+        m = re.match(r"^([一-鿿·•\.\s]{2,8})\s*[\(（](.{1,12})[\)）]\s*$", h3_text)
+        if m:
+            wb_name = m.group(1).strip()
+            wb_title = m.group(2).strip()
+        else:
+            # bare 2-4 char CJK name
+            if (
+                2 <= len(h3_text) <= 6
+                and all("一" <= c <= "鿿" or c in " ·•" for c in h3_text)
+            ):
+                wb_name = h3_text.strip()
+                wb_title = None
+            else:
+                continue
+        if not wb_name or wb_name in seen_names:
+            continue
+        if wb_title and not _looks_like_faculty(wb_title):
+            continue
+        # Find profile URL: prefer the <a class="more"> in the same parent /
+        # nearest ancestor; fall back to any <a href> sibling.
+        wb_href: str | None = None
+        parent = h3.parent
+        for _ in range(3):
+            if parent is None:
+                break
+            more = parent.css_first("a.more[href]") or parent.css_first("a[href]")
+            if more is not None:
+                wb_href = (more.attributes.get("href") or "").strip()
+                if wb_href:
+                    break
+            parent = parent.parent
+        if not wb_href:
+            continue
+        wb_url = absolutize(list_url, wb_href)
+        if wb_url in seen:
+            continue
+        seen.add(wb_url)
+        seen_names.add(wb_name)
+        items.append(
+            ListItem(
+                name_cn=wb_name,
+                profile_url=wb_url,
+                title=wb_title,
+            )
+        )
+
     return items
 
 

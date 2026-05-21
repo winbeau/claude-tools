@@ -387,6 +387,7 @@ def enrich(
 @app.command("crawl-stealth")
 def crawl_stealth(
     school: str = typer.Argument(..., help="school code, e.g. xjtu"),
+    dept: list[str] = typer.Option(None, "--dept", help="dept code(s) to limit to (default all)"),
     limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all)"),
     headed: bool = typer.Option(False, "--headed", help="show chromium (debug)"),
     snapshot: bool = typer.Option(True, "--snapshot/--no-snapshot"),
@@ -408,6 +409,7 @@ def crawl_stealth(
     console.rule(f"[bold blue]stealth crawl {school}")
     stats = crawl_school_with_stealth_sync(
         school,
+        dept_codes=dept if dept else None,
         headed=headed,
         snapshot=snapshot,
         limit=limit if limit > 0 else None,

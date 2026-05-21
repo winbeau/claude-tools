@@ -335,6 +335,7 @@ class StealthCrawlStats:
 async def crawl_school_with_stealth(
     school_code: str,
     *,
+    dept_codes: list[str] | None = None,
     headed: bool = False,
     snapshot: bool = True,
     limit: int | None = None,
@@ -351,6 +352,9 @@ async def crawl_school_with_stealth(
             school_row = upsert_school(s, cfg.code, cfg.name_cn, cfg.name_en)
 
             for dept in cfg.departments:
+                if dept_codes and dept.code not in dept_codes:
+                    log.info("stealth: skipping dept %s (not in --dept filter)", dept.code)
+                    continue
                 if not adapter.supports_dept(dept.code):
                     log.info("stealth: adapter does not support dept %s", dept.code)
                     continue
@@ -487,5 +491,12 @@ async def _process_profile_stealth(
     stats.advisors_upserted += 1
 
 
-def crawl_school_with_stealth_sync(school_code: str, **kw) -> StealthCrawlStats:
-    return asyncio.run(crawl_school_with_stealth(school_code, **kw))
+def crawl_school_with_stealth_sync(
+    school_code: str,
+    *,
+    dept_codes: list[str] | None = None,
+    **kw,
+) -> StealthCrawlStats:
+    return asyncio.run(
+        crawl_school_with_stealth(school_code, dept_codes=dept_codes, **kw)
+    )
