@@ -388,12 +388,19 @@ def enrich(
 def watch(
     refresh_s: float = typer.Option(3.0, "--refresh", help="seconds between TUI refreshes"),
 ) -> None:
-    """Live read-only TUI for enrich progress.
+    """Live read-only TUI for enrich progress (Textual-based, multi-lane aware).
 
-    Reads DB + data/enrich_logs/*.jsonl + data/enrich.lock and refreshes every
-    --refresh seconds. The running enrich / crawl processes are not touched —
-    launch any time, exit (Ctrl-C) any time, processes keep going.
+    Reads DB + data/enrich_logs/*.jsonl + data/enrich.lock and scans /proc for
+    active `claw enrich` processes (detects parallel lanes). Refreshes every
+    --refresh seconds. q / Ctrl-C to quit — running processes are not touched.
     """
+    from .watch_tui import run_watch_tui
+
+    run_watch_tui(refresh_s=refresh_s)
+
+
+def _watch_legacy(refresh_s: float) -> None:
+    """Legacy Rich.Live implementation, kept as fallback only."""
     import time as _t
     from datetime import datetime, timezone
 

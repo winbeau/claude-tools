@@ -21,6 +21,7 @@ dependencies = [
     "openai>=1.40",
     "playwright>=1.46",
     "anyio>=4.4",
+    "textual>=0.80",
 ]
 
 [project.scripts]
