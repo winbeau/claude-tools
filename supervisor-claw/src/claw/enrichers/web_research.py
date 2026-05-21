@@ -700,6 +700,14 @@ class ResearchAgent:
                     tool_choice="auto",
                     temperature=0.2,
                     max_tokens=800,
+                    # Hard 60s cap per LLM call. OpenAI SDK default is 600s,
+                    # which lets a single API hiccup stall asyncio.gather and
+                    # the whole school appears to hang on its last in-flight
+                    # advisor. With this cap a slow turn dies fast, gets
+                    # logged as `deepseek error`, the agent loop breaks out,
+                    # the advisor lands in jsonl as error, and the school
+                    # finishes.
+                    timeout=60.0,
                     # DeepSeek v4-flash (and other reasoning-enabled models)
                     # default to thinking=enabled, which requires every
                     # follow-up turn to echo back the previous assistant's
