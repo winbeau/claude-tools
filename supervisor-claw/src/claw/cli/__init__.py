@@ -384,5 +384,251 @@ def enrich(
     console.print(f"log: {stats.log_path}")
 
 
+@app.command()
+def watch(
+    refresh_s: float = typer.Option(3.0, "--refresh", help="seconds between TUI refreshes"),
+) -> None:
+    """Live read-only TUI for enrich progress.
+
+    Reads DB + data/enrich_logs/*.jsonl + data/enrich.lock and refreshes every
+    --refresh seconds. The running enrich / crawl processes are not touched —
+    launch any time, exit (Ctrl-C) any time, processes keep going.
+    """
+    import time as _t
+    from datetime import datetime, timezone
+
+    from rich.live import Live
+    from rich.layout import Layout
+    from rich.panel import Panel
+    from rich.text import Text
+
+    init_db()
+    s_settings = get_settings()
+    db_path = Path(s_settings.claw_db_path)
+    enrich_lock_path = Path("data/enrich.lock")
+    enrich_log_dir = Path("data/enrich_logs")
+    # v4-flash unit pricing (per 1M tokens, USD).  Override via env later if needed.
+    PRICE_PROMPT_PER_M = 0.27
+    PRICE_COMPLETION_PER_M = 1.10
+
+    def _read_lock() -> dict | None:
+        if not enrich_lock_path.exists():
+            return None
+        try:
+            d = json.loads(enrich_lock_path.read_text())
+            return d if isinstance(d, dict) else None
+        except Exception:
+            return None
+
+    def _school_from_cmd(cmd: str) -> str | None:
+        # Parse "...claw enrich --school <code> --concurrency 2 [--force-unlock]"
+        toks = cmd.split()
+        for i, t in enumerate(toks):
+            if t == "--school" and i + 1 < len(toks):
+                return toks[i + 1]
+        return None
+
+    def _pid_alive(pid: int) -> bool:
+        try:
+            import os
+            os.kill(pid, 0)
+            return True
+        except Exception:
+            return False
+
+    def _summarize_jsonl_files() -> tuple[dict[str, dict], dict, int]:
+        """Walk enrich_logs/*.jsonl, group rows by school.
+
+        Returns (per_school, totals, total_files).
+        per_school[school_code] = {
+            rows, ok, err, report, no_report, prompt_tok, completion_tok,
+            last_advisor, last_ts, first_ts
+        }
+        """
+        per: dict[str, dict] = {}
+        totals = {
+            "rows": 0, "ok": 0, "err": 0, "report": 0, "no_report": 0,
+            "prompt": 0, "completion": 0,
+        }
+        if not enrich_log_dir.exists():
+            return per, totals, 0
+        files = sorted(enrich_log_dir.glob("*.jsonl"))
+        for f in files:
+            try:
+                with f.open() as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            d = json.loads(line)
+                        except Exception:
+                            continue
+                        sc = d.get("school", "?")
+                        rec = per.setdefault(
+                            sc,
+                            {"rows": 0, "ok": 0, "err": 0, "report": 0, "no_report": 0,
+                             "prompt": 0, "completion": 0, "last_advisor": "",
+                             "last_ts": "", "first_ts": ""},
+                        )
+                        rec["rows"] += 1
+                        totals["rows"] += 1
+                        ok = bool(d.get("ok"))
+                        if ok:
+                            rec["ok"] += 1; totals["ok"] += 1
+                            if d.get("report_submitted"):
+                                rec["report"] += 1; totals["report"] += 1
+                            else:
+                                rec["no_report"] += 1; totals["no_report"] += 1
+                        else:
+                            rec["err"] += 1; totals["err"] += 1
+                        rec["prompt"] += int(d.get("prompt_tokens", 0) or 0)
+                        rec["completion"] += int(d.get("completion_tokens", 0) or 0)
+                        totals["prompt"] += int(d.get("prompt_tokens", 0) or 0)
+                        totals["completion"] += int(d.get("completion_tokens", 0) or 0)
+                        ts = d.get("ts", "")
+                        if ts:
+                            if not rec["first_ts"]:
+                                rec["first_ts"] = ts
+                            rec["last_ts"] = ts
+                        rec["last_advisor"] = d.get("name_cn", rec["last_advisor"])
+            except Exception:
+                continue
+        return per, totals, len(files)
+
+    def _build() -> Layout:
+        now_utc = datetime.now(timezone.utc)
+        lock = _read_lock()
+        per_jsonl, totals, n_files = _summarize_jsonl_files()
+
+        # ---- DB per-school summary ----
+        with session_scope() as sess:
+            schools = sess.exec(select(School)).all()
+            db_rows: list[dict] = []
+            agg_total = 0
+            agg_enriched = 0
+            agg_recruit = 0
+            agg_with_email = 0
+            for sch in schools:
+                advs = sess.exec(select(Advisor).where(Advisor.school_id == sch.id)).all()
+                n = len(advs)
+                enriched = sum(1 for a in advs if a.last_enriched_at is not None)
+                recruit = sum(1 for a in advs if a.is_recruiting)
+                with_email = sum(1 for a in advs if a.email)
+                db_rows.append({
+                    "code": sch.code,
+                    "total": n,
+                    "enriched": enriched,
+                    "recruit": recruit,
+                    "with_email": with_email,
+                })
+                agg_total += n
+                agg_enriched += enriched
+                agg_recruit += recruit
+                agg_with_email += with_email
+
+        # ---- per-school table ----
+        tbl = Table(
+            title=None, expand=True, header_style="bold cyan",
+            row_styles=["", "dim"],
+        )
+        tbl.add_column("school", style="bold", no_wrap=True)
+        tbl.add_column("crawled", justify="right")
+        tbl.add_column("enriched", justify="right")
+        tbl.add_column("done%", justify="right")
+        tbl.add_column("recruit", justify="right")
+        tbl.add_column("email", justify="right")
+        tbl.add_column("jsonl rows", justify="right")
+        tbl.add_column("ok/err", justify="right")
+        tbl.add_column("tok in/out", justify="right")
+        tbl.add_column("state")
+        active_school = _school_from_cmd(lock.get("cmd", "")) if lock else None
+        for r in sorted(db_rows, key=lambda x: -x["total"]):
+            code = r["code"]
+            n = r["total"]
+            done = r["enriched"]
+            pct = (done * 100 / n) if n else 0
+            j = per_jsonl.get(code, {})
+            jsonl_rows = j.get("rows", 0)
+            ok = j.get("ok", 0)
+            err = j.get("err", 0)
+            prompt = j.get("prompt", 0)
+            completion = j.get("completion", 0)
+            state = ""
+            if active_school == code:
+                state = "[bold green]● enriching[/]"
+            elif n == 0:
+                state = "[dim]– empty –[/]"
+            elif done == 0:
+                state = "[yellow]⌛ queued[/]"
+            elif done >= n:
+                state = "[green]✓ done[/]"
+            else:
+                state = f"[cyan]◌ partial {pct:.0f}%[/]"
+            tok_str = f"{prompt//1000}k/{completion//1000}k" if (prompt or completion) else "-"
+            tbl.add_row(
+                code, str(n), str(done), f"{pct:.0f}%",
+                str(r["recruit"]), str(r["with_email"]),
+                str(jsonl_rows), f"{ok}/{err}", tok_str, state,
+            )
+
+        # ---- header ----
+        head_lines: list[str] = []
+        head_lines.append(
+            f"[bold]supervisor-claw / enrich monitor[/]   "
+            f"[dim]now {now_utc.isoformat(timespec='seconds')}Z   "
+            f"refresh={refresh_s:.0f}s   db={db_path}[/]"
+        )
+        if lock:
+            pid = int(lock.get("pid", 0))
+            alive = _pid_alive(pid) if pid else False
+            sch = active_school or "?"
+            started = lock.get("start", "")
+            tag = "[bold green]● live[/]" if alive else "[red]✗ dead-pid[/]"
+            head_lines.append(
+                f"{tag}  enrich pid={pid} school=[bold magenta]{sch}[/] "
+                f"started={started}"
+            )
+        else:
+            head_lines.append("[yellow]○ no active enrich (no lock file)[/]")
+        header = Panel(Text.from_markup("\n".join(head_lines)), border_style="blue")
+
+        # ---- footer ----
+        cost = (
+            totals["prompt"] / 1_000_000 * PRICE_PROMPT_PER_M
+            + totals["completion"] / 1_000_000 * PRICE_COMPLETION_PER_M
+        )
+        foot = (
+            f"[bold]aggregate[/]  "
+            f"advisors {agg_enriched}/{agg_total} enriched ({agg_enriched*100/max(1,agg_total):.0f}%) · "
+            f"recruit {agg_recruit} · email {agg_with_email}\n"
+            f"[bold]enrich runs[/]  "
+            f"jsonl files {n_files} · rows {totals['rows']} · "
+            f"ok {totals['ok']} / err {totals['err']} / report {totals['report']} / "
+            f"no_report {totals['no_report']}\n"
+            f"[bold]tokens[/]  "
+            f"prompt {totals['prompt']:,} · completion {totals['completion']:,} · "
+            f"[green]cost ≈ ${cost:.2f}[/]   [dim](v4-flash @ "
+            f"${PRICE_PROMPT_PER_M}/M in + ${PRICE_COMPLETION_PER_M}/M out)[/]"
+        )
+        footer = Panel(Text.from_markup(foot), border_style="green")
+
+        lay = Layout()
+        lay.split_column(
+            Layout(header, name="head", size=4),
+            Layout(tbl, name="body"),
+            Layout(footer, name="foot", size=6),
+        )
+        return lay
+
+    with Live(_build(), refresh_per_second=max(0.2, 1.0 / refresh_s), screen=False) as live:
+        try:
+            while True:
+                _t.sleep(refresh_s)
+                live.update(_build())
+        except KeyboardInterrupt:
+            pass
+
+
 if __name__ == "__main__":
     app()
