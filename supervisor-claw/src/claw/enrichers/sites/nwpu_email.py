@@ -36,8 +36,6 @@ import contextlib
 import re
 from typing import TYPE_CHECKING, Optional
 
-import httpx
-
 from ...core.logging import get_logger
 from ..email_backfill import (
     _EMAIL_RE,
@@ -47,6 +45,7 @@ from ..email_backfill import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
+    import httpx
     from playwright.async_api import Page
 
     from ...models.db import Advisor
