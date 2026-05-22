@@ -203,6 +203,49 @@ def _is_footer_like(addr: str) -> bool:
     return local in _FOOTER_LOCAL_PARTS
 
 
+# Org-list / department-mailbox localpart prefixes seen on .edu.cn sites.
+# An address with localpart equal to one of these or ``<prefix>{-,_,.}…`` is
+# almost certainly a bureau mailbox, not the advisor's personal email.
+_ORG_LIST_PREFIXES: tuple[str, ...] = (
+    "info", "service", "office", "admin", "dean", "help",
+    "contact", "master", "noreply", "no-reply", "teach", "recruit",
+    "zs", "yzs", "yjs", "yzc", "jx", "yz", "tw", "tuanwei", "dangwei",
+    "zhaosheng", "zhaopin", "secretary", "mishu", "lib", "library",
+    "centre", "center", "news", "report", "press", "edu", "kyc",
+    "kjc", "rsc", "cwc", "xsc", "yzb", "yjsb", "jwc",
+)
+
+
+def _looks_like_personal_localpart(localpart: str) -> bool:
+    """Cheap heuristic: does the localpart look like a person, not a list?
+
+    Rejects:
+    * empty / very short (≤ 3 chars) — too generic
+    * known bureaucratic prefixes (info-…, recruit-…, yzs, yzc, dean, …)
+    * all-consonant Chinese acronyms (zero vowels) like ``gfkdyzc``,
+      which are how academic departments name their group mailboxes
+      (国防 + 科大 + 研招/院招 → "gfkdyzc")
+
+    A False return means "very likely org-list, skip". A True return
+    does NOT prove the address is personal — it just clears this filter.
+    """
+    if not localpart:
+        return False
+    lp = localpart.lower()
+    if len(lp) <= 3:
+        return False
+    for p in _ORG_LIST_PREFIXES:
+        if lp == p:
+            return False
+        if lp.startswith(p + "-") or lp.startswith(p + "_") or lp.startswith(p + "."):
+            return False
+    # ``"gfkdyzc"`` (0 vowels, all consonants) → reject. We treat 'y' as a
+    # consonant on purpose so e.g. ``"yzs"`` / ``"yjsb"`` get caught.
+    if not any(c in "aeiou" for c in lp):
+        return False
+    return True
+
+
 def _pick_email(
     candidates: list[str],
     domain_hint: str | None = None,
@@ -214,6 +257,10 @@ def _pick_email(
     2. ends with an academic TLD ``.edu`` / ``.edu.cn`` / ``.ac.cn``
     3. first non-footer-like address
     4. None
+
+    Org-list-like localparts (see :func:`_looks_like_personal_localpart`)
+    are filtered out before any ranking — so a ``gfkdyzc@nudt.edu.cn``
+    candidate never wins, even if it's the only domain match.
     """
     if not candidates:
         return None
@@ -225,6 +272,9 @@ def _pick_email(
             continue
         seen.add(a)
         if _is_footer_like(a):
+            continue
+        local = a.split("@", 1)[0]
+        if not _looks_like_personal_localpart(local):
             continue
         cleaned.append(a)
     if not cleaned:

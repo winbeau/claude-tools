@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING, Optional
 from urllib.parse import quote_plus
 
 from ..core.email_decoders import (
+    _looks_like_personal_localpart,
     decode_hust_email,
     decode_xidian_email,
     extract_email_from_rendered_dom,
@@ -120,13 +121,19 @@ def _pick_best(candidates: list[str], domain_hint: str | None) -> Optional[str]:
 
     1. domain_hint match
     2. ``.edu.cn`` / ``.ac.cn`` / ``.edu``
-    3. first non-footer candidate
+    3. first non-footer, non-org-list candidate
+
+    Org-list-like localparts (department mailboxes, recruit lists, all-
+    consonant Chinese acronyms like ``gfkdyzc``) are dropped here too
+    so a domain-matching department address never wins over nothing.
     """
     seen: set[str] = set()
     clean: list[str] = []
     for c in candidates:
         a = c.strip().lower()
         if not a or a in seen or _is_footer_like(a):
+            continue
+        if not _looks_like_personal_localpart(a.split("@", 1)[0]):
             continue
         seen.add(a)
         clean.append(a)
