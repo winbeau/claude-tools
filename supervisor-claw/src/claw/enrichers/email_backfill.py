@@ -81,6 +81,23 @@ _DECODER_DISPATCH = {
     "hust":   decode_hust_email,
 }
 
+# Per-school *full-orchestrator* override. When a school code is in this
+# table, ``backfill_one_advisor`` delegates to the site module's
+# ``find_email`` instead of running the generic js → bing → dblp cascade.
+#
+# Use this for schools where the default ordering is wrong, where a
+# strategy is permanently broken (e.g. nwpu's TS-WAF wall makes ``js``
+# useless), or where a site-specific recovery (wayback, IR DOI lookup,
+# group-page fan-out) needs to slot in.
+#
+# Resolved lazily via importlib so we don't take an import-time hit for
+# 19 schools that don't need any of this. The lookup is keyed on
+# ``school_code`` and returns the module-level ``find_email`` coroutine,
+# or ``None`` if no override exists.
+_SITE_EMAIL_OVERRIDES: tuple[str, ...] = (
+    "nwpu",
+)
+
 # Default audit log path.
 _DEFAULT_AUDIT_PATH = "data/email_backfill_audit.jsonl"
 
@@ -380,6 +397,31 @@ def update_email_only(
 _DEFAULT_STRATEGIES: tuple[str, ...] = ("js", "bing", "dblp")
 
 
+def _resolve_site_override(school_code: str):
+    """Lazy-import ``claw.enrichers.sites.<code>_email.find_email``.
+
+    Returns the ``find_email`` coroutine function or ``None`` if no site
+    module is registered for this school code. Import errors are logged
+    and silently downgraded to ``None`` so a broken site module never
+    crashes the whole backfill run.
+    """
+    if school_code not in _SITE_EMAIL_OVERRIDES:
+        return None
+    import importlib
+
+    mod_name = f"claw.enrichers.sites.{school_code}_email"
+    try:
+        mod = importlib.import_module(mod_name)
+    except Exception as e:  # noqa: BLE001
+        log.warning("site override %s import failed: %s", mod_name, e)
+        return None
+    fn = getattr(mod, "find_email", None)
+    if fn is None:
+        log.warning("site module %s has no find_email()", mod_name)
+        return None
+    return fn
+
+
 async def backfill_one_advisor(
     advisor: "Advisor",
     page: "Page",
@@ -401,7 +443,35 @@ async def backfill_one_advisor(
                 and the school's guessed domain.
     * ``dblp``: :func:`dblp_email_lookup` with ``school_name_cn`` as the
                 affiliation hint.
+
+    Site overrides
+    --------------
+    If ``school_code`` has a registered site module (see
+    ``_SITE_EMAIL_OVERRIDES``), that module's ``find_email`` is called
+    instead of the generic cascade. The site module is free to ignore /
+    reorder / extend the strategy list as it sees fit.
     """
+    site_fn = _resolve_site_override(school_code)
+    if site_fn is not None:
+        try:
+            email, source = await site_fn(
+                advisor,
+                page,
+                sess,
+                school_name_cn,
+            )
+        except Exception as e:  # noqa: BLE001
+            log.warning(
+                "site override %s_email.find_email raised %s; falling back to generic",
+                school_code, e,
+            )
+        else:
+            if email:
+                return email, source
+            # site override returned (None, None) → still fall through to
+            # the generic cascade below, so callers don't lose recall when
+            # a site module conservatively refuses to guess.
+
     order = list(strategies) if strategies else list(_DEFAULT_STRATEGIES)
     domain_hint = _guess_school_domain(school_code)
 
