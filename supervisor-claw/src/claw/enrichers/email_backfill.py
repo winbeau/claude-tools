@@ -38,6 +38,7 @@ from typing import TYPE_CHECKING, Optional
 from urllib.parse import quote_plus
 
 from ..core.email_decoders import (
+    _EMAIL_RE as _CORE_EMAIL_RE,
     _looks_like_personal_localpart,
     decode_hust_email,
     decode_xidian_email,
@@ -54,11 +55,9 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 log = get_logger(__name__)
 
-# Same regex as core.email_decoders — duplicated here so we don't have a
-# cross-module dependency just for the pattern.
-_EMAIL_RE = re.compile(
-    r"\b([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})\b"
-)
+# Reuse the TLD-whitelisted regex from core.email_decoders so both decode
+# and search paths reject malformed hosts like ``nwpu.edu.cnhuixin``.
+_EMAIL_RE = _CORE_EMAIL_RE
 
 # Local-parts that look like contact forms / footers (mirrors core.email_decoders).
 _FOOTER_LOCAL_PARTS: tuple[str, ...] = (

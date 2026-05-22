@@ -41,10 +41,21 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 log = get_logger(__name__)
 
-# Generic email regex (case-insensitive). We deliberately exclude common
-# image/asset extensions so we don't pick up "logo@2x.png" etc.
+# Known TLDs. SERPs/HTML routinely glue an email to the next Chinese word
+# with no space ("nwpu.edu.cn 慧信" → "nwpu.edu.cnhuixin"); without a TLD
+# whitelist the regex happily eats those 5+ char suffixes as a valid TLD.
+# Listed: common gTLDs + ccTLDs + the academic-relevant ones.
+_VALID_TLDS = (
+    "cn", "com", "org", "net", "edu", "gov", "mil", "info", "biz",
+    "io", "ai", "co", "me", "us", "uk", "jp", "kr", "hk", "tw", "mo",
+    "de", "fr", "ru", "ca", "au", "sg", "il", "in", "it", "es", "nl",
+    "se", "no", "fi", "dk", "ch", "at", "be", "pl", "br", "mx", "tr",
+    "name", "pro", "xyz", "app", "tech", "cloud", "online",
+)
+_TLD_GROUP = "|".join(_VALID_TLDS)
 _EMAIL_RE = re.compile(
-    r"\b([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})\b"
+    rf"\b([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.(?:{_TLD_GROUP}))\b",
+    re.IGNORECASE,
 )
 
 # Footer / contact-form addresses that show up site-wide and aren't the
