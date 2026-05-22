@@ -436,6 +436,11 @@ def backfill_email(
     ),
     headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
     concurrency: int = typer.Option(1, "--concurrency", help="parallel advisors (1 recommended)"),
+    per_advisor_timeout: float = typer.Option(
+        120.0,
+        "--per-advisor-timeout",
+        help="abandon an advisor after this many seconds (default: 120)",
+    ),
 ) -> None:
     """Backfill ``advisor.email`` for the given school.
 
@@ -510,14 +515,23 @@ def backfill_email(
                         if advisor.email:  # raced — skip
                             continue
                         try:
-                            email, source = await backfill_one_advisor(
-                                advisor=advisor,
-                                page=page,
-                                sess=client,
-                                school_code=school,
-                                school_name_cn=cfg.name_cn,
-                                strategies=strategies,
+                            email, source = await asyncio.wait_for(
+                                backfill_one_advisor(
+                                    advisor=advisor,
+                                    page=page,
+                                    sess=client,
+                                    school_code=school,
+                                    school_name_cn=cfg.name_cn,
+                                    strategies=strategies,
+                                ),
+                                timeout=per_advisor_timeout,
                             )
+                        except asyncio.TimeoutError:
+                            console.print(
+                                f"[yellow]⏱[/yellow] [{i}/{total}] {name_cn} — "
+                                f"timed out (>{per_advisor_timeout:.0f}s)"
+                            )
+                            continue
                         except Exception as e:  # noqa: BLE001
                             console.print(f"[red]✗[/red] [{i}/{total}] {name_cn}: {e}")
                             continue
