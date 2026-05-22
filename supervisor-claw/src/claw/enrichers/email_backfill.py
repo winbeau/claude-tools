@@ -116,16 +116,22 @@ def _is_footer_like(addr: str) -> bool:
     return addr.split("@", 1)[0].lower() in _FOOTER_LOCAL_PARTS
 
 
-def _pick_best(candidates: list[str], domain_hint: str | None) -> Optional[str]:
-    """Same scoring rules as :mod:`core.email_decoders._pick_email`.
+def _pick_best(
+    candidates: list[str],
+    domain_hint: str | None,
+    *,
+    strict_domain: bool = True,
+) -> Optional[str]:
+    """Like :func:`core.email_decoders._pick_email`, but **strict by default**.
 
-    1. domain_hint match
-    2. ``.edu.cn`` / ``.ac.cn`` / ``.edu``
-    3. first non-footer, non-org-list candidate
+    For bing / dblp / search-based recovery we want zero tolerance for
+    cross-domain mismatches — a SERP that surfaces an unrelated person's
+    gmail must not become advisor.email. So when ``domain_hint`` is set
+    and no candidate's *host* contains it, we return None instead of
+    falling through to "first academic TLD" / "first candidate".
 
     Org-list-like localparts (department mailboxes, recruit lists, all-
-    consonant Chinese acronyms like ``gfkdyzc``) are dropped here too
-    so a domain-matching department address never wins over nothing.
+    consonant Chinese acronyms like ``gfkdyzc``) are dropped here too.
     """
     seen: set[str] = set()
     clean: list[str] = []
@@ -141,9 +147,11 @@ def _pick_best(candidates: list[str], domain_hint: str | None) -> Optional[str]:
         return None
     if domain_hint:
         hint = domain_hint.lower()
-        for a in clean:
-            if hint in a:
-                return a
+        domain_matches = [a for a in clean if hint in a.split("@", 1)[1]]
+        if domain_matches:
+            return domain_matches[0]
+        if strict_domain:
+            return None
     for a in clean:
         host = a.split("@", 1)[1]
         if host.endswith(".edu.cn") or host.endswith(".ac.cn") or host.endswith(".edu"):

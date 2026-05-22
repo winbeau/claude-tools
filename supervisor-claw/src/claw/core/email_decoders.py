@@ -249,10 +249,18 @@ def _looks_like_personal_localpart(localpart: str) -> bool:
 def _pick_email(
     candidates: list[str],
     domain_hint: str | None = None,
+    *,
+    strict_domain: bool = False,
 ) -> str | None:
     """From a list of candidate addresses pick the best one.
 
-    Preference order:
+    When ``strict_domain=True`` and ``domain_hint`` is given, **only**
+    addresses matching that domain are eligible — no fall-through to
+    other academic TLDs or unrelated personal mailboxes. This is the
+    safe mode for off-site search (bing / dblp), where SERPs routinely
+    surface unrelated people's gmail / qq / outlook addresses.
+
+    Default (``strict_domain=False``) preserves the legacy preference:
     1. matches ``domain_hint`` (substring, e.g. ``xjtu.edu.cn``)
     2. ends with an academic TLD ``.edu`` / ``.edu.cn`` / ``.ac.cn``
     3. first non-footer-like address
@@ -282,9 +290,13 @@ def _pick_email(
 
     if domain_hint:
         hint = domain_hint.lower()
-        for a in cleaned:
-            if hint in a:
-                return a
+        domain_matches = [a for a in cleaned if hint in a.split("@", 1)[1]]
+        if domain_matches:
+            return domain_matches[0]
+        if strict_domain:
+            # No domain match → refuse rather than fall through. This is
+            # how we avoid bing SERPs handing us a stranger's gmail.
+            return None
 
     for a in cleaned:
         host = a.split("@", 1)[1]
