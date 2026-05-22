@@ -23,7 +23,9 @@ Per-site modules are appropriate for schools where the default
 ``js → bing → dblp`` chain has the wrong order, calls subordinate
 helpers in a tailored way (e.g. wayback before bing), or skips a
 strategy entirely because of a hard infrastructure block (e.g. NWPU's
-TS-WAF wall makes the ``js`` path useless). See
+TS-WAF wall makes the ``js`` path useless). They are *optional* — the
+generic :func:`claw.enrichers.email_backfill.backfill_one_advisor`
+orchestrator handles schools without a site-specific module. See
 :data:`claw.enrichers.email_backfill._SITE_EMAIL_OVERRIDES` for the
 registered school codes.
 """

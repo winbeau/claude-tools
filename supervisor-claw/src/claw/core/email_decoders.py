@@ -65,6 +65,31 @@ _FOOTER_LOCAL_PARTS: tuple[str, ...] = (
     "aia-president",
 )
 
+# XJTU-specific footer / department-contact local-parts. These show up on the
+# bottom of cs.xjtu / se.xjtu / aiar.xjtu pages and on wayback snapshots of the
+# same; they are NOT individual advisor emails. Listed as a prefix tuple so
+# subclasses (e.g. ``cs-recruit01@xjtu.edu.cn``) are also rejected.
+_XJTU_FOOTER_PREFIXES: tuple[str, ...] = (
+    "cs-office",      # cs.xjtu 学院综合办
+    "ai-info",        # aiar.xjtu 信息员
+    "se-office",      # se.xjtu 软件学院办公室
+    "ai-office",
+    "cs-recruit",     # 招生办公室
+    "xjtucs",         # 学院公邮
+)
+
+
+def _is_xjtu_footer(addr: str) -> bool:
+    """Return True if ``addr``'s local-part looks like an XJTU footer email.
+
+    Matches any of :data:`_XJTU_FOOTER_PREFIXES` as a prefix of the local part
+    (case-insensitive). Helper for :mod:`claw.enrichers.sites.xjtu_email`.
+    """
+    if "@" not in addr:
+        return False
+    local = addr.split("@", 1)[0].lower()
+    return any(local.startswith(p) for p in _XJTU_FOOTER_PREFIXES)
+
 # How long to wait for the page's encryption JS to populate the DOM.
 _JS_DECODE_TIMEOUT_MS = 15_000
 
@@ -236,4 +261,6 @@ __all__ = [
     "decode_hust_email",
     "decode_xidian_email",
     "extract_email_from_rendered_dom",
+    "_XJTU_FOOTER_PREFIXES",
+    "_is_xjtu_footer",
 ]
