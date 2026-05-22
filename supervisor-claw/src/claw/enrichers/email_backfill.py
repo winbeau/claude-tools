@@ -66,13 +66,13 @@ _FOOTER_LOCAL_PARTS: tuple[str, ...] = (
     "sse", "scs", "aia-president",
 )
 
-# Bing / DuckDuckGo / Sogou search URL templates. We hit the public web
-# pages — *not* any paid API.
+# Search URL templates. We hit the public web pages — *not* any paid API.
+# v0.5.1: trimmed from 4 engines to 1 (bing.com only). Earlier rounds
+# showed that cn.bing.com / duckduckgo.com / sogou.com routinely hit
+# captcha / interstitials and contributed almost zero unique hits over
+# bing.com — but they doubled the per-no-hit wall time.
 _SEARCH_ENGINES: list[tuple[str, str]] = [
-    ("bing.com",       "https://www.bing.com/search?q={q}"),
-    ("cn.bing.com",    "https://cn.bing.com/search?q={q}&ensearch=0"),
-    ("duckduckgo.com", "https://duckduckgo.com/?q={q}"),
-    ("sogou.com",      "https://www.sogou.com/web?query={q}"),
+    ("bing.com", "https://www.bing.com/search?q={q}"),
 ]
 
 # Per-school decoder dispatch table. School codes match those in schools.yaml.
@@ -220,13 +220,15 @@ async def search_email_via_stealth_bing(
     school_name_cn: str,
     domain_hint: str | None = None,
 ) -> Optional[str]:
-    """Search ``<name> <school> email`` across public web search engines.
+    """Search ``<name> <school> email`` on public web pages (bing.com only).
 
-    Cascade: bing.com → cn.bing.com → DuckDuckGo → Sogou. For each engine we
-    navigate via the supplied stealth ``page`` and regex-match any email in
-    the rendered HTML. If ``domain_hint`` is set, that domain is preferred.
+    v0.5.1 fast-path: single engine (bing.com), 10s nav timeout, no
+    networkidle wait — the SERP markup we regex is in the initial DOM,
+    so waiting for networkidle just adds wall time without recall gain.
+    If bing.com is blocked or returns no candidates, return None and let
+    the dblp strategy try.
 
-    No paid APIs are touched. Returns ``None`` if nothing usable is found.
+    No paid APIs are touched.
     """
     query_parts: list[str] = [name, school_name_cn, "email"]
     if domain_hint:
@@ -239,14 +241,12 @@ async def search_email_via_stealth_bing(
     for engine, tmpl in _SEARCH_ENGINES:
         url = tmpl.format(q=q_encoded)
         try:
-            await page.goto(url, timeout=20_000, wait_until="domcontentloaded")
+            await page.goto(url, timeout=10_000, wait_until="domcontentloaded")
         except Exception as e:  # noqa: BLE001
             log.warning("search nav failed for %s (%s): %s", engine, url, e)
             continue
-        # Some engines load results lazily — small settle.
-        with contextlib.suppress(Exception):
-            await page.wait_for_load_state("networkidle", timeout=8_000)
-        await asyncio.sleep(1.0)
+        # Brief settle for late inline JS that paints result snippets.
+        await asyncio.sleep(0.4)
 
         html = ""
         with contextlib.suppress(Exception):
@@ -261,9 +261,6 @@ async def search_email_via_stealth_bing(
         if picked:
             log.info("search hit via %s for %s: %s", engine, name, picked)
             return picked
-
-        # Politeness: sleep a bit between engines to avoid hammering.
-        await asyncio.sleep(1.5)
 
     return None
 
@@ -292,9 +289,12 @@ async def dblp_email_lookup(
     pipeline because it can be on any random WAF-blocked host.
     """
     q = f"{name} {affiliation_hint}".strip()
-    api = f"https://dblp.org/search/author/api?q={quote_plus(q)}&format=json&h=5"
+    # v0.5.1: top-2 authors only (was 5). DBLP emails are rare; if the
+    # top match doesn't have one, the cold-tail hits almost never do
+    # either, and 5 XML fetches add ~30s per advisor for no payoff.
+    api = f"https://dblp.org/search/author/api?q={quote_plus(q)}&format=json&h=2"
     try:
-        r = await sess.get(api, timeout=15.0)
+        r = await sess.get(api, timeout=10.0)
         r.raise_for_status()
         payload = r.json()
     except Exception as e:  # noqa: BLE001
@@ -304,6 +304,7 @@ async def dblp_email_lookup(
     hits = payload.get("result", {}).get("hits", {}).get("hit", [])
     if not isinstance(hits, list):
         return None
+    hits = hits[:2]
 
     domain_hint = None
     aff_lower = affiliation_hint.lower()
@@ -325,7 +326,7 @@ async def dblp_email_lookup(
             continue
         xml_url = url if url.endswith(".xml") else url.rstrip("/") + ".xml"
         try:
-            xr = await sess.get(xml_url, timeout=15.0)
+            xr = await sess.get(xml_url, timeout=8.0)
             xr.raise_for_status()
         except Exception as e:  # noqa: BLE001
             log.debug("dblp xml fetch failed for %s: %s", xml_url, e)

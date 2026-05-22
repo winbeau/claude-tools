@@ -564,7 +564,7 @@ def backfill_email(
                             )
 
                         # politeness: short sleep between advisors to avoid ban.
-                        await asyncio.sleep(1.5)
+                        await asyncio.sleep(0.5)
             with contextlib.suppress(Exception):
                 await page.close()
         return hits
