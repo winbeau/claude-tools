@@ -60,8 +60,19 @@ _FOOTER_LOCAL_PARTS: tuple[str, ...] = (
     "noreply",
     "no-reply",
     "postmaster",
+    # HUST-style institute aliases
     "sse",
     "scs",
+    "cs-help",
+    "cs-info",
+    "csdean",
+    "csshuji",
+    "ssedean",
+    "sseshuji",
+    "sse-info",
+    "aia",
+    "aia-info",
+    "aia-dean",
     "aia-president",
 )
 
@@ -151,6 +162,54 @@ async def extract_email_from_rendered_dom(
     return _pick_email(candidates, domain_hint=domain_hint)
 
 
+async def _extract_mailto(page: "Page") -> str | None:
+    """Generic ``mailto:`` extractor.
+
+    Many faculty pages — including HUST's legacy ``info/<treeid>/<id>.htm``
+    template and a chunk of xjtu / nju / bit profile pages — render the
+    instructor's address as a plain ``<a href="mailto:foo@bar">…</a>``
+    link even when the visible text is encrypted (or just an icon).
+
+    Walks every ``a[href^="mailto:"]`` in the live DOM, strips ``mailto:``
+    + query params (``?subject=…``), filters out obvious footer-like
+    addresses, and returns the first plausible one. Returns ``None`` on
+    any failure — never raises.
+    """
+    try:
+        hrefs = await page.evaluate(
+            "() => Array.from(document.querySelectorAll('a[href^=\"mailto:\"]'))"
+            ".map(a => a.getAttribute('href') || '')"
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(hrefs, list):
+        return None
+
+    candidates: list[str] = []
+    for h in hrefs:
+        if not isinstance(h, str):
+            continue
+        addr = h.strip()
+        # strip leading scheme (any case)
+        if addr.lower().startswith("mailto:"):
+            addr = addr[7:]
+        # drop URL params (?subject=…&body=…)
+        addr = addr.split("?", 1)[0].strip()
+        # some sites HTML-encode the @ or wrap the address in <>
+        addr = addr.strip("<> ")
+        if "@" not in addr:
+            continue
+        # mailto can carry multiple recipients separated by ',' — take the
+        # first non-footer-looking one.
+        for piece in addr.split(","):
+            piece = piece.strip()
+            if not piece or "@" not in piece:
+                continue
+            candidates.append(piece)
+
+    return _pick_email(candidates)
+
+
 async def _wait_for_decoded_span(
     page: "Page",
     span_selector: str,
@@ -214,25 +273,69 @@ async def decode_hust_email(page: "Page") -> str | None:
 
     HUST faculty profiles ship the email cipher inside
     ``div.blockwhite.Ot-ctact`` and rely on ``ImageScale.addimg()`` /
-    SiteBuilder runtime JS to populate the text. We wait until the Ot-ctact
-    block contains an ``@`` then read it.
+    SiteBuilder runtime JS to populate the text. The decryption JS is
+    **lazy** — it can take 8-10s after ``DOMContentLoaded`` to finish
+    populating the span, so we use a longer timeout than xidian and try
+    multiple selectors in priority order.
+
+    Strategy:
+      1. Wait (long) for any of several candidate selectors to contain
+         a decoded ``user@host`` string.
+      2. If step 1 misses, sniff for ``a[href^="mailto:"]`` — HUST often
+         hides the address there even when the visible text never decodes.
+      3. Final fallback: scan the whole rendered DOM with the generic
+         extractor (catches the legacy ``info/<id>.htm`` plain-text
+         template).
     """
-    # The Ot-ctact block contains multiple <span _tsites_encrypt_field> just
-    # like xidian; same wait_for_function pattern works.
-    ot_selector = "div.Ot-ctact span[_tsites_encrypt_field], div.Ot-ctact"
-    decoded = await _wait_for_decoded_span(page, ot_selector, timeout_ms=_JS_DECODE_TIMEOUT_MS)
-    if decoded:
+    # The Ot-ctact block contains multiple <span _tsites_encrypt_field>;
+    # most pages also render a fully-decoded ``.email`` or
+    # ``a[href^=mailto]`` once JS settles. Probe the more specific
+    # selectors first so we don't accidentally pick up the "邮编"/"地址"
+    # spans that share the encrypt-field marker.
+    candidate_selectors = (
+        "div.Ot-ctact a[href^='mailto:']",
+        "div.Ot-ctact .email",
+        "div.Ot-ctact span[_tsites_encrypt_field]",
+        "div.Ot-ctact",
+    )
+    # HUST's ImageScale.addimg is fired from <script> at the end of <body>
+    # but the decrypt loop is debounced; we give it ~25s (xidian needs 15s,
+    # HUST routinely takes 8-12s but a stressed VPS sometimes lags into
+    # the 15-20s range).
+    hust_timeout_ms = 25_000
+    for sel in candidate_selectors:
+        decoded = await _wait_for_decoded_span(page, sel, timeout_ms=hust_timeout_ms)
+        if not decoded:
+            continue
         candidates = _EMAIL_RE.findall(decoded)
         picked = _pick_email(candidates, domain_hint="hust.edu.cn")
         if picked:
             return picked
+        # First selector that yielded *something* but no clean address —
+        # don't bother re-waiting on the broader selectors, fall through
+        # to the mailto + DOM scan below.
+        break
+
+    # Many HUST profiles wrap the email in a real mailto link even when
+    # the rendered text stays encrypted. Cheap to probe.
+    mailto = await _extract_mailto(page)
+    if mailto and "hust.edu.cn" in mailto:
+        return mailto
+    # Even if domain doesn't match (e.g. teacher uses a gmail account), the
+    # mailto link is still authoritative — accept it as a fallback.
+    if mailto:
+        return mailto
 
     # HUST sometimes hosts the email in plain text on the legacy
-    # <school>.hust.edu.cn/info/<treeid>/<id>.htm template.
-    return await extract_email_from_rendered_dom(page, domain_hint="hust.edu.cn")
+    # <school>.hust.edu.cn/info/<treeid>/<id>.htm template. Longer settle
+    # since the lazy fill may still be running.
+    return await extract_email_from_rendered_dom(
+        page, domain_hint="hust.edu.cn", settle_ms=3000
+    )
 
 
 __all__ = [
+    "_extract_mailto",
     "decode_hust_email",
     "decode_xidian_email",
     "extract_email_from_rendered_dom",
