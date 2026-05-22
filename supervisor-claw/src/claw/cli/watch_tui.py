@@ -1,12 +1,15 @@
-"""Textual-based live monitor for enrich progress.
+"""Textual-based live monitor for enrich / crawl / email-backfill progress.
 
 Read-only TUI that reads ``data/claw.db`` + ``data/enrich_logs/*.jsonl`` +
-``data/enrich.lock`` and scans ``/proc`` for active ``claw enrich``
-subprocesses. Designed for parallel lanes (Plan B): the lanes panel detects
-every running enricher via /proc, not just the single lock file.
+``data/email_backfill_*.log`` + ``data/email_backfill_audit.jsonl`` and
+scans ``/proc`` for any running ``claw enrich`` / ``claw crawl`` /
+``claw crawl-stealth`` / ``claw backfill-email`` subprocess. The lane
+panel shows up to 5 active processes regardless of task type — the same
+lane is reused if the running task happens to be email backfill instead
+of enrichment.
 
-Launch any time, ``q`` / Ctrl-C to exit — the running enrich/crawl processes
-are not touched.
+Launch any time, ``q`` / Ctrl-C to exit — the running subprocesses are
+not touched.
 """
 
 from __future__ import annotations
@@ -55,6 +58,44 @@ def _school_from_cmd(cmd: str) -> str | None:
     return None
 
 
+def _classify_claw_cmd(cmd: str) -> tuple[str, str | None] | None:
+    """Classify a ``claw …`` command line. Returns (task, school) or None.
+
+    task ∈ {"enrich", "crawl", "backfill-email"}. ``school`` is the school
+    code (from --school or, for backfill-email, the positional arg).
+    """
+    if "claw" not in cmd:
+        return None
+    toks = cmd.split()
+    # Find the subcommand right after the 'claw' bin / module token.
+    sub = None
+    for i, t in enumerate(toks):
+        if t.endswith("/claw") or t == "claw":
+            if i + 1 < len(toks):
+                sub = toks[i + 1]
+                break
+    if sub is None:
+        return None
+    if sub == "enrich":
+        return ("enrich", _school_from_cmd(cmd))
+    if sub in ("crawl", "crawl-stealth"):
+        return ("crawl", _school_from_cmd(cmd))
+    if sub == "backfill-email":
+        # Positional: claw backfill-email <school> [--flags…]
+        # Find the next non-flag token after the subcommand.
+        try:
+            after = toks[toks.index(sub) + 1:]
+        except ValueError:
+            after = []
+        school = None
+        for t in after:
+            if not t.startswith("--"):
+                school = t
+                break
+        return ("backfill-email", school)
+    return None
+
+
 def _pid_alive(pid: int) -> bool:
     try:
         import os
@@ -65,8 +106,14 @@ def _pid_alive(pid: int) -> bool:
         return False
 
 
-def _scan_active_enrichers() -> list[dict]:
-    """Walk /proc and return one entry per *python* ``claw enrich`` process."""
+def _scan_active_processes() -> list[dict]:
+    """Walk /proc, return one entry per active ``claw`` subprocess.
+
+    Recognises enrich / crawl / crawl-stealth / backfill-email. Wrapper
+    ``uv run …`` processes are filtered out; only the underlying
+    ``.venv/bin/python … claw …`` worker is returned (avoids each task
+    appearing twice).
+    """
     out: list[dict] = []
     proc = Path("/proc")
     if not proc.exists():
@@ -82,11 +129,16 @@ def _scan_active_enrichers() -> list[dict]:
         if not cmdline_raw:
             continue
         cmdline = cmdline_raw.replace("\x00", " ").strip()
-        if "claw" not in cmdline or "enrich" not in cmdline or "--school" not in cmdline:
+        if "claw" not in cmdline:
             continue
         if ".venv/bin/python" not in cmdline:
+            # skip the outer `uv run` wrapper; the inner python process
+            # is the actual worker we want to track.
             continue
-        school = _school_from_cmd(cmdline)
+        cls = _classify_claw_cmd(cmdline)
+        if cls is None:
+            continue
+        task, school = cls
         try:
             etime = now - (p / "cmdline").stat().st_mtime
         except Exception:
@@ -94,14 +146,90 @@ def _scan_active_enrichers() -> list[dict]:
         out.append(
             {
                 "pid": int(p.name),
+                "task": task,
                 "school": school or "?",
                 "etime_s": int(etime),
                 "cmdline": cmdline[:160],
             }
         )
-    # stable ordering by school code, for consistent lane numbering
-    out.sort(key=lambda x: x["school"])
+    # stable ordering: task type then school, for consistent lane numbering
+    out.sort(key=lambda x: (x["task"], x["school"]))
     return out
+
+
+# Back-compat shim — older code paths may import the old name.
+_scan_active_enrichers = _scan_active_processes
+
+
+def _email_backfill_progress(
+    school: str, data_dir: Path = Path("data")
+) -> tuple[int, int, int, str | None]:
+    """Read the most recent ``email_backfill_<school>_*.log`` for progress.
+
+    Returns ``(done, hits, timeouts, last_advisor)``. ``done`` counts any
+    per-advisor outcome line (✓ ✗ ⏱ – ·). All zeros if no log exists.
+    """
+    if not data_dir.exists():
+        return 0, 0, 0, None
+    logs = sorted(data_dir.glob(f"email_backfill_{school}_*.log"))
+    if not logs:
+        return 0, 0, 0, None
+    log = logs[-1]
+    done = hits = timeouts = 0
+    last_name: str | None = None
+    try:
+        with log.open(encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if not line:
+                    continue
+                head = line[:1]
+                if head in ("✓", "✗", "⏱", "·", "–", "-"):
+                    done += 1
+                    if head == "✓":
+                        hits += 1
+                    elif head == "⏱":
+                        timeouts += 1
+                    # the line shape is: "<sym> [i/total] <name> — …"
+                    try:
+                        # find name between "] " and " —"
+                        b = line.find("] ")
+                        e = line.find(" —", b + 2)
+                        if b != -1 and e != -1:
+                            last_name = line[b + 2 : e].strip() or last_name
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    return done, hits, timeouts, last_name
+
+
+def _email_backfill_total(school: str, data_dir: Path = Path("data")) -> int:
+    """Read backfill-email header line ``backfill-email <school> (N candidates)``.
+
+    Returns 0 if no log / header not found.
+    """
+    if not data_dir.exists():
+        return 0
+    logs = sorted(data_dir.glob(f"email_backfill_{school}_*.log"))
+    if not logs:
+        return 0
+    log = logs[-1]
+    try:
+        with log.open(encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if "candidates" in line and "backfill-email" in line:
+                    # e.g. "──── backfill-email xidian (229 candidates) ────"
+                    i = line.find("(")
+                    j = line.find(" candidates", i)
+                    if i != -1 and j != -1:
+                        try:
+                            return int(line[i + 1 : j])
+                        except ValueError:
+                            return 0
+                    return 0
+    except Exception:
+        pass
+    return 0
 
 
 def _summarize_jsonl(log_dir: Path) -> tuple[dict[str, dict], dict, int]:
@@ -378,11 +506,13 @@ class EnrichMonitor(App):
 
     # ------------------------------------------------------------------
 
+    LANES = 5  # max simultaneous lane cards (enrich + crawl + backfill mix)
+
     def compose(self) -> ComposeResult:
         yield Static("", id="title_bar")
         with Horizontal(id="lanes_row"):
-            yield Static("", classes="lane_card", id="lane_card_0")
-            yield Static("", classes="lane_card", id="lane_card_1")
+            for i in range(self.LANES):
+                yield Static("", classes="lane_card", id=f"lane_card_{i}")
         yield DataTable(id="schools_table", zebra_stripes=True, show_cursor=False)
         with Horizontal(id="stats_row"):
             yield Static("", classes="stat_card advisors", id="card_advisors")
@@ -457,60 +587,101 @@ class EnrichMonitor(App):
         self._tput_last_sample = (now, total_rows)
         return self._tput_ema, 0
 
+    # Per-task display config. The badge label is what shows on the card
+    # next to the school code; the color tint differentiates the tasks at
+    # a glance when several lanes run in parallel.
+    _TASK_BADGE = {
+        "enrich":         ("ENR", "bright_cyan"),
+        "crawl":          ("CRW", "yellow"),
+        "backfill-email": ("EML", "magenta"),
+    }
+
     def refresh_display(self) -> None:
         now_utc = datetime.now(timezone.utc)
-        active = _scan_active_enrichers()
+        active = _scan_active_processes()
         active_schools = {a["school"] for a in active}
         lock = _read_lock(self.lock_path)
         per_jsonl, totals, n_files = _summarize_jsonl(self.log_dir)
         db_rows = _db_summary()
 
         # ---- title bar ----
+        task_counts: dict[str, int] = {}
+        for a in active:
+            task_counts[a["task"]] = task_counts.get(a["task"], 0) + 1
+        task_summary = (
+            " · ".join(f"{n} {t}" for t, n in task_counts.items())
+            if task_counts else "idle"
+        )
         self.query_one("#title_bar", Static).update(
             Text.from_markup(
-                f"⚡ supervisor-claw · enrich monitor   "
+                f"⚡ supervisor-claw · live monitor   "
                 f"[dim]{now_utc.isoformat(timespec='seconds')}Z · "
-                f"refresh {self.refresh_s:.0f}s · active lanes: "
-                f"{len(active)}[/]"
+                f"refresh {self.refresh_s:.0f}s · {task_summary}[/]"
             )
         )
 
-        # ---- lane cards (up to 2 visible, more would need responsive layout) ----
-        for slot in range(2):
+        # ---- lane cards ----
+        for slot in range(self.LANES):
             card = self.query_one(f"#lane_card_{slot}", Static)
             if slot < len(active):
                 a = active[slot]
                 alive = _pid_alive(a["pid"])
                 lane_letter = chr(ord("A") + slot)
+                task = a["task"]
+                badge_label, tint = self._TASK_BADGE.get(task, ("?", "white"))
                 if alive:
                     card.set_class(True, "lane_card")
                     card.set_class(False, "idle")
                     card.set_class(False, "dead")
                 else:
                     card.set_class(True, "dead")
-                badge = "[bold green]●[/]" if alive else "[bold red]✗[/]"
+                heart = "[bold green]●[/]" if alive else "[bold red]✗[/]"
                 school = a["school"]
                 pid = a["pid"]
-                # Look up that school's current progress
-                j = per_jsonl.get(school, {})
-                jrows = j.get("rows", 0)
-                tot = next((r["total"] for r in db_rows if r["code"] == school), 0)
-                pct = (jrows * 100 / tot) if tot else 0
+
+                # Per-task progress shape
+                if task == "enrich":
+                    j = per_jsonl.get(school, {})
+                    cur = j.get("rows", 0)
+                    tot = next(
+                        (r["total"] for r in db_rows if r["code"] == school), 0
+                    )
+                    pct = (cur * 100 / tot) if tot else 0
+                    line2 = f"[dim]{cur}/{tot}[/]"
+                elif task == "backfill-email":
+                    done, hits, timeouts, last = _email_backfill_progress(school)
+                    tot = _email_backfill_total(school)
+                    pct = (done * 100 / tot) if tot else 0
+                    extra = []
+                    if hits:
+                        extra.append(f"[green]✓{hits}[/]")
+                    if timeouts:
+                        extra.append(f"[yellow]⏱{timeouts}[/]")
+                    extra_str = " ".join(extra)
+                    line2 = (
+                        f"[dim]{done}/{tot}[/]  {extra_str}".rstrip()
+                    )
+                else:  # crawl — no per-school totals reliable from /proc alone
+                    cur = 0
+                    tot = 0
+                    pct = 0.0
+                    line2 = "[dim]running…[/]"
+
                 bar = _bar(pct, width=20)
-                color = _bar_color(pct)
+                color = _bar_color(pct) if pct else "white"
                 card.update(Text.from_markup(
-                    f"[bold]Lane {lane_letter}[/]  {badge} [bold magenta]"
-                    f"{school}[/]\n"
-                    f"[{color}]{bar}[/]  [bold]{pct:5.1f}%[/]  "
-                    f"[dim]{jrows}/{tot}[/]\n"
-                    f"[dim]pid {pid} · uptime {_fmt_etime(a['etime_s'])}[/]"
+                    f"[bold]Lane {lane_letter}[/]  {heart} "
+                    f"[bold {tint}]{badge_label}[/] "
+                    f"[bold magenta]{school}[/]\n"
+                    f"[{color}]{bar}[/]  [bold]{pct:5.1f}%[/]  {line2}\n"
+                    f"[dim]pid {pid} · up {_fmt_etime(a['etime_s'])}[/]"
                 ))
             else:
                 card.set_class(False, "dead")
                 card.set_class(True, "idle")
                 card.update(Text.from_markup(
                     f"[bold]Lane {chr(ord('A') + slot)}[/]  "
-                    f"[dim]· idle ·[/]\n\n[dim]no active enricher on this slot[/]"
+                    f"[dim]· idle ·[/]\n\n[dim]no active claw process[/]"
                 ))
 
         # ---- per-school table ----
