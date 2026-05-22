@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import csv
 import json
 import sys
@@ -420,6 +421,146 @@ def crawl_stealth(
         f"profile_ok={stats.profiles_ok} profile_stub={stats.profiles_stub} "
         f"wayback={stats.wayback_fallbacks} dblp={stats.dblp_fallbacks} "
         f"errors={stats.errors}"
+    )
+
+
+@app.command("backfill-email")
+def backfill_email(
+    school: str = typer.Argument(..., help="school code, e.g. xidian / hust / xjtu"),
+    limit: int = typer.Option(0, "--limit", help="stop after N advisors (0 = all matched)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="don't write DB, just print candidates"),
+    strategy: list[str] = typer.Option(
+        None,
+        "--strategy",
+        help="cascade subset of: js, bing, dblp (default = all 3 in order)",
+    ),
+    headed: bool = typer.Option(False, "--headed", help="show Playwright browser (debug)"),
+    concurrency: int = typer.Option(1, "--concurrency", help="parallel advisors (1 recommended)"),
+) -> None:
+    """Backfill ``advisor.email`` for the given school.
+
+    Idempotent: only operates on advisors where ``email IS NULL`` and writes
+    via :func:`update_email_only` which refuses to overwrite existing values.
+    Every write is mirrored to ``data/email_backfill_audit.jsonl``.
+
+    Strategies cascade per advisor — the first hit wins.
+    """
+    setup_logging()
+    init_db()
+
+    # imports kept local — playwright is optional during unit-test imports
+    import httpx
+
+    from ..config import find_school
+    from ..core.http import make_legacy_friendly_ssl_context
+    from ..enrichers.email_backfill import backfill_one_advisor, update_email_only
+    from ..pipeline.stealth_crawler import open_stealth_session
+
+    cfg = find_school(school)
+    if cfg is None:
+        console.print(f"[red]school '{school}' not in schools.yaml[/red]")
+        raise typer.Exit(2)
+
+    strategies = list(strategy) if strategy else ["js", "bing", "dblp"]
+    valid = {"js", "bing", "dblp"}
+    for s in strategies:
+        if s not in valid:
+            console.print(f"[red]unknown strategy '{s}'; valid: {sorted(valid)}[/red]")
+            raise typer.Exit(2)
+
+    # ---- select candidates (advisors with email IS NULL) ----
+    candidates: list[tuple[int, str, str | None]] = []
+    with session_scope() as s:
+        school_row = s.exec(select(School).where(School.code == school)).first()
+        if school_row is None:
+            console.print(f"[red]school '{school}' has no rows in DB — run `claw crawl` first[/red]")
+            raise typer.Exit(2)
+        q = select(Advisor).where(
+            Advisor.school_id == school_row.id, Advisor.email.is_(None)  # type: ignore[union-attr]
+        )
+        rows = s.exec(q).all()
+        for a in rows:
+            candidates.append((a.id, a.name_cn, a.homepage))
+            if limit and len(candidates) >= limit:
+                break
+
+    total = len(candidates)
+    if total == 0:
+        console.print(f"[green]{school}[/green]: no advisors with NULL email — nothing to do")
+        return
+
+    console.rule(f"[bold blue]backfill-email {school} ({total} candidates)")
+    console.print(
+        f"strategies={strategies}  dry_run={dry_run}  audit=data/email_backfill_audit.jsonl"
+    )
+
+    hits = 0
+
+    async def _run() -> int:
+        nonlocal hits
+        ssl_ctx = make_legacy_friendly_ssl_context()
+        async with open_stealth_session(headed=headed) as sess_stealth:
+            page = await sess_stealth.context.new_page()
+            async with httpx.AsyncClient(timeout=20.0, verify=ssl_ctx, http2=True) as client:
+                with session_scope() as db:
+                    for i, (advisor_id, name_cn, _homepage) in enumerate(candidates, 1):
+                        advisor = db.get(Advisor, advisor_id)
+                        if advisor is None:
+                            continue
+                        if advisor.email:  # raced — skip
+                            continue
+                        try:
+                            email, source = await backfill_one_advisor(
+                                advisor=advisor,
+                                page=page,
+                                sess=client,
+                                school_code=school,
+                                school_name_cn=cfg.name_cn,
+                                strategies=strategies,
+                            )
+                        except Exception as e:  # noqa: BLE001
+                            console.print(f"[red]✗[/red] [{i}/{total}] {name_cn}: {e}")
+                            continue
+
+                        if email:
+                            if dry_run:
+                                console.print(
+                                    f"[cyan]·[/cyan] [{i}/{total}] {name_cn} "
+                                    f"→ [bold]{email}[/] (source={source}, dry-run)"
+                                )
+                                hits += 1
+                            else:
+                                wrote = update_email_only(
+                                    db, advisor_id, email, source or "unknown"
+                                )
+                                if wrote:
+                                    hits += 1
+                                    console.print(
+                                        f"[green]✓[/green] [{i}/{total}] {name_cn} "
+                                        f"→ [bold]{email}[/] (source={source})"
+                                    )
+                                else:
+                                    console.print(
+                                        f"[yellow]·[/yellow] [{i}/{total}] {name_cn} "
+                                        f"→ {email} (already set / write rejected)"
+                                    )
+                        else:
+                            console.print(
+                                f"[dim]–[/dim] [{i}/{total}] {name_cn} — no email found"
+                            )
+
+                        # politeness: short sleep between advisors to avoid ban.
+                        await asyncio.sleep(1.5)
+            with contextlib.suppress(Exception):
+                await page.close()
+        return hits
+
+    hits = asyncio.run(_run())
+    pct = (hits * 100 / total) if total else 0
+    console.rule(f"[bold green]done {school}")
+    console.print(
+        f"{hits}/{total} advisors got email ({pct:.1f}%); "
+        f"audit at data/email_backfill_audit.jsonl"
     )
 
 
