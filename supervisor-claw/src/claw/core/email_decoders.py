@@ -215,6 +215,49 @@ _ORG_LIST_PREFIXES: tuple[str, ...] = (
     "kjc", "rsc", "cwc", "xsc", "yzb", "yjsb", "jwc",
 )
 
+# Chinese-administrative-term pinyin spotted in the wild as bureau mailboxes
+# (硕士班 → shiziban, 研究生班 → yjsban, etc.). Exact-match only — anything
+# longer than these usually IS a personal name with one of these as substring
+# (e.g. "yanjiuxxx" — only reject "yanjiusheng" exact).
+_ADMIN_PINYIN_EXACT: tuple[str, ...] = (
+    "shiziban",       # 硕士班 — caught FP: 樊晓桠 → shiziban@nwpu
+    "boshiban",       # 博士班
+    "yjsban",         # 研究生班
+    "yjsh",           # 研究生
+    "yanjiusheng",    # 研究生
+    "banzhuren",      # 班主任
+    "fudaoyuan",      # 辅导员
+    "jiaowu",         # 教务
+    "jiaoxue",        # 教学
+    "xueyuan",        # 学院
+    "xueke",          # 学科
+    "shiyanshi",      # 实验室
+    "danwei",         # 单位
+    "yanshengyuan",   # 研生院
+    "xueshengchu",    # 学生处
+    "xuegongbu",      # 学工部
+    "jwc",            # 教务处
+    "rsb",            # 人事部
+    "kyc",            # 科研处
+    "graduate",       # 'graduate' / english variant
+    "alumni",         # 'alumni' admin list
+    "webmaster",      # already in _FOOTER_LOCAL_PARTS but be safe
+)
+
+# 20 school codes — combined with admin suffixes catches accounts like
+# 'xjtunic', 'hust-info', 'nwpu_help', 'tsinghuaservice' (real FP: 朱利 →
+# xjtunic@mail.xjtu.edu.cn was xjtu's NIC, not 朱利's mailbox).
+_SCHOOL_CODE_PREFIXES: tuple[str, ...] = (
+    "xjtu", "xidian", "nwpu", "hust", "nudt", "fudan", "pku", "nju",
+    "ustc", "bit", "zju", "sysu", "tju", "nankai", "sjtu",
+    "shanghaitech", "shtech", "buaa", "uestc", "seu", "tsinghua",
+)
+_ADMIN_SUFFIX_TOKENS: tuple[str, ...] = (
+    "admin", "info", "nic", "help", "office", "service", "support",
+    "master", "dean", "recruit", "secretary", "zs", "yzs", "yzc", "yjs",
+    "news", "lib", "library", "press", "contact", "feedback",
+)
+
 
 def _looks_like_personal_localpart(localpart: str) -> bool:
     """Cheap heuristic: does the localpart look like a person, not a list?
@@ -222,6 +265,8 @@ def _looks_like_personal_localpart(localpart: str) -> bool:
     Rejects:
     * empty / very short (≤ 3 chars) — too generic
     * known bureaucratic prefixes (info-…, recruit-…, yzs, yzc, dean, …)
+    * Chinese admin-term exact matches (shiziban, boshiban, jiaowu, …)
+    * school-code-prefixed admin accounts (xjtunic, hust-info, …)
     * all-consonant Chinese acronyms (zero vowels) like ``gfkdyzc``,
       which are how academic departments name their group mailboxes
       (国防 + 科大 + 研招/院招 → "gfkdyzc")
@@ -239,6 +284,18 @@ def _looks_like_personal_localpart(localpart: str) -> bool:
             return False
         if lp.startswith(p + "-") or lp.startswith(p + "_") or lp.startswith(p + "."):
             return False
+    if lp in _ADMIN_PINYIN_EXACT:
+        return False
+    # School-code-prefixed admin (xjtunic, hust-info, …)
+    for sp in _SCHOOL_CODE_PREFIXES:
+        if lp == sp:
+            return False
+        if lp.startswith(sp):
+            rest = lp[len(sp):]
+            if rest in _ADMIN_SUFFIX_TOKENS:
+                return False
+            if rest and rest[0] in "-_." and rest[1:] in _ADMIN_SUFFIX_TOKENS:
+                return False
     # ``"gfkdyzc"`` (0 vowels, all consonants) → reject. We treat 'y' as a
     # consonant on purpose so e.g. ``"yzs"`` / ``"yjsb"`` get caught.
     if not any(c in "aeiou" for c in lp):
