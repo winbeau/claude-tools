@@ -18,9 +18,9 @@ Strategy
 * List-only advisors (``homepage`` IS NULL) → bing + dblp; the dept list
   pages never expose the email.
 
-This module is a thin wrapper around
-:func:`claw.enrichers.email_backfill.backfill_one_advisor` — it chooses a
-sensible per-advisor strategy list and forces ``domain_hint="xidian.edu.cn"``.
+Calls the helpers in :mod:`claw.enrichers.email_backfill` directly rather
+than re-entering :func:`backfill_one_advisor` — re-entering would recurse
+indefinitely via the ``_SITE_EMAIL_OVERRIDES`` dispatch.
 """
 
 from __future__ import annotations
@@ -28,7 +28,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from ...core.logging import get_logger
-from ..email_backfill import backfill_one_advisor
+from ..email_backfill import (
+    decode_js_email_on_page,
+    dblp_email_lookup,
+    search_email_via_stealth_bing,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     import httpx
@@ -37,6 +41,8 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from ...models.db import Advisor
 
 log = get_logger(__name__)
+
+_DOMAIN_HINT = "xidian.edu.cn"
 
 
 def _pick_strategies(advisor: "Advisor") -> list[str]:
@@ -55,7 +61,6 @@ def _pick_strategies(advisor: "Advisor") -> list[str]:
         return ["bing", "dblp"]
     if "faculty.xidian.edu.cn" in url_l:
         return ["js", "bing", "dblp"]
-    # web.xidian.edu.cn personal sites + any non-tsites template
     return ["bing", "dblp"]
 
 
@@ -68,25 +73,51 @@ async def find_email(
     """Run the xidian-tuned email backfill cascade for one advisor.
 
     Returns ``(email, source)``; both ``None`` if nothing was found.
-
-    ``source`` mirrors :func:`backfill_one_advisor` values:
-    ``js_decode`` / ``bing`` / ``dblp``.
     """
     strategies = _pick_strategies(advisor)
-    log.debug(
-        "xidian.find_email: name=%s homepage=%s strategies=%s",
-        getattr(advisor, "name_cn", "?"),
-        getattr(advisor, "homepage", None),
-        strategies,
-    )
-    return await backfill_one_advisor(
-        advisor=advisor,
-        page=page,
-        sess=sess,
-        school_code="xidian",
-        school_name_cn=school_name_cn,
-        strategies=strategies,
-    )
+    name = getattr(advisor, "name_cn", None)
+    if not name:
+        return None, None
+
+    for strat in strategies:
+        try:
+            if strat == "js":
+                url = (getattr(advisor, "homepage", None)
+                       or getattr(advisor, "source_url", None))
+                if not url:
+                    continue
+                try:
+                    await page.goto(url, timeout=30_000, wait_until="domcontentloaded")
+                except Exception as e:  # noqa: BLE001
+                    log.warning("xidian js nav failed %s: %s", url, e)
+                    continue
+                email = await decode_js_email_on_page(page, "xidian")
+                if email:
+                    return email, "js_decode"
+
+            elif strat == "bing":
+                email = await search_email_via_stealth_bing(
+                    page,
+                    name=name,
+                    school_name_cn=school_name_cn,
+                    domain_hint=_DOMAIN_HINT,
+                )
+                if email:
+                    return email, "bing"
+
+            elif strat == "dblp":
+                email = await dblp_email_lookup(
+                    sess,
+                    name=name,
+                    affiliation_hint=school_name_cn,
+                )
+                if email:
+                    return email, "dblp"
+        except Exception as e:  # noqa: BLE001
+            log.warning("xidian strategy %s raised for %s: %s", strat, name, e)
+            continue
+
+    return None, None
 
 
 __all__ = ["find_email"]
