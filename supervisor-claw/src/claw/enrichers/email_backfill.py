@@ -67,12 +67,14 @@ _FOOTER_LOCAL_PARTS: tuple[str, ...] = (
 )
 
 # Search URL templates. We hit the public web pages — *not* any paid API.
-# v0.5.1: trimmed from 4 engines to 1 (bing.com only). Earlier rounds
-# showed that cn.bing.com / duckduckgo.com / sogou.com routinely hit
-# captcha / interstitials and contributed almost zero unique hits over
-# bing.com — but they doubled the per-no-hit wall time.
+# v0.5.2: order = google → baidu → bing per user preference. Each engine
+# has a tight 10s nav timeout so a blocked engine costs ~10s before we
+# fall through to the next. Worst case 3-engine no-hit ≈ 30s; first-hit
+# fast path ≈ 12s.
 _SEARCH_ENGINES: list[tuple[str, str]] = [
-    ("bing.com", "https://www.bing.com/search?q={q}"),
+    ("google.com", "https://www.google.com/search?q={q}"),
+    ("baidu.com",  "https://www.baidu.com/s?wd={q}"),
+    ("bing.com",   "https://www.bing.com/search?q={q}"),
 ]
 
 # Per-school decoder dispatch table. School codes match those in schools.yaml.
