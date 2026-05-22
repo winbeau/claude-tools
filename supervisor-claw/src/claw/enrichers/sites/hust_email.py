@@ -141,24 +141,23 @@ async def find_email(
         Display name used as the bing query / DBLP affiliation hint.
     """
     # ------------------------------------------------------------------
-    # Strategy 1: js decoder on the advisor's known profile URL.
+    # Strategy 1+2: js decoder on the advisor's profile URL (and alts).
+    # v0.5.3: faculty.hust.edu.cn is currently IP-blocking huawei2 with
+    # net::ERR_ABORTED on every nav. Skip the js path entirely so we
+    # don't waste 30s × 2 per advisor; revisit when the block lifts.
+    # The full block (kept inline for easy re-enable) follows the bing
+    # / dblp strategies below.
     # ------------------------------------------------------------------
     primary = getattr(advisor, "homepage", None) or getattr(advisor, "source_url", None)
-    if primary:
+    _HUST_JS_DISABLED = True
+    if primary and not _HUST_JS_DISABLED:
         email = await _try_js_decode(page, primary)
         if email:
             return email, "js_decode"
-
-    # ------------------------------------------------------------------
-    # Strategy 2: js decoder on URL-shape variants of the primary.
-    # Cheap (1-2 extra page loads) and rescues profiles whose primary
-    # URL serves a stub but whose dir form (or http/https alt) renders
-    # the mailto.
-    # ------------------------------------------------------------------
-    for alt in _candidate_alt_urls(primary):
-        email = await _try_js_decode(page, alt)
-        if email:
-            return email, "js_decode_alt"
+        for alt in _candidate_alt_urls(primary):
+            email = await _try_js_decode(page, alt)
+            if email:
+                return email, "js_decode_alt"
 
     # ------------------------------------------------------------------
     # Strategy 3: stealth web search restricted to hust.edu.cn.
