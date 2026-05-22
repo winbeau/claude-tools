@@ -23,6 +23,7 @@ dependencies = [
     "anyio>=4.4",
     "textual>=0.80",
     "playwright-stealth>=2.0",
+    "pypinyin>=0.55",
 ]
 
 [project.scripts]

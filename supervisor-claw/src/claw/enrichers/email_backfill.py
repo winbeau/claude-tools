@@ -39,6 +39,7 @@ from urllib.parse import quote_plus
 
 from ..core.email_decoders import (
     _EMAIL_RE as _CORE_EMAIL_RE,
+    _localpart_matches_name,
     _looks_like_personal_localpart,
     decode_hust_email,
     decode_xidian_email,
@@ -122,17 +123,18 @@ def _pick_best(
     domain_hint: str | None,
     *,
     strict_domain: bool = True,
+    name_cn: str | None = None,
 ) -> Optional[str]:
     """Like :func:`core.email_decoders._pick_email`, but **strict by default**.
 
     For bing / dblp / search-based recovery we want zero tolerance for
-    cross-domain mismatches — a SERP that surfaces an unrelated person's
-    gmail must not become advisor.email. So when ``domain_hint`` is set
-    and no candidate's *host* contains it, we return None instead of
-    falling through to "first academic TLD" / "first candidate".
+    cross-domain mismatches AND for cross-person mismatches. So:
+    * strict_domain=True (default) → no fall-through to other TLDs when
+      domain_hint is set
+    * name_cn given → drop candidates whose localpart pinyin doesn't
+      plausibly match the advisor's own name
 
-    Org-list-like localparts (department mailboxes, recruit lists, all-
-    consonant Chinese acronyms like ``gfkdyzc``) are dropped here too.
+    Without name_cn (legacy call sites) the pinyin filter is a no-op.
     """
     seen: set[str] = set()
     clean: list[str] = []
@@ -140,7 +142,10 @@ def _pick_best(
         a = c.strip().lower()
         if not a or a in seen or _is_footer_like(a):
             continue
-        if not _looks_like_personal_localpart(a.split("@", 1)[0]):
+        local = a.split("@", 1)[0]
+        if not _looks_like_personal_localpart(local):
+            continue
+        if name_cn and not _localpart_matches_name(local, name_cn):
             continue
         seen.add(a)
         clean.append(a)
@@ -259,7 +264,7 @@ async def search_email_via_stealth_bing(
         candidates = _EMAIL_RE.findall(html)
         # Reject the engine's own contact addresses
         candidates = [c for c in candidates if engine.split(".")[0] not in c.lower()]
-        picked = _pick_best(candidates, domain_hint=domain_hint)
+        picked = _pick_best(candidates, domain_hint=domain_hint, name_cn=name)
         if picked:
             log.info("search hit via %s for %s: %s", engine, name, picked)
             return picked
@@ -335,7 +340,7 @@ async def dblp_email_lookup(
             continue
         candidates.extend(_EMAIL_RE.findall(xr.text))
 
-    return _pick_best(candidates, domain_hint=domain_hint)
+    return _pick_best(candidates, domain_hint=domain_hint, name_cn=name)
 
 
 # ---------------------------------------------------------------------------

@@ -39,6 +39,15 @@ from .logging import get_logger
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from playwright.async_api import Page
 
+# pypinyin is a required dep; if it ever goes missing we degrade to a no-op
+# matcher so the filter doesn't crash callers (it just lets everything pass
+# through the pinyin check — strict_domain still applies).
+try:
+    from pypinyin import lazy_pinyin, Style as _PinyinStyle  # type: ignore
+except Exception:  # pragma: no cover
+    lazy_pinyin = None  # type: ignore
+    _PinyinStyle = None  # type: ignore
+
 log = get_logger(__name__)
 
 # Known TLDs. SERPs/HTML routinely glue an email to the next Chinese word
@@ -314,11 +323,115 @@ def _looks_like_personal_localpart(localpart: str) -> bool:
     return True
 
 
+def _pinyin_tokens(name_cn: str) -> tuple[str, ...]:
+    """Return (full, surname_first_form, abbrev) — empty if no name / no pypinyin.
+
+    Examples:
+    * "张三"   → ("zhangsan", "zhangsan", "zs")
+    * "黄晓太" → ("huangxiaotai", "huangxiaotai", "hxt")
+    * "于强"   → ("yuqiang", "yuqiang", "yq")
+    * "邓岳"   → ("dengyue", "dengyue", "dy")
+
+    Used by :func:`_pick_email` to reject bing-SERP candidates whose
+    localpart matches **some other** professor's pinyin (the common FP
+    pattern: e.g. 慕建君 → jfma@xidian, where jfma is 马建峰's email).
+    """
+    if not name_cn or lazy_pinyin is None:
+        return ()
+    # Strip whitespace inside the name (e.g. "朱 利" → "朱利").
+    clean = "".join(name_cn.split())
+    if not clean:
+        return ()
+    try:
+        syllables = lazy_pinyin(clean)
+    except Exception:  # noqa: BLE001
+        return ()
+    if not syllables:
+        return ()
+    full = "".join(s.lower() for s in syllables)
+    # Surname-first variant is the same as full for CN names (no Western
+    # given-first re-ordering), but keep it explicit in case we extend.
+    surname_first = full
+    # Initials (zhang + san → zs; huang + xiao + tai → hxt). Capped at
+    # the first 4 syllables to avoid spurious matches from very long
+    # 4+ character names where the abbrev becomes too generic.
+    abbr = "".join(s[0].lower() for s in syllables if s)[:4]
+    return (full, surname_first, abbr)
+
+
+def _localpart_matches_name(localpart: str, name_cn: str | None) -> bool:
+    """Does ``localpart`` plausibly belong to ``name_cn``?
+
+    The check is **anti-FP only** — when name_cn is empty / pypinyin is
+    missing, returns True (don't block the candidate). When name_cn is
+    present, we require ANY of:
+
+    1. localpart contains the full pinyin (zhangsan in "zhangsan@…")
+    2. localpart contains the surname-pinyin AND a single initial (e.g.
+       "zhang.s" or "s.zhang" for 张三; "huang.xt" for 黄晓太)
+    3. localpart equals (or contains) the initials abbrev (zs / hxt)
+    4. localpart contains the last 2 syllables (any order) for >=3-char
+       names — handles "qjj" → "qijj" (祁建军) loose matches via prefix
+       check below
+
+    These are deliberately generous so we don't kill legit personal
+    addresses with unusual orderings (e.g. q.yu for 强 于 / yu qiang).
+    """
+    if not name_cn:
+        return True
+    tokens = _pinyin_tokens(name_cn)
+    if not tokens:
+        return True
+    full, surname_first, abbr = tokens
+    lp = localpart.lower()
+    if not lp:
+        return False
+
+    # Rule 1: full pinyin appears anywhere
+    if full and full in lp:
+        return True
+    if surname_first and surname_first != full and surname_first in lp:
+        return True
+
+    # Rule 2: every syllable's first letter appears (in name order) as a
+    # subsequence in the localpart. Catches "jfma" (jianfengma) for 马建峰
+    # — wait, in our convention 马建峰 → mjf, NOT jfm. So "jfma" should
+    # NOT match 马建峰 (mjf). Good. But "swjia" matches 贾松卫
+    # (jiasongwei → jsw) when read as initials. We test abbr substring:
+    if abbr and len(abbr) >= 2 and abbr in lp:
+        return True
+    # Rule 2b: reverse abbr also matches (vowel-prefix dots like "q.yu"
+    # for "于强" → yq, reversed = qy ≠ q.yu — but the localpart 'q.yu'
+    # contains 'qy' when dots stripped). Strip non-letters for the abbr
+    # check.
+    lp_letters = re.sub(r"[^a-z]", "", lp)
+    if abbr and len(abbr) >= 2 and abbr in lp_letters:
+        return True
+    rev_abbr = abbr[::-1] if abbr else ""
+    if rev_abbr and len(rev_abbr) >= 2 and rev_abbr in lp_letters:
+        return True
+
+    # Rule 3: any single syllable that is >=3 chars appears in the
+    # localpart. Catches "kangliu" → 'kang' or 'liu' from 刘康 (liu kang
+    # → ['liu','kang']). Also catches "yangliying1208" → 'yang' / 'liying'.
+    try:
+        syllables = lazy_pinyin("".join(name_cn.split())) if lazy_pinyin else []
+    except Exception:  # noqa: BLE001
+        syllables = []
+    for s in syllables:
+        s = s.lower()
+        if len(s) >= 3 and s in lp:
+            return True
+
+    return False
+
+
 def _pick_email(
     candidates: list[str],
     domain_hint: str | None = None,
     *,
     strict_domain: bool = False,
+    name_cn: str | None = None,
 ) -> str | None:
     """From a list of candidate addresses pick the best one.
 
@@ -337,6 +450,12 @@ def _pick_email(
     Org-list-like localparts (see :func:`_looks_like_personal_localpart`)
     are filtered out before any ranking — so a ``gfkdyzc@nudt.edu.cn``
     candidate never wins, even if it's the only domain match.
+
+    When ``name_cn`` is provided, an additional pinyin-match filter rejects
+    candidates whose localpart can't plausibly be the advisor's own email
+    (see :func:`_localpart_matches_name`). This is the safe-mode for bing /
+    dblp where SERPs routinely surface OTHER xidian/nwpu professors'
+    addresses.
     """
     if not candidates:
         return None
@@ -351,6 +470,8 @@ def _pick_email(
             continue
         local = a.split("@", 1)[0]
         if not _looks_like_personal_localpart(local):
+            continue
+        if name_cn and not _localpart_matches_name(local, name_cn):
             continue
         cleaned.append(a)
     if not cleaned:

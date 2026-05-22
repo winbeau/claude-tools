@@ -117,6 +117,10 @@ async def _try_wayback_email(advisor: "Advisor", sess: httpx.AsyncClient) -> Opt
     candidates = _EMAIL_RE.findall(html)
     if not candidates:
         return None
+    # wayback snapshot is the advisor's OWN profile page, so the pinyin
+    # filter is overkill — keep it off here (most legit hits like
+    # 'gaowu@nwpu.edu.cn' for 高武 would still pass, but stranger pinyin
+    # variations might not).
     return _pick_best(candidates, domain_hint=_NWPU_DOMAIN_HINT)
 
 
