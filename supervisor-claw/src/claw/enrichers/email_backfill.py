@@ -95,7 +95,11 @@ _DECODER_DISPATCH = {
 # ``school_code`` and returns the module-level ``find_email`` coroutine,
 # or ``None`` if no override exists.
 _SITE_EMAIL_OVERRIDES: tuple[str, ...] = (
+    "hust",
+    "nudt",
     "nwpu",
+    "xidian",
+    "xjtu",
 )
 
 # Default audit log path.
