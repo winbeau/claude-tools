@@ -68,6 +68,99 @@ _FOOTER_LOCAL_PARTS: tuple[str, ...] = (
 # How long to wait for the page's encryption JS to populate the DOM.
 _JS_DECODE_TIMEOUT_MS = 15_000
 
+# ---------------------------------------------------------------------------
+# tsites hex-blob decryption (best-effort pure Python)
+# ---------------------------------------------------------------------------
+#
+# faculty.xidian.edu.cn (and other Sudy-CMS / tsites portals) ship
+# ``<span class="encrypt-field" _tsites_encrypt_field>HEXBLOB</span>``. The
+# plain-text is written into the span at runtime by
+# ``/system/resource/tsites/tsitesencrypt.js``. The actual cipher used by
+# tsitesencrypt.js is **not** publicly documented and the key is buried
+# inside the obfuscated JS shipped per-page (likely a per-site SM4/AES
+# session key — observed blobs are 128–160 bytes which suggests a block
+# cipher rather than a fixed-key XOR stream).
+#
+# We tried to derive the key from public info in this repo (adapter
+# comments, a captured fixture blob) and could not — the blob length and
+# byte-distribution do not match a single-byte or short-repeated XOR
+# pattern. So :func:`decrypt_tsites_hex` is deliberately conservative:
+#
+# 1. If the hex string is short enough to *be* a plain email (≤ 64 hex
+#    chars = ≤ 32 bytes, i.e. ≤ 1 block), try interpreting it as ASCII —
+#    occasionally tsites pages embed *plaintext* hex of the email (its
+#    "encryption" layer is bypassed for some fields).
+# 2. Try single-byte XOR — for every key in ``0x00..0xff`` decode the bytes,
+#    check whether the result looks like a valid email (regex match,
+#    printable ASCII). Return the first hit.
+# 3. Otherwise return ``None`` — the caller falls back to letting the page
+#    JS run in a real browser and reading the post-render DOM.
+#
+# This means in practice the pure-Python path almost always returns
+# ``None`` on real faculty.xidian blobs (they are AES/SM4-ciphered), but
+# it costs ~0.1 ms and saves a 15s browser wait on the lucky pages where
+# the blob is trivially encoded. The browser path is still the source of
+# truth.
+
+_TSITES_HEX_RE = re.compile(r"^[0-9a-fA-F]+$")
+
+
+def _looks_like_email(text: str) -> bool:
+    """Cheap plausibility check for XOR-decode outputs."""
+    if not text or "@" not in text:
+        return False
+    # All chars must be printable ASCII.
+    if any(ord(c) < 0x20 or ord(c) > 0x7e for c in text):
+        return False
+    return bool(_EMAIL_RE.search(text))
+
+
+def decrypt_tsites_hex(hex_blob: str) -> str | None:
+    """Best-effort pure-Python decryption of a tsites hex email blob.
+
+    ``hex_blob`` is the inner text of ``<span _tsites_encrypt_field>...</span>``
+    on a faculty.xidian.edu.cn (and similar tsites/Sudy-CMS) profile page.
+
+    Returns the decoded ASCII email if one of the trivial decode paths
+    matches, otherwise ``None``. **Most real blobs return ``None``** —
+    callers must fall back to the browser-render path (see
+    :func:`decode_xidian_email`).
+    """
+    if not hex_blob:
+        return None
+    s = hex_blob.strip()
+    if not s or not _TSITES_HEX_RE.match(s):
+        return None
+    # Hex strings are even-length pairs.
+    if len(s) % 2 != 0:
+        return None
+    try:
+        raw = bytes.fromhex(s)
+    except ValueError:
+        return None
+
+    # (1) Plain ASCII hex (rare — but cheap to check)
+    with contextlib.suppress(UnicodeDecodeError):
+        as_ascii = raw.decode("ascii")
+        if _looks_like_email(as_ascii):
+            return as_ascii.lower()
+
+    # (2) Single-byte XOR sweep — try every possible key.
+    for key in range(256):
+        decoded = bytes(b ^ key for b in raw)
+        try:
+            text = decoded.decode("ascii")
+        except UnicodeDecodeError:
+            continue
+        if _looks_like_email(text):
+            m = _EMAIL_RE.search(text)
+            if m:
+                return m.group(1).lower()
+
+    # Could attempt longer repeating XOR keys here (length 2..8) but in
+    # observed blobs that hasn't matched either — and the cost grows fast.
+    return None
+
 
 def _is_footer_like(addr: str) -> bool:
     local = addr.split("@", 1)[0].lower()
@@ -180,31 +273,73 @@ async def _wait_for_decoded_span(
     return None
 
 
+async def _read_tsites_hex_blobs(page: "Page") -> list[str]:
+    """Pull the raw hex contents of every ``<span _tsites_encrypt_field>``.
+
+    We read the *raw* textContent of each marker span — before any
+    tsitesencrypt.js decode runs, this is the original hex blob; after
+    decode it would be plain text. Either way, the consumer
+    (:func:`decrypt_tsites_hex`) handles non-hex input gracefully by
+    returning ``None``.
+    """
+    js = (
+        "() => Array.from(document.querySelectorAll('span[_tsites_encrypt_field]'))"
+        ".map(e => (e.textContent || '').trim()).filter(t => t.length > 0)"
+    )
+    try:
+        result = await page.evaluate(js)
+    except Exception:  # noqa: BLE001
+        return []
+    if not isinstance(result, list):
+        return []
+    return [t for t in result if isinstance(t, str)]
+
+
 async def decode_xidian_email(page: "Page") -> str | None:
     """Decode an email from a ``faculty.xidian.edu.cn`` profile page.
 
     The static HTML carries ``<span class="encrypt-field" _tsites_encrypt_field>
     HEXBLOB</span>``; ``/system/resource/tsites/tsitesencrypt.js`` is loaded
     in the page and at runtime replaces the span's text with the plain-text
-    email. We wait for that replacement, then read the span's innerText.
+    email.
 
-    Fallback: if the span never decodes within the timeout window, run the
-    generic DOM scan (some advisors expose a plain-text email elsewhere on
-    the profile, e.g. in the bio prose).
+    Decode cascade
+    --------------
+    1. **Pure-Python attempt** — pull every encrypt-field span's raw text,
+       feed each through :func:`decrypt_tsites_hex` (trivial-XOR /
+       plain-ASCII probe). Most real blobs fail this, but it's cheap
+       (~0.1 ms each) and saves a 15s wait on the rare plaintext-hex case.
+    2. **Browser-render wait** — call :func:`_wait_for_decoded_span` and
+       read whatever the page's own JS placed in the span. This is the
+       only reliable path for real-world AES/SM4 ciphered blobs.
+    3. **Generic DOM fallback** — last-ditch regex scan for emails in the
+       rendered DOM (bio prose often surfaces an email even when the
+       encrypted span never decodes).
 
     Returns ``None`` if no email can be recovered.
     """
-    # All encrypt-field spans share the marker attribute; their actual
-    # text gets set by tsitesencrypt.js on page load.
+    # (1) pure-Python decrypt attempt on every raw blob
+    for blob in await _read_tsites_hex_blobs(page):
+        decoded = decrypt_tsites_hex(blob)
+        if decoded and "xidian.edu.cn" in decoded:
+            return decoded
+        if decoded:
+            # Decoded but not the school domain — still likely valid
+            # (some advisors use personal Gmail). Accept it.
+            return decoded
+
+    # (2) browser-decoded DOM read
     span_selector = "span[_tsites_encrypt_field]"
-    decoded = await _wait_for_decoded_span(page, span_selector, timeout_ms=_JS_DECODE_TIMEOUT_MS)
-    if decoded:
-        candidates = _EMAIL_RE.findall(decoded)
+    decoded_text = await _wait_for_decoded_span(
+        page, span_selector, timeout_ms=_JS_DECODE_TIMEOUT_MS
+    )
+    if decoded_text:
+        candidates = _EMAIL_RE.findall(decoded_text)
         picked = _pick_email(candidates, domain_hint="xidian.edu.cn")
         if picked:
             return picked
 
-    # Generic fallback — bio prose sometimes has the email in plain text
+    # (3) Generic fallback — bio prose sometimes has the email in plain text
     # even when the encrypted span never decoded (e.g. WAF stripped the JS).
     return await extract_email_from_rendered_dom(page, domain_hint="xidian.edu.cn")
 
@@ -235,5 +370,6 @@ async def decode_hust_email(page: "Page") -> str | None:
 __all__ = [
     "decode_hust_email",
     "decode_xidian_email",
+    "decrypt_tsites_hex",
     "extract_email_from_rendered_dom",
 ]
