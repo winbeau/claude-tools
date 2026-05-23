@@ -1,0 +1,6 @@
+[submodule "supervisor-claw"]
+	path = supervisor-claw
+	url = https://github.com/winbeau/supervisor-claw.git
+[submodule "auto-ac"]
+	path = auto-ac
+	url = https://github.com/winbeau/auto-ac.git
